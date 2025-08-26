@@ -1,0 +1,194 @@
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.formRowContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.formRowContainer .inputContainer {
+  width: 100%;
+}
+
+.filterSelector {
+  max-width: 178px;
+  background-color: var(--white);
+  border-radius: 8px;
+}
+
+.title {
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--modal-title);
+  margin-bottom: 52px;
+  position: relative;
+}
+
+.checkboxContainer {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.title::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 1px;
+  background-color: var(--border);
+  position: absolute;
+  bottom: -16px;
+  left: 0;
+}
+
+.inputWrapper {
+  display: flex;
+  gap: 8px;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.inputRow {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 8px;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.deleteBtn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--warning);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--warning);
+  transition: all 0.3s ease;
+}
+
+.deleteBtn:hover,
+.deleteBtn:focus {
+  border: 2px solid var(--warning-hover);
+  color: var(--warning-hover);
+}
+
+.editBtn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--reset-button);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--reset-button);
+  transition: all 0.3s ease;
+}
+
+.editBtn:hover,
+.editBtn:focus {
+  border: 2px solid var(--reset-button-hover);
+  color: var(--reset-button-hover);
+}
+
+.updateBtn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--button);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--button);
+  transition: all 0.3s ease;
+}
+
+.updateBtn:hover,
+.updateBtn:focus {
+  border: 2px solid var(--button-hover);
+  color: var(--button-hover);
+}
+
+.submitBtn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  padding: 8px;
+  background-color: var(--button);
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.submitBtn:hover,
+.submitBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.searchBtn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--button);
+  border-radius: 16px;
+  padding: 8px;
+  color: var(--button);
+  width: 149px;
+  transition: all 0.3s ease;
+}
+
+.searchBtn:hover,
+.searchBtn:focus {
+  border: 2px solid var(--button-hover);
+  color: var(--button-hover);
+}
+
+@media screen and (min-width: 1024px) {
+  .formContainer {
+    gap: 26px;
+  }
+
+  .formRowContainer {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+  }
+
+  .title {
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 1.33;
+    margin-bottom: 36px;
+    text-align: center;
+  }
+
+  .buttonContainer {
+    display: flex;
+    gap: 24px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+
+  .inputWrapper {
+    gap: 24px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+}

@@ -1,0 +1,13 @@
+.expandable {
+  display: inline;
+}
+
+.toggleBtn {
+  margin-left: 4px;
+  color: var(--button);
+  font-size: 0.9em;
+}
+
+.toggleBtn:hover {
+  text-decoration: underline;
+}

@@ -1,0 +1,41 @@
+:root {
+  /* Colors */
+  --main-text: #474747;
+  --heading-text: #1a1a1a;
+  --white: #fff;
+  --warning: #e53935;
+  --warning-hover: #b71c1c;
+  --sidebar-background: #c25a35;
+  --page-background: #fafafa;
+  --active-color: #9a4026;
+  --active-color-hover: #7d321f;
+
+  /* Status */
+  --max-score: #8dcc20;
+  --min-score: #f0553d;
+  --appeal-text: #e0a800;
+  --appeal-text-valid: #587a1f;
+  --appeal-text-invalid: #c74736;
+
+  /* Buttons */
+  --button: #653cd9;
+  --button-hover: #5a2cc1;
+  --reset-button: #e58845;
+  --reset-button-hover: #d6763b;
+  --delete-button: #8a2f22;
+
+  /* Borders */
+  --border: #e0e0e0;
+  --border-hover: #999;
+
+  /* Other */
+  --toggle-lang-background: #f5f5f5;
+  --toggle-lang: #6e6e6e;
+
+  /* Table */
+  --table-title: #e9f9f8;
+  --table-edit: #d6d6d6;
+
+  /* Modal */
+  --modal-title: #361f7a;
+}

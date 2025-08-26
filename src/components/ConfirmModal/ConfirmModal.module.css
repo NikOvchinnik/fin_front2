@@ -1,0 +1,88 @@
+.confirmContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  gap: 24px;
+  width: 360px;
+}
+
+.confirmTitle {
+  font-weight: 500;
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--modal-title);
+}
+
+.confirmText {
+  font-size: 14px;
+  line-height: 1.43;
+}
+
+.buttonContainer {
+  display: flex;
+  gap: 8px;
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.confirmBtn {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 8px;
+  padding: 8px;
+  background-color: var(--button);
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.confirmBtn:hover,
+.confirmBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.confirmBtnCancel {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid var(--warning);
+  border-radius: 8px;
+  padding: 8px;
+  color: var(--warning);
+  transition: all 0.3s ease;
+}
+
+.confirmBtnCance:hover,
+.confirmBtnCance:focus {
+  border: 2px solid var(--warning-hover);
+  color: var(--warning-hover);
+}
+
+@media screen and (min-width: 1024px) {
+  .confirmContainer {
+    width: 620px;
+  }
+
+  .confirmTitle {
+    font-weight: 500;
+    font-size: 24px;
+    line-height: 1.33;
+    text-align: center;
+  }
+
+  .confirmText {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .buttonContainer {
+    display: flex;
+    gap: 24px;
+    font-weight: 400;
+    font-size: 20px;
+    line-height: 1.6;
+  }
+}

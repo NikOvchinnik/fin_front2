@@ -1,0 +1,363 @@
+.modalOpen {
+  overflow: hidden;
+}
+
+.burgerContainer {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 100;
+}
+
+.btnMenu {
+  background-color: var(--active-color);
+  border-radius: 8px;
+  width: 48px;
+  height: 48px;
+  color: var(--white);
+  fill: var(--white);
+  font-weight: 600;
+  font-size: 12px;
+  line-height: 1.43;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.btnMenu:hover,
+.btnMenu:focus {
+  background-color: var(--active-color-hover);
+}
+
+.btnMenuClose {
+  background-color: var(--active-color-hover);
+  gap: 5px;
+}
+
+.iconMenu {
+  width: 24px;
+  height: 24px;
+}
+
+.iconMenuClose {
+  width: 14px;
+  height: 14px;
+}
+
+.navContainerMobile {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  position: absolute;
+  background-color: var(--sidebar-background);
+  width: 100%;
+  height: 100%;
+  padding: 24px 16px;
+  background-image: url('../../img/sideBarMobile_background.svg');
+  background-repeat: no-repeat;
+  background-position: 0 80vh;
+  background-size: auto;
+  overflow-y: scroll;
+  z-index: 98;
+}
+
+.navContainerDesktop {
+  display: none;
+}
+
+.logoContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+}
+
+.logo {
+  width: 121px;
+  height: 32px;
+}
+
+.btnSideBarMenu {
+  display: none;
+}
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.navLink {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--white);
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  max-width: 339px;
+  transition: all 0.3s ease;
+}
+
+.navLink:hover,
+.navLink:focus {
+  background-color: var(--active-color-hover);
+}
+
+.navLinkActive {
+  background-color: var(--active-color);
+  position: relative;
+}
+
+.navLinkActive::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  left: -16px;
+  width: 8px;
+  height: 40px;
+  background: var(--active-color);
+  border-radius: 0 8px 8px 0;
+}
+
+.iconNav {
+  width: 24px;
+  height: 24px;
+}
+
+.btnChildrenMenu {
+  display: none;
+}
+
+.childrenList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  position: relative;
+}
+
+.navChildrenLink {
+  display: flex;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.navChildrenLink:hover,
+.navChildrenLink:focus {
+  background-color: var(--active-color-hover);
+  color: var(--white);
+}
+
+.navChildrenLinkActive {
+  background-color: var(--active-color);
+  color: var(--white);
+}
+
+.navUserContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: auto;
+}
+
+.languageSwitcher {
+  border-radius: 8px;
+  padding: 4px;
+  width: 94px;
+  background-color: var(--toggle-lang-background);
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+}
+
+.languageBtn {
+  border-radius: 4px;
+  padding: 8px;
+  font-size: 12px;
+  line-height: 1.33;
+  color: var(--toggle-lang);
+}
+
+.languageBtnActive {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.iconLogOut {
+  width: 24px;
+  height: 24px;
+}
+
+.btnLogOut {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: var(--white);
+  border-radius: 8px;
+  padding: 8px 16px;
+  width: 244px;
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--heading-text);
+}
+
+.iconLogOut {
+  width: 24px;
+  height: 24px;
+}
+
+@media screen and (min-width: 1024px) {
+  .burgerContainer {
+    display: none;
+  }
+
+  .navContainerMobile {
+    display: none;
+  }
+
+  .navContainerDesktop {
+    display: flex;
+    flex-direction: column;
+    gap: 44px;
+    background-color: var(--sidebar-background);
+    border-radius: 0 24px 24px 0;
+    max-width: 284px;
+    padding: 32px 20px 32px 20px;
+    background-image: url('../../img/sideBarDesktop_background.svg');
+    background-repeat: no-repeat;
+    background-position: 0 80vh;
+    background-size: auto;
+    z-index: 100;
+    transition: all 0.3s ease;
+    position: relative;
+  }
+
+  .childrenContainer {
+    position: absolute;
+    top: 0;
+    right: -284px;
+    border-right: 1px solid var(--sidebar-background);
+    border-radius: 0 24px 24px 0;
+    background-color: var(--white);
+    padding: 32px 20px;
+    height: 100%;
+    width: 284px;
+    z-index: 99;
+  }
+
+  .btnChildrenMenu {
+    display: flex;
+    margin-left: auto;
+  }
+
+  .childrenList {
+    margin-top: 44px;
+  }
+
+  .childrenList::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background-color: #E6F2FA;
+    position: absolute;
+    top: -16px;
+    left: 0;
+  }
+
+  .navChildrenLink {
+    font-size: 16px;
+    line-height: 1.5;
+    color: var(--main-text);
+  }
+
+  .navChildrenLinkActive {
+    background-color: var(--active-color);
+    color: var(--white);
+  }
+
+  .logoContainer::before {
+    content: '';
+    display: block;
+    width: 100%;
+    height: 1px;
+    background-color: var(--white);
+    position: absolute;
+    bottom: -28px;
+    left: 0;
+  }
+
+  .btnSideBarMenu {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: var(--active-color);
+    padding: 6px;
+    border-radius: 8px;
+    fill: var(--white);
+    transition: all 0.3s ease;
+  }
+
+  .btnSideBarMenu:hover,
+  .btnSideBarMenu:focus {
+    background-color: var(--active-color-hover);
+  }
+
+  .iconSideBarMenu {
+    width: 20px;
+    height: 20px;
+  }
+
+  .navLink {
+    font-size: 16px;
+    line-height: 1.5;
+    display: flex;
+    max-width: 244px;
+  }
+
+  .navLinkActive::before {
+    left: -20px;
+  }
+
+  .navUserContainer {
+    position: sticky;
+    bottom: 32px;
+  }
+
+  .btnLogOut {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .navContainerCollapsed {
+    max-width: 88px;
+    background-position: -89px 681px;
+  }
+
+  .iconSideBarMenuCollapsed {
+    transform: rotate(180deg);
+  }
+
+  .logoCollapsed {
+    display: none;
+  }
+
+  .navTextCollapsed {
+    display: none;
+  }
+
+  .navUserContainerCollapsed {
+    display: none;
+  }
+}

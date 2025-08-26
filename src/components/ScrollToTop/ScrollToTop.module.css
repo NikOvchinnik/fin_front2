@@ -1,0 +1,19 @@
+.scrollContainer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 20px;
+  fill: var(--button);
+  transition: all 0.3s ease;
+}
+
+.scrollContainer:hover,
+.scrollContainer:focus {
+  fill: var(--button-hover);
+}
+
+.scrollIcon {
+  width: 25px;
+  height: 25px;
+  transform: rotate(90deg);
+}

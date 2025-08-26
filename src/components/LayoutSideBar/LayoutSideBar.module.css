@@ -1,0 +1,28 @@
+.mainContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--page-background);
+}
+
+.contentContainer {
+  display: flex;
+  background-color: var(--white);
+  padding: 16px;
+  width: 100%;
+  overflow: hidden;
+}
+
+
+@media screen and (min-width: 1024px) {
+  .contentContainer {
+    margin: 16px;
+    border-radius: 24px;
+    padding: 20px;
+  }
+}
+
+@media screen and (min-width: 1280px) {
+  .contentContainer {
+    margin: 24px;
+  }
+}

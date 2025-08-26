@@ -1,0 +1,70 @@
+.dateContainer {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  font-weight: 600;
+  margin: 8px 0;
+  z-index: 10;
+}
+
+.dateInput {
+  color: var(--button);
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.dateInputDay {
+  max-width: 100px;
+}
+
+.dateInput:hover,
+.dateInput:focus {
+  color: var(--button-hover);
+}
+
+.dateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--button);
+  fill: var(--button);
+  border-radius: 8px;
+  padding: 8px;
+  width: 48px;
+  height: 32px;
+  transition: all 0.3s ease;
+}
+
+.dateBtn:hover,
+.dateBtn:focus {
+  border: 2px solid var(--button-hover);
+  fill: var(--button-hover);
+}
+
+.dateIcon {
+  width: 16px;
+  height: 16px;
+}
+
+@media screen and (min-width: 1024px) {
+  .dateContainer {
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 1.33;
+    margin: 0;
+  }
+
+  .dateInputDay {
+    max-width: 150px;
+  }
+
+  .dateBtn {
+    width: 68px;
+    height: 40px;
+  }
+
+  .dateIcon {
+    width: 20px;
+    height: 20px;
+  }
+}

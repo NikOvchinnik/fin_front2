@@ -1,0 +1,29 @@
+.modalOpen {
+  overflow: hidden;
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  fill: var(--main-text);
+  transition: fill 0.3s ease;
+  z-index: 1001;
+}
+
+.closeIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.closeBtn:hover {
+  fill: var(--heading-text);
+}
+
+@media screen and (min-width: 1024px) {
+  .closeBtn {
+    display: none;
+  }
+}
