@@ -23,15 +23,15 @@ const App = () => {
   const renderRootComponent = role => {
     switch (role) {
       case 1:
-        return <Navigate to={`users`} />;  //CEO/COO
+        return <Navigate to={`requests`} />;  //CEO/COO
       case 2:
-        return <Navigate to={`users`} />; //Керівник відділу
+        return <Navigate to={`requests/${userId}`} />; //Керівник відділу
       case 3:
-        return <Navigate to={`users`} />; //Заявник(Тімлід)
+        return <Navigate to={`requests/${userId}`} />; //Заявник(Тімлід)
       case 4:
-        return <Navigate to={`users`} />; //Фінансист
+        return <Navigate to={`requests`} />; //Фінансист
       case 5:
-        return <Navigate to={`users`} />; //Бухгалтер
+        return <Navigate to={`requests`} />; //Бухгалтер
       default:
         return <HomePage />;
     }

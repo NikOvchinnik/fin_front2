@@ -14,7 +14,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/requests/${userId}`,
+        link: `/my_requests/${userId}`,
         icon: 'file',
       },
       {
@@ -39,7 +39,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/requests/${userId}`,
+        link: `/my_requests/${userId}`,
         icon: 'file',
       },
       {
@@ -54,12 +54,12 @@ export const getNavSideBar = (userId, userName) => [
     pages: [
       {
         page: 'Мої заявки',
-        link: `/requests/${userId}`,
+        link: `/my_requests/${userId}`,
         icon: 'file',
       },
       {
         page: 'Повернення коштів',
-        link: `/refunds/${userId}`,
+        link: `/refunds`,
         icon: 'refund',
       },
       {
@@ -79,7 +79,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/requests/${userId}`,
+        link: `/my_requests/${userId}`,
         icon: 'file',
       },
       {
@@ -94,7 +94,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Курс валют',
-        link: `/exchange-rates`,
+        link: `/exchange_rate`,
         icon: 'dollar',
       },
     ],
@@ -109,7 +109,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/requests/${userId}`,
+        link: `/my_requests/${userId}`,
         icon: 'file',
       },
       {
