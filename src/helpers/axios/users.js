@@ -9,17 +9,9 @@ export const loginUser = async formData => {
   }
 };
 
-export const getUsers = async (options = '') => {
+export const getUsers = async () => {
   try {
-    return await axios.get('/users' + (options ? `?${options}` : ''));
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getUserById = async id => {
-  try {
-    return await axios.get(`/users/${id}`);
+    return await axios.get('/api/get-users');
   } catch (error) {
     throw error;
   }
@@ -27,15 +19,15 @@ export const getUserById = async id => {
 
 export const postUser = async credentials => {
   try {
-    return await axios.post('/users', credentials);
+    return await axios.post('/api/add-user', credentials);
   } catch (error) {
     throw error;
   }
 };
 
-export const patchUser = async credentials => {
+export const patchUser = async (id, credentials) => {
   try {
-    return await axios.patch(`/users/${credentials.id}`, credentials);
+    return await axios.put(`/api/update-user/${id}`, credentials);
   } catch (error) {
     throw error;
   }
@@ -43,15 +35,7 @@ export const patchUser = async credentials => {
 
 export const deleteUser = async id => {
   try {
-    return await axios.delete(`/users/${id}`);
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const forgotPassword = async email => {
-  try {
-    return await axios.post(`/auth/forgotPassword`, { email });
+    return await axios.delete(`/api/delete-user/${id}`);
   } catch (error) {
     throw error;
   }

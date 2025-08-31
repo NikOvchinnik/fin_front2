@@ -1,0 +1,41 @@
+.userContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  gap: 4px;
+}
+
+.userText {
+  font-size: 14px;
+  line-height: 1.43;
+}
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: 1px solid var(--table-edit);
+  fill: var(--table-edit);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.userIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.userBtn:hover,
+.userBtn:focus {
+  border: 1px solid var(--border-hover);
+  fill: var(--border-hover);
+}
+
+@media screen and (min-width: 1024px) {
+  .userText {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+}

@@ -1,0 +1,54 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.addUserBtn {
+  border: 2px solid var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 207px;
+  color: var(--button);
+  margin: 4px 0;
+  transition: all 0.3s ease;
+}
+
+.addUserBtn span {
+  margin-left: 8px;
+  font-size: 18px;
+}
+
+.addUserBtn:hover,
+.addUserBtn:focus {
+  border: 2px solid var(--button-hover);
+  color: var(--button-hover);
+}
+
+.sortContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnContainer{
+  display: flex;
+  align-items: center;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 24px;
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+  }
+
+  .addUserBtn {
+    margin: 0;
+    margin-left: auto;
+  }
+}
