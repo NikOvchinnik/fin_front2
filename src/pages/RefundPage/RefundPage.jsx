@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import DocTitle from '../../components/DocTitle/DocTitle';
-import style from './UsersPage.module.css';
+import style from './RefundPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
 

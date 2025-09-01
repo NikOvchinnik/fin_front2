@@ -2,22 +2,24 @@ import Form from '../../Form/Form';
 import style from './RequestCommentForm.module.css';
 import { Notify } from 'notiflix';
 
-const RequestCommentForm = ({ user, closeModal, onRefresh }) => {
-  const fields = [
-    {
-      type: 'select',
-      name: 'role_id',
-      label: 'Роль',
-      options: rolesOptions,
-      validation: { required: 'This field is required' },
-    },
-    {
-      type: 'text',
-      name: 'first_name',
-      label: 'Ім’я',
-      validation: { required: 'This field is required' },
-    },
-  ];
+const RequestCommentForm = ({ closeModal, onRefresh }) => {
+  // const fields = [
+  //   {
+  //     type: 'select',
+  //     name: 'last_name',
+  //     label: 'Роль',
+  //     options: rolesOptions,
+  //     validation: { required: 'This field is required' },
+  //   },
+  //   {
+  //     type: 'text',
+  //     name: 'first_name',
+  //     label: 'Ім’я',
+  //     validation: { required: 'This field is required' },
+  //   },
+  // ];
+
+  const fields = [];
 
   const buttons = [
     {
@@ -35,20 +37,20 @@ const RequestCommentForm = ({ user, closeModal, onRefresh }) => {
         buttons={buttons}
         onSubmit={async data => {
           try {
-            const formData = new FormData();
-            Object.entries(data).forEach(([key, value]) => {
-              if (typeof value === 'string') {
-                value = value.trim();
-              }
+            // const formData = new FormData();
+            // Object.entries(data).forEach(([key, value]) => {
+            //   if (typeof value === 'string') {
+            //     value = value.trim();
+            //   }
 
-              if (value !== null && value !== undefined && value !== '') {
-                formData.append(key, value);
-              } else {
-                formData.append(key, '');
-              }
-            });
+            //   if (value !== null && value !== undefined && value !== '') {
+            //     formData.append(key, value);
+            //   } else {
+            //     formData.append(key, '');
+            //   }
+            // });
 
-            await patchUser(user.user_id, formData);
+            // await patchUser(user.user_id, formData);
             onRefresh();
             closeModal();
             Notify.success('Інформацію змінено!');
@@ -58,8 +60,8 @@ const RequestCommentForm = ({ user, closeModal, onRefresh }) => {
           }
         }}
         defaultValues={{
-          first_name: user.user_first_name || '',
-          last_name: user.user_last_name || '',
+          first_name: '',
+          last_name: '',
         }}
       />
     </div>
