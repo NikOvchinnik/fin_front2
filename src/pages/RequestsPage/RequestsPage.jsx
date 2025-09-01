@@ -413,7 +413,7 @@ const RequestsPage = () => {
           )}
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
             <RequestCommentForm
-              // periodId={periodId}
+              // periodI={periodI}
               closeModal={closeModal}
               onRefresh={fetchData}
             />
