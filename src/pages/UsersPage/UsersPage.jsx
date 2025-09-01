@@ -10,6 +10,7 @@ import UserCard from '../../components/UserCard/UserCard';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import UserNewForm from '../../components/Forms/UserNewForm/UserNewForm';
 import { getRoles } from '../../helpers/axios/roles';
+import { getFinRequests } from '../../helpers/axios/requests';
 
 const UsersPage = () => {
   const [loading, setLoading] = useState(true);

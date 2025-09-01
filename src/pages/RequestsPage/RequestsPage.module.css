@@ -1,0 +1,170 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.tableContainer {
+  min-width: 1024px;
+}
+
+.searchContainer {
+  display: flex;
+  justify-content: end;
+  width: 100%;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+}
+
+.btnContainer {
+  display: flex;
+  gap: 16px;
+}
+
+.addAssessmentBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 175px;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.addAssessmentBtn:hover,
+.addAssessmentBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 155px;
+  color: var(--button);
+  transition: all 0.3s ease;
+}
+
+.sendBtn:hover,
+.sendBtn:focus {
+  border: 2px solid var(--button-hover);
+  color: var(--button-hover);
+}
+
+.assignBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 245px;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.assignBtn:hover,
+.assignBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.checkboxContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelCheckboxContainer {
+  display: flex;
+  width: 100%;
+}
+
+.checkboxInput {
+  appearance: none;
+  border: 1px solid #d6d6d6;
+  background: #fff;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+}
+
+.checkboxInput:checked {
+  background-color: var(--button);
+  border-color: var(--button);
+}
+
+.checkboxInput:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.assessmentLink {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  color: var(--button);
+  fill: var(--button);
+  transition: all 0.3s ease;
+}
+
+.assessmentLink:hover,
+.assessmentLink:focus {
+  color: var(--button-hover);
+  fill: var(--button-hover);
+}
+
+.assessmentIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.assessmentText {
+  word-break: break-word;
+}
+
+.sortContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 24px;
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+  }
+
+  .labelContainer {
+    max-width: 440px;
+  }
+}
