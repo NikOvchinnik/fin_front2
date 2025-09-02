@@ -18,7 +18,7 @@ const ExpandableText = ({ text, limit = 80 }) => {
           className={style.toggleBtn}
           onClick={() => setExpanded(prev => !prev)}
         >
-          {expanded ? ' Show less' : ' Show more'}
+          {expanded ? ' Сховати' : ' Показати все'}
         </button>
       )}
     </span>

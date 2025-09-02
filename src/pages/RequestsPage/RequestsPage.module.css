@@ -9,9 +9,41 @@
   min-width: 1024px;
 }
 
-.searchContainer {
+.fullWidthText {
+  white-space: nowrap;
+}
+
+.breakText {
+  word-break: break-word;
+}
+
+.copyText {
   display: flex;
   justify-content: end;
+  cursor: pointer;
+}
+
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dateContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 60px;
+}
+
+.formsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchContainer {
+  display: flex;
   width: 100%;
 }
 
@@ -22,18 +54,13 @@
 .inputContainer {
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 12px 14px;
+  padding: 14px 14px;
   font-weight: 500;
   color: var(--main-text);
   width: 100%;
 }
 
-.btnContainer {
-  display: flex;
-  gap: 16px;
-}
-
-.addAssessmentBtn {
+.csvBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,43 +72,8 @@
   transition: all 0.3s ease;
 }
 
-.addAssessmentBtn:hover,
-.addAssessmentBtn:focus {
-  background-color: var(--button-hover);
-}
-
-.sendBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid var(--button);
-  border-radius: 8px;
-  padding: 6px;
-  width: 155px;
-  color: var(--button);
-  transition: all 0.3s ease;
-}
-
-.sendBtn:hover,
-.sendBtn:focus {
-  border: 2px solid var(--button-hover);
-  color: var(--button-hover);
-}
-
-.assignBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--button);
-  border-radius: 8px;
-  padding: 6px;
-  width: 245px;
-  color: var(--white);
-  transition: all 0.3s ease;
-}
-
-.assignBtn:hover,
-.assignBtn:focus {
+.csvBtn:hover,
+.csvBtn:focus {
   background-color: var(--button-hover);
 }
 
@@ -124,30 +116,6 @@
   transform: rotate(45deg);
 }
 
-.assessmentLink {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-  color: var(--button);
-  fill: var(--button);
-  transition: all 0.3s ease;
-}
-
-.assessmentLink:hover,
-.assessmentLink:focus {
-  color: var(--button-hover);
-  fill: var(--button-hover);
-}
-
-.assessmentIcon {
-  width: 12px;
-  height: 12px;
-}
-
-.assessmentText {
-  word-break: break-word;
-}
-
 .sortContainer {
   display: flex;
   align-items: center;
@@ -159,12 +127,82 @@
   height: 24px;
 }
 
+.editBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--table-edit);
+  border-radius: 4px;
+  fill: var(--table-edit);
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.editBtn:hover,
+.editBtn:focus {
+  fill: var(--border-hover);
+  border: 1px solid var(--border-hover);
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.statuscontainer {
+  max-width: 1040px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  background: var(--toggle-lang-background);
+}
+
+.statusBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 28px;
+  transition: all 0.3s ease;
+}
+
+.activeBtn {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.statusBtn:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
+.noDataText{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  text-align: center;
+}
+
 @media screen and (min-width: 1024px) {
   .mainContainer {
     gap: 24px;
   }
 
-  .labelContainer {
-    max-width: 440px;
+  .dateContainer {
+    flex-direction: row;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0;
+  }
+
+  .formsContainer {
+    flex-direction: row;
+    gap: 20px;
   }
 }

@@ -11,52 +11,47 @@ registerLocale('uk', {
 });
 
 const DateNavigator = ({
-  days,
-  selectedDate,
-  startDate = null,
-  endDate = null,
-  setSelectedDate,
+  startDate,
+  endDate,
+  setStartDate,
+  setEndDate,
   onLoading,
 }) => {
-  const handleDateChange = date => {
+  const handleDateChange = dates => {
     onLoading(true);
-    setSelectedDate(dayjs(date));
+    const [start, end] = dates;
+    setStartDate(start ? dayjs(start) : null);
+    setEndDate(end ? dayjs(end) : null);
+  };
+
+  const shiftMonth = months => {
+    onLoading(true);
+    setStartDate(prev =>
+      prev ? prev.add(months, 'month').startOf('month') : null
+    );
+    setEndDate(prev =>
+      prev ? prev.add(months, 'month').endOf('month') : null
+    );
   };
 
   return (
     <div className={style.dateContainer}>
-      <button
-        className={style.dateBtn}
-        onClick={() => {
-          onLoading(true);
-          setSelectedDate(prev => prev.subtract(days, 'day'));
-        }}
-      >
+      <button className={style.dateBtn} onClick={() => shiftMonth(-1)}>
         <Icon id="arrow-left-switch" className={style.dateIcon} />
       </button>
 
       <DatePicker
-        selected={startDate ? null : selectedDate.toDate()}
+        selected={startDate ? startDate.toDate() : null}
         onChange={handleDateChange}
         startDate={startDate ? startDate.toDate() : null}
         endDate={endDate ? endDate.toDate() : null}
-        selectsRange={Boolean(startDate)}
-        dateFormat={startDate ? 'dd.MM.yy' : 'dd.MM.yyyy'}
+        selectsRange
+        dateFormat="dd.MM.yyyy"
         locale="uk"
-        className={
-          startDate
-            ? style.dateInput
-            : `${style.dateInput} ${style.dateInputDay} `
-        }
+        className={style.dateInput}
       />
 
-      <button
-        className={style.dateBtn}
-        onClick={() => {
-          onLoading(true);
-          setSelectedDate(prev => prev.add(days, 'day'));
-        }}
-      >
+      <button className={style.dateBtn} onClick={() => shiftMonth(1)}>
         <Icon id="arrow-right-switch" className={style.dateIcon} />
       </button>
     </div>
