@@ -31,7 +31,9 @@ const RequestsPage = () => {
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
-    teacherName: '',
+    applicant: '',
+    payer: '',
+    expense_category: '',
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'payment_date_await',
@@ -126,6 +128,14 @@ const RequestsPage = () => {
         `${row.applicant_id?.last_name} ${row.applicant_id?.first_name}`
           .toLowerCase()
           .includes(filters.applicant)
+      );
+    }
+
+    if (filters.expense_category) {
+      filteredRows = filteredRows.filter(row =>
+        row.expense_category?.name
+          .toLowerCase()
+          .includes(filters.expense_category)
       );
     }
 
@@ -736,6 +746,17 @@ const RequestsPage = () => {
                   />
                 </label>
               </form>
+              <form className={style.searchContainer}>
+                <label className={style.labelContainer}>
+                  <input
+                    type="text"
+                    name="expense_category"
+                    className={style.inputContainer}
+                    placeholder="Стаття витрат"
+                    onChange={handleSearchChange}
+                  />
+                </label>
+              </form>
             </div>
             <ul className={style.statuscontainer}>
               {statusSelector.map(status => (
@@ -761,16 +782,6 @@ const RequestsPage = () => {
                 дату періоду.
               </p>
             </div>
-          ) : isMobile ? (
-            <Table
-              data={requestsRows}
-              columns={columns}
-              styles="analyticTable"
-              fixedFirstColumn="true"
-              visibleColumns={20}
-              visibleColumnsMobile={2}
-              rowsPerPage={25}
-            />
           ) : (
             <SimpleBar style={{ maxWidth: '100%' }}>
               <div className={style.tableContainer}>
@@ -778,10 +789,11 @@ const RequestsPage = () => {
                   data={requestsRows}
                   columns={columns}
                   styles="analyticTable"
-                  fixedFirstColumn="true"
+                  fixedFirstColumn={isMobile ? true : false}
                   visibleColumns={20}
                   visibleColumnsMobile={2}
                   rowsPerPage={25}
+                  enableHorizontalScroll={isMobile ? false : true}
                 />
               </div>
             </SimpleBar>
