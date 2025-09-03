@@ -6,7 +6,28 @@
 .tableContainer {
   border: 1px solid var(--border);
   border-radius: 12px;
-  overflow: hidden;
+  overflow: auto;
+}
+
+.tableContainer::-webkit-scrollbar {
+  height: 6px;
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  background: transparent; 
+}
+
+.tableContainer::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover {
+  background: var(--main-text); 
+}
+
+.tableContainer::-webkit-scrollbar-track {
+  margin: 0 6px; 
 }
 
 .tableContainer:has(.calendarTable) {
@@ -103,7 +124,6 @@ td:last-child {
 .status-2 {
   background-color: #fbf3de;
 }
-
 
 .sent {
   background-color: #f2fae6;

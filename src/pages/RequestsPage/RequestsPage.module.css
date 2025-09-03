@@ -5,10 +5,6 @@
   width: 100%;
 }
 
-.tableContainer {
-  min-width: 1024px;
-}
-
 .fullWidthText {
   white-space: nowrap;
 }

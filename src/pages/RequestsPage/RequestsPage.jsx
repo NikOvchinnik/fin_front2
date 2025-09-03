@@ -783,20 +783,16 @@ const RequestsPage = () => {
               </p>
             </div>
           ) : (
-            <SimpleBar style={{ maxWidth: '100%' }}>
-              <div className={style.tableContainer}>
-                <Table
-                  data={requestsRows}
-                  columns={columns}
-                  styles="analyticTable"
-                  fixedFirstColumn={isMobile ? true : false}
-                  visibleColumns={20}
-                  visibleColumnsMobile={2}
-                  rowsPerPage={25}
-                  enableHorizontalScroll={isMobile ? false : true}
-                />
-              </div>
-            </SimpleBar>
+            <Table
+              data={requestsRows}
+              columns={columns}
+              styles="analyticTable"
+              fixedFirstColumn={isMobile ? true : false}
+              visibleColumns={20}
+              visibleColumnsMobile={2}
+              rowsPerPage={25}
+              enableHorizontalScroll={isMobile ? false : true}
+            />
           )}
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
             <RequestCommentForm
