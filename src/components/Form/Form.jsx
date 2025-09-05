@@ -378,6 +378,7 @@ const Form = ({
                   <Select
                     {...input}
                     label={field.label || ''}
+                    disabled={field.disabled || false}
                     onChange={e => {
                       input.onChange(e);
                       field.onChange && field.onChange(e.target.value);

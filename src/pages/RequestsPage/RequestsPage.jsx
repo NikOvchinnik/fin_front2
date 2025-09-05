@@ -214,10 +214,10 @@ const RequestsPage = () => {
             return req.payment_form?.payer || '';
           case 'beneficiary':
             return req.project?.name || '';
-          case 'plan_balance':
-            return `${req.planned_balance_optimistic ?? ''} / ${
-              req.planned_balance_pessimistic ?? ''
-            }`;
+          case 'planned_balance_optimistic':
+            return req.planned_balance_optimistic ?? '';
+          case 'planned_balance_pessimistic':
+            return req.planned_balance_pessimistic ?? '';
           case 'tech':
             return req.payment_date_await
               ? req.payment_date_await.slice(0, 7)
@@ -298,26 +298,39 @@ const RequestsPage = () => {
           {dayjs(request.created_at).format('YYYY-MM-DD') || ''}
         </p>
       ),
+      created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       payment_date_await: (
         <p className={style.fullWidthText}>
           {request.payment_date_await || ''}
         </p>
       ),
+      payment_date_await_plain: request.payment_date_await || '',
       project: request.project?.name || '',
+      project_plain: request.project?.name || '',
       contractor: request.contractor_id || '',
+      contractor_plain: request.contractor_id || '',
       purpose: (
         <p>
           <ExpandableText text={request.purpose || ''} limit={50} />
         </p>
       ),
+      purpose_plain: request.purpose || '',
       payment_period: request.payment_period || '',
+      payment_period_plain: request.payment_period || '',
       amount: request.amount ? request.amount.toLocaleString('uk-UA') : '',
+      amount_plain: request.amount ?? '',
       currency: request.currency?.name || '',
+      currency_plain: request.currency?.name || '',
       amount_uah:
         request.amount && request.currency?.rate
           ? (request.amount * request.currency.rate).toLocaleString('uk-UA')
           : '',
+      amount_uah_plain:
+        request.amount && request.currency?.rate
+          ? request.amount * request.currency.rate
+          : '',
       expense_category: request.expense_category?.name || '',
+      expense_category_plain: request.expense_category?.name || '',
       payment_details: (
         <p className={style.breakText}>
           <span
@@ -332,16 +345,29 @@ const RequestsPage = () => {
           <ExpandableText text={request.payment_details || ''} limit={20} />
         </p>
       ),
+      payment_details_plain: request.payment_details || '',
       payment_form: request.payment_form?.name || '',
+      payment_form_plain: request.payment_form?.name || '',
       applicant:
         `${request.applicant_id?.last_name} ${request.applicant_id?.first_name}` ||
         '',
-      payer: request.payment_form?.payer || '',
-      beneficiary: request.project?.name || '',
-      plan_balance:
-        `${request.planned_balance_optimistic} / ${request.planned_balance_pessimistic} ` ||
+      applicant_plain:
+        `${request.applicant_id?.last_name} ${request.applicant_id?.first_name}` ||
         '',
+      payer: request.payment_form?.payer || '',
+      payer_plain: request.payment_form?.payer || '',
+      beneficiary: request.project?.name || '',
+      beneficiary_plain: request.project?.name || '',
+      planned_balance_optimistic: request.planned_balance_optimistic ?? '',
+      planned_balance_optimistic_plain:
+        request.planned_balance_optimistic ?? '',
+      planned_balance_pessimistic: request.planned_balance_pessimistic ?? '',
+      planned_balance_pessimistic_plain:
+        request.planned_balance_pessimistic ?? '',
       tech: request.payment_date_await
+        ? request.payment_date_await.slice(0, 7)
+        : '',
+      tech_plain: request.payment_date_await
         ? request.payment_date_await.slice(0, 7)
         : '',
       status: (
@@ -358,6 +384,7 @@ const RequestsPage = () => {
           {request.status?.name || ''}
         </span>
       ),
+      status_plain: request.status?.name || '',
       action: (
         <button
           className={style.editBtn}
@@ -597,13 +624,27 @@ const RequestsPage = () => {
       ),
     },
     {
-      accessorKey: 'plan_balance',
+      accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс по плану</p>
+          <p>Баланс оптимістичний</p>
           <button
             className={style.btnContainer}
-            onClick={() => handleSort('plan_balance')}
+            onClick={() => handleSort('planned_balance_optimistic')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'planned_balance_pessimistic',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Баланс песимістичний</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('planned_balance_pessimistic')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -638,10 +679,14 @@ const RequestsPage = () => {
         </div>
       ),
     },
-    {
-      accessorKey: 'action',
-      header: 'Дія',
-    },
+    ...(userRole === 4 || userRole === 5
+      ? [
+          {
+            accessorKey: 'action',
+            header: 'Дія',
+          },
+        ]
+      : []),
   ];
 
   const filteredColumns = useMemo(() => {
@@ -667,6 +712,47 @@ const RequestsPage = () => {
     setModalColumnsIsOpen(false);
   };
 
+  const exportToCSV = () => {
+    if (!requestsRows || requestsRows.length === 0) return;
+
+    const columnsForExport = filteredColumns;
+
+    const headers = columnsForExport.map(col => {
+      if (typeof col.header === 'string') return col.header;
+      if (col.header.props && col.header.props.children) {
+        const p = col.header.props.children.find?.(c => c?.type === 'p');
+        if (p && p.props && typeof p.props.children === 'string')
+          return p.props.children;
+        return col.accessorKey;
+      }
+      return col.accessorKey;
+    });
+
+    const rows = requestsRows.map(row =>
+      columnsForExport.map(col => {
+        const plainKey = `${col.accessorKey}_plain`;
+        const value = row[plainKey] ?? '';
+        return `"${String(value).replace(/"/g, '""')}"`;
+      })
+    );
+
+    const csvContent = [headers.map(h => `"${h}"`).join(',')]
+      .concat(rows.map(r => r.join(',')))
+      .join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `requests_${dayjs().format('YYYY-MM-DD')}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <>
       {loading ? (
@@ -683,7 +769,9 @@ const RequestsPage = () => {
                 setEndDate={setEndDate}
                 onLoading={setLoadingTable}
               />
-              <button className={style.csvBtn}>Експорт у CSV</button>
+              <button className={style.csvBtn} onClick={exportToCSV}>
+                Експорт у CSV
+              </button>
             </div>
             <div className={style.formsContainer}>
               <Form

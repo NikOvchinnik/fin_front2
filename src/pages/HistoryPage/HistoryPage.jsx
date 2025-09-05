@@ -28,7 +28,7 @@ const HistoryPage = () => {
       ) : (
         <section className={style.mainContainer}>
           <DocTitle>History</DocTitle>
-          <h1>HistoryPage</h1>
+          <h1>History Page coming soon...</h1>
         </section>
       )}
     </>

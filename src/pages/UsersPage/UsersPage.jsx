@@ -10,7 +10,8 @@ import UserCard from '../../components/UserCard/UserCard';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import UserNewForm from '../../components/Forms/UserNewForm/UserNewForm';
 import { getRoles } from '../../helpers/axios/roles';
-import { getFinRequests } from '../../helpers/axios/requests';
+import { selectUserRole } from '../../redux/auth/selectors';
+import { useSelector } from 'react-redux';
 
 const UsersPage = () => {
   const [loading, setLoading] = useState(true);
@@ -18,6 +19,7 @@ const UsersPage = () => {
   const [dataUsers, setDataUsers] = useState([]);
   const [rolesMap, setRolesMap] = useState({});
   const [sortOrder, setSortOrder] = useState({});
+  const userRole = useSelector(selectUserRole);
 
   const fetchData = useCallback(async () => {
     try {
@@ -83,6 +85,7 @@ const UsersPage = () => {
         row[roleKey] = user ? (
           <UserCard
             key={`${roleKey}-${user.id}`}
+            userRole={userRole}
             user={user}
             onRefresh={fetchData}
           />
@@ -126,7 +129,11 @@ const UsersPage = () => {
             visibleColumnsMobile={2}
           />
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
-            <UserNewForm closeModal={closeModal} onRefresh={fetchData} />
+            <UserNewForm
+              closeModal={closeModal}
+              onRefresh={fetchData}
+              userRole={userRole}
+            />
           </ModalWindow>
         </section>
       )}

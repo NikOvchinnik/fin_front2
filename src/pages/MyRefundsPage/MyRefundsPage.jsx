@@ -16,6 +16,7 @@ import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const MyRefundsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -33,7 +34,9 @@ const MyRefundsPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
   const userRole = useSelector(selectUserRole);
-  const userId = useSelector(selectUserId);
+  const { userId } = useParams();
+  const userSelectorId = useSelector(selectUserId);
+  const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
     try {
@@ -54,7 +57,11 @@ const MyRefundsPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    fetchData();
+    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+      navigate('/');
+    } else {
+      fetchData();
+    }
   }, [fetchData]);
 
   const handleSort = key => {
@@ -174,20 +181,29 @@ const MyRefundsPage = () => {
           {dayjs(request.created_at).format('YYYY-MM-DD') || ''}
         </p>
       ),
+      created_at_plain: request.created_at
+        ? dayjs(request.created_at).format('YYYY-MM-DD')
+        : '',
       payment_date_await: (
         <p className={style.fullWidthText}>
           {request.payment_date_await || ''}
         </p>
       ),
+      payment_date_await_plain: request.payment_date_await || '',
       contractor: request.contractor_id || '',
+      contractor_plain: request.contractor_id || '',
       purpose: (
         <p>
           <ExpandableText text={request.purpose || ''} limit={50} />
         </p>
       ),
+      purpose_plain: request.purpose || '',
       payment_period: request.payment_period || '',
+      payment_period_plain: request.payment_period || '',
       amount: request.amount ? request.amount.toLocaleString('uk-UA') : '',
+      amount_plain: request.amount || '',
       currency: request.currency || '',
+      currency_plain: request.currency || '',
       status: (
         <span
           style={{
@@ -200,6 +216,7 @@ const MyRefundsPage = () => {
           {request.status || ''}
         </span>
       ),
+      status_plain: request.status || '',
       action: (
         <div className={style.actionContainer}>
           <button
@@ -382,6 +399,47 @@ const MyRefundsPage = () => {
     setModalSendIsOpen(false);
   };
 
+  const exportToCSV = () => {
+    if (!requestsRows || requestsRows.length === 0) return;
+
+    const columnsForExport = columns;
+
+    const headers = columnsForExport.map(col => {
+      if (typeof col.header === 'string') return col.header;
+      if (col.header.props && col.header.props.children) {
+        const p = col.header.props.children.find?.(c => c?.type === 'p');
+        if (p && p.props && typeof p.props.children === 'string')
+          return p.props.children;
+        return col.accessorKey;
+      }
+      return col.accessorKey;
+    });
+
+    const rows = requestsRows.map(row =>
+      columnsForExport.map(col => {
+        const plainKey = `${col.accessorKey}_plain`;
+        const value = row[plainKey] ?? '';
+        return `"${String(value).replace(/"/g, '""')}"`;
+      })
+    );
+
+    const csvContent = [headers.map(h => `"${h}"`).join(',')]
+      .concat(rows.map(r => r.join(',')))
+      .join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute(
+      'download',
+      `my_refunds_${dayjs().format('YYYY-MM-DD')}.csv`
+    );
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const handleSend = async () => {
     try {
       // await deleteUser(user.user_id);
@@ -414,7 +472,9 @@ const MyRefundsPage = () => {
                 <button className={style.newBtn} onClick={openModal}>
                   Заявка на повернення <span>+</span>
                 </button>
-                <button className={style.csvBtn}>Експорт у CSV</button>
+                <button className={style.csvBtn} onClick={exportToCSV}>
+                  Експорт у CSV
+                </button>
               </div>
             </div>
             <ul className={style.statuscontainer}>

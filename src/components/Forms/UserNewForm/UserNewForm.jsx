@@ -7,7 +7,7 @@ import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
 import { getUnits } from '../../../helpers/axios/units';
 
-const UserNewForm = ({ closeModal, onRefresh }) => {
+const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
   const [unitsOptions, setUnitsOptions] = useState([]);
@@ -72,6 +72,7 @@ const UserNewForm = ({ closeModal, onRefresh }) => {
       label: 'Роль',
       options: rolesOptions,
       validation: { required: 'This field is required' },
+      disabled: userRole !== 1,
     },
     {
       type: 'select',
@@ -115,7 +116,7 @@ const UserNewForm = ({ closeModal, onRefresh }) => {
                 formData.append(key, '');
               }
             });
-            
+
             await postUser(formData);
             onRefresh();
             closeModal();
