@@ -23,3 +23,11 @@ export const getExpenseCategories = async () => {
     throw error;
   }
 };
+
+export const updateCurrencies = async payload => {
+  try {
+    return await axios.post('/api/update-currency', payload);
+  } catch (error) {
+    throw error;
+  }
+};
