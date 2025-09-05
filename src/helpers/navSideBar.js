@@ -18,6 +18,11 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'file',
       },
       {
+        page: 'Повернення коштів',
+        link: `/my_refunds/${userId}`,
+        icon: 'refund',
+      },
+      {
         page: 'Бюджетування',
         link: `/budgeting`,
         icon: 'piggy-bank',
@@ -43,6 +48,11 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'file',
       },
       {
+        page: 'Повернення коштів',
+        link: `/my_refunds/${userId}`,
+        icon: 'refund',
+      },
+      {
         page: 'Бюджетування',
         link: `/budgeting`,
         icon: 'piggy-bank',
@@ -59,7 +69,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Повернення коштів',
-        link: `/refunds`,
+        link: `/my_refunds/${userId}`,
         icon: 'refund',
       },
       {
@@ -84,7 +94,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Повернення коштів',
-        link: `/refunds`,
+        link: `/my_refunds/${userId}`,
         icon: 'refund',
       },
       {
@@ -114,7 +124,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Повернення коштів',
-        link: `/refunds`,
+        link: `/my_refunds/${userId}`,
         icon: 'refund',
       },
       {

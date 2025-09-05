@@ -25,9 +25,9 @@ const App = () => {
       case 1:
         return <Navigate to={`requests`} />;  //CEO/COO
       case 2:
-        return <Navigate to={`requests/${userId}`} />; //Керівник відділу
+        return <Navigate to={`my_requests/${userId}`} />; //Керівник відділу
       case 3:
-        return <Navigate to={`requests/${userId}`} />; //Заявник(Тімлід)
+        return <Navigate to={`my_requests/${userId}`} />; //Заявник(Тімлід)
       case 4:
         return <Navigate to={`requests`} />; //Фінансист
       case 5:

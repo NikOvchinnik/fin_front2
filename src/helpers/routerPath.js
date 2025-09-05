@@ -3,7 +3,7 @@ import { lazy } from 'react';
 const routesConfig = [
   {
     path: 'users',
-    roles: [1],
+    roles: [1,2],
     element: lazy(() => import('../pages/UsersPage/UsersPage')),
   },
   {
@@ -15,6 +15,11 @@ const routesConfig = [
     path: 'my_requests/:id',
     roles: [1, 2, 3, 4, 5],
     element: lazy(() => import('../pages/MyRequestsPage/MyRequestsPage')),
+  },
+  {
+    path: 'my_refunds/:id',
+    roles: [1, 2, 3, 4, 5],
+    element: lazy(() => import('../pages/MyRefundsPage/MyRefundsPage')),
   },
   {
     path: 'budgeting',
@@ -30,11 +35,6 @@ const routesConfig = [
     path: 'history',
     roles: [1],
     element: lazy(() => import('../pages/HistoryPage/HistoryPage')),
-  },
-  {
-    path: 'refund',
-    roles: [1, 2, 3, 4, 5],
-    element: lazy(() => import('../pages/RefundPage/RefundPage')),
   },
 ];
 

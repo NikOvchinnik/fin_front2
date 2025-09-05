@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import DocTitle from '../../components/DocTitle/DocTitle';
-import style from './MyRequestsPage.module.css';
+import style from './MyRefundsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getMyRequests } from '../../helpers/axios/requests';
+import { getMyRefunds } from '../../helpers/axios/requests';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -17,7 +17,7 @@ import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
-const MyRequestsPage = () => {
+const MyRefundsPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
@@ -38,7 +38,7 @@ const MyRequestsPage = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoadingTable(true);
-      const requests = await getMyRequests({
+      const requests = await getMyRefunds({
         userId,
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
@@ -400,7 +400,7 @@ const MyRequestsPage = () => {
         <Loader />
       ) : (
         <section className={style.mainContainer}>
-          <DocTitle>MyRequests</DocTitle>
+          <DocTitle>MyRefunds</DocTitle>
           <div className={style.filterContainer}>
             <div className={style.dateContainer}>
               <DateNavigator
@@ -412,7 +412,7 @@ const MyRequestsPage = () => {
               />
               <div className={style.btnsContainer}>
                 <button className={style.newBtn} onClick={openModal}>
-                  Створити заявку <span>+</span>
+                  Заявка на повернення <span>+</span>
                 </button>
                 <button className={style.csvBtn}>Експорт у CSV</button>
               </div>
@@ -483,4 +483,4 @@ const MyRequestsPage = () => {
   );
 };
 
-export default MyRequestsPage;
+export default MyRefundsPage;

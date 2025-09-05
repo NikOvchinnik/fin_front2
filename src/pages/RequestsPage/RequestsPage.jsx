@@ -6,7 +6,6 @@ import Loader from '../../components/Loader/Loader';
 import { getFinRequests } from '../../helpers/axios/requests';
 import { getCurrencies } from '../../helpers/axios/payments';
 import { useMediaQuery } from '@mui/material';
-import SimpleBar from 'simplebar-react';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
@@ -19,6 +18,7 @@ import Form from '../../components/Form/Form';
 import { getProjects } from '../../helpers/axios/projects';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
+import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,6 @@ const RequestsPage = () => {
   const [selectedProject, setSelectedProject] = useState('Всі');
   const [selectedCurrency, setSelectedCurrency] = useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
-  const [selectedRows, setSelectedRows] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
     applicant: '',
@@ -36,13 +35,18 @@ const RequestsPage = () => {
     expense_category: '',
   });
   const [sortConfig, setSortConfig] = useState({
-    key: 'payment_date_await',
+    key: 'created_at',
     direction: 'desc',
   });
   const [isModalOpen, setModalIsOpen] = useState(false);
+  const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('visibleColumns');
+    return saved ? JSON.parse(saved) : 'All';
+  });
   const userRole = useSelector(selectUserRole);
 
   const fetchData = useCallback(async () => {
@@ -104,6 +108,26 @@ const RequestsPage = () => {
       ...prevFilters,
       [name]: value.toLowerCase().trim(),
     }));
+  };
+
+  const handleColumnToggle = accessorKey => {
+    setVisibleColumns(prev => {
+      let updated;
+      if (prev === 'All') {
+        updated = columns
+          .map(c => c.accessorKey)
+          .filter(key => key !== accessorKey);
+      } else {
+        if (prev.includes(accessorKey)) {
+          updated = prev.filter(key => key !== accessorKey);
+        } else {
+          updated = [...prev, accessorKey];
+        }
+        if (updated.length === columns.length) updated = 'All';
+      }
+      localStorage.setItem('visibleColumns', JSON.stringify(updated));
+      return updated;
+    });
   };
 
   const requestsRows = useMemo(() => {
@@ -269,19 +293,6 @@ const RequestsPage = () => {
 
     return sortedRows.map(request => ({
       id: request.id,
-      select: (
-        <div className={style.checkboxContainer}>
-          <label className={style.labelCheckboxContainer}>
-            <input
-              type="checkbox"
-              name="select"
-              className={style.checkboxInput}
-              checked={selectedRows.includes(request.id)}
-              onChange={() => handleRowSelect(request.id)}
-            />
-          </label>
-        </div>
-      ),
       created_at: (
         <p className={style.fullWidthText}>
           {dayjs(request.created_at).format('YYYY-MM-DD') || ''}
@@ -372,43 +383,9 @@ const RequestsPage = () => {
     activeStatus,
     filters,
     sortConfig,
-    selectedRows,
   ]);
 
-  const handleSelectAll = e => {
-    if (e.target.checked) {
-      setSelectedRows(requestsRows.map(row => row.id));
-    } else {
-      setSelectedRows([]);
-    }
-  };
-
-  const handleRowSelect = id => {
-    setSelectedRows(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
-  };
-
   const columns = [
-    // {
-    //   accessorKey: 'select',
-    //   header: (
-    //     <form className={style.checkboxContainer}>
-    //       <label className={style.labelCheckboxContainer}>
-    //         <input
-    //           type="checkbox"
-    //           name="selectAll"
-    //           className={style.checkboxInput}
-    //           checked={
-    //             selectedRows.length === requestsRows.length &&
-    //             requestsRows.length > 0
-    //           }
-    //           onChange={handleSelectAll}
-    //         />
-    //       </label>
-    //     </form>
-    //   ),
-    // },
     {
       accessorKey: 'created_at',
       header: (
@@ -667,6 +644,11 @@ const RequestsPage = () => {
     },
   ];
 
+  const filteredColumns = useMemo(() => {
+    if (visibleColumns === 'All') return columns;
+    return columns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [columns, visibleColumns]);
+
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
   const openModal = () => {
@@ -675,6 +657,14 @@ const RequestsPage = () => {
 
   const closeModal = () => {
     setModalIsOpen(false);
+  };
+
+  const openModalColumns = () => {
+    setModalColumnsIsOpen(true);
+  };
+
+  const closeModalColumns = () => {
+    setModalColumnsIsOpen(false);
   };
 
   return (
@@ -772,6 +762,12 @@ const RequestsPage = () => {
                 </li>
               ))}
             </ul>
+            <div>
+              <button className={style.filterBtn} onClick={openModalColumns}>
+                <Icon id="filter_list" className={style.filterIcon} />
+                Фільтр колонок
+              </button>
+            </div>
           </div>
           {loadingTable ? (
             <Loader />
@@ -785,7 +781,7 @@ const RequestsPage = () => {
           ) : (
             <Table
               data={requestsRows}
-              columns={columns}
+              columns={filteredColumns}
               styles="analyticTable"
               fixedFirstColumn={isMobile ? true : false}
               visibleColumns={20}
@@ -799,6 +795,17 @@ const RequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalColumnsOpen}
+            onCloseModal={closeModalColumns}
+          >
+            <ModalColumnsForm
+              columns={columns}
+              closeModal={closeModalColumns}
+              visibleColumns={visibleColumns}
+              handleColumnToggle={handleColumnToggle}
             />
           </ModalWindow>
         </section>
