@@ -9,7 +9,6 @@ import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
-import RequestCommentForm from '../../components/Forms/RequestCommentForm/RequestCommentForm';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import { getStatusStyle, statusSelector } from '../../helpers/status';
@@ -19,6 +18,7 @@ import { getProjects } from '../../helpers/axios/projects';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
+import ApproveRequestForm from '../../components/Forms/ApproveRequestForm/ApproveRequestForm';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -879,7 +879,7 @@ const RequestsPage = () => {
             />
           )}
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
-            <RequestCommentForm
+            <ApproveRequestForm
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}

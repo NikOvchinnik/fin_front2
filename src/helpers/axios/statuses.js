@@ -15,3 +15,11 @@ export const getMainStatuses = async () => {
     throw error;
   }
 };
+
+export const changeFinStatus = async payload => {
+  try {
+    return await axios.post('/api/change-status-by-fin', payload);
+  } catch (error) {
+    throw error;
+  }
+};
