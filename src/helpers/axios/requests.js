@@ -34,3 +34,27 @@ export const getMyRefunds = async ({ userId, startDate, endDate }) => {
     throw error;
   }
 };
+
+export const postRequest = async payload => {
+  try {
+    return await axios.post('/api/save-draft', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteRequest = async id => {
+  try {
+    return await axios.delete(`/api/delete-draft/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendRequest = async id => {
+  try {
+    return await axios.post(`/api/send-draft/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};

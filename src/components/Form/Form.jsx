@@ -14,6 +14,7 @@ import {
   ThemeProvider,
   FormHelperText,
   Tooltip,
+  Autocomplete,
 } from '@mui/material';
 
 const Form = ({
@@ -171,6 +172,36 @@ const Form = ({
               />
             ))}
           </div>
+        );
+      case 'autocomplete-select':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            rules={field.validation}
+            render={({ field: input }) => (
+              <Autocomplete
+                options={field.options || []}
+                getOptionLabel={option => option.label || ''}
+                value={
+                  field.options.find(opt => opt.value === input.value) || null
+                }
+                onChange={(_, newValue) => {
+                  input.onChange(newValue ? newValue.value : '');
+                  field.onChange && field.onChange(newValue);
+                }}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label={field.label || ''}
+                    placeholder={field.placeholder || ''}
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name]?.message}
+                  />
+                )}
+              />
+            )}
+          />
         );
       case 'number':
         return (
@@ -438,6 +469,137 @@ const Form = ({
               />
             ))}
           </div>
+        );
+      case 'text-select-group':
+        return (
+          <div className={style.inputRow}>
+            <Controller
+              name={field.text.name}
+              control={control}
+              rules={field.text.validation}
+              render={({ field: input }) => (
+                <TextField
+                  {...input}
+                  label={field.text.label || ''}
+                  placeholder={field.text.placeholder || ''}
+                  fullWidth
+                  error={!!errors[field.text.name]}
+                  helperText={errors[field.text.name]?.message}
+                />
+              )}
+            />
+            <Controller
+              name={field.select.name}
+              control={control}
+              rules={field.select.validation}
+              render={({ field: input }) => (
+                <FormControl fullWidth error={!!errors[field.select.name]}>
+                  {field.select.label && (
+                    <InputLabel>{field.select.label}</InputLabel>
+                  )}
+                  <Select
+                    {...input}
+                    onChange={e => {
+                      input.onChange(e);
+                      field.select.onChange &&
+                        field.select.onChange(e.target.value);
+                    }}
+                  >
+                    {field.select.options.map((option, i) => (
+                      <MenuItem key={i} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors[field.select.name] && (
+                    <FormHelperText>
+                      {errors[field.select.name]?.message}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            />
+          </div>
+        );
+      case 'number-select-group':
+        return (
+          <div className={style.inputRow}>
+            <Controller
+              name={field.number.name}
+              control={control}
+              rules={field.number.validation}
+              render={({ field: input }) => (
+                <TextField
+                  {...input}
+                  type="number"
+                  step="0.01"
+                  label={field.number.label || ''}
+                  placeholder={field.number.placeholder || ''}
+                  fullWidth
+                  error={!!errors[field.number.name]}
+                  helperText={errors[field.number.name]?.message}
+                />
+              )}
+            />
+            <Controller
+              name={field.select.name}
+              control={control}
+              rules={field.select.validation}
+              render={({ field: input }) => (
+                <FormControl fullWidth error={!!errors[field.select.name]}>
+                  {field.select.label && (
+                    <InputLabel>{field.select.label}</InputLabel>
+                  )}
+                  <Select
+                    {...input}
+                    label={field.select.label} // важливо, щоб label був тут
+                    onChange={e => {
+                      input.onChange(e);
+                      field.select.onChange &&
+                        field.select.onChange(e.target.value);
+                    }}
+                  >
+                    {field.select.options.map((option, i) => (
+                      <MenuItem key={i} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  {errors[field.select.name] && (
+                    <FormHelperText>
+                      {errors[field.select.name]?.message}
+                    </FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            />
+          </div>
+        );
+      case 'file':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            rules={field.validation}
+            render={({ field: input }) => (
+              <InputWrapper field={field}>
+                <input
+                  type="file"
+                  multiple
+                  onChange={e => {
+                    const files = Array.from(e.target.files);
+                    input.onChange(files);
+                    field.onChange && field.onChange(files);
+                  }}
+                />
+                {errors[field.name] && (
+                  <p className={style.errorText}>
+                    {errors[field.name]?.message}
+                  </p>
+                )}
+              </InputWrapper>
+            )}
+          />
         );
       case 'multiselect':
         return (

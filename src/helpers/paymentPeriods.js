@@ -1,0 +1,16 @@
+export const periodOptions = [
+  { label: '1 month', value: '1 month' },
+  { label: '2 month', value: '2 month' },
+  { label: '3 month', value: '3 month' },
+  { label: '4 month', value: '4 month' },
+  { label: '5 month', value: '5 month' },
+  { label: '6 month', value: '6 month' },
+  { label: '7 month', value: '7 month' },
+  { label: '8 month', value: '8 month' },
+  { label: '9 month', value: '9 month' },
+  { label: '10 month', value: '10 month' },
+  { label: '11 month', value: '11 month' },
+  { label: '12 month', value: '12 month' },
+  { label: '24 month', value: '24 month' },
+  { label: '36 month', value: '36 month' },
+];

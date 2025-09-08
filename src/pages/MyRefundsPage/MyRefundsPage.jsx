@@ -3,7 +3,7 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './MyRefundsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getMyRefunds } from '../../helpers/axios/requests';
+import { getMyRefunds, sendRequest } from '../../helpers/axios/requests';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -17,6 +17,8 @@ import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { useNavigate, useParams } from 'react-router-dom';
+import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
+import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 
 const MyRefundsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -246,6 +248,7 @@ const MyRefundsPage = () => {
                   request.status === 'Чернетка' ||
                   request.status === 'Потребує виправлень'
                 ) {
+                  setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
               }}
@@ -442,7 +445,7 @@ const MyRefundsPage = () => {
 
   const handleSend = async () => {
     try {
-      // await deleteUser(user.user_id);
+      await sendRequest(selectedRequest.id);
       fetchData();
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
@@ -517,14 +520,19 @@ const MyRefundsPage = () => {
             isModalOpen={isModalEditOpen}
             onCloseModal={closeModalEdit}
           >
-            <RequestCommentForm
+            <EditRequestForm
               request={selectedRequest}
               closeModal={closeModalEdit}
               onRefresh={fetchData}
+              formType="refund"
             />
           </ModalWindow>
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
-            <RequestCommentForm closeModal={closeModal} onRefresh={fetchData} />
+            <NewRequestForm
+              closeModal={closeModal}
+              onRefresh={fetchData}
+              formType="refund"
+            />
           </ModalWindow>
           <ModalWindow
             isModalOpen={isModalSendOpen}
@@ -532,7 +540,7 @@ const MyRefundsPage = () => {
           >
             <ConfirmModal
               title="Send request"
-              message={`Ви впевнені, що хочете відправити заявку на оплату?`}
+              message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor_id}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
             />
