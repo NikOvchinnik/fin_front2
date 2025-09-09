@@ -1,31 +1,39 @@
-import { changeFinStatus } from '../../../helpers/axios/statuses';
-import { statusSelector } from '../../../helpers/status';
+import {
+  changeBuhStatus,
+  changeFinStatus,
+} from '../../../helpers/axios/statuses';
+import { approveStatusBuh, approveStatusFin } from '../../../helpers/status';
 import Form from '../../Form/Form';
 import style from './ApproveRequestForm.module.css';
 import { Notify } from 'notiflix';
 
-const ApproveRequestForm = ({ request, closeModal, onRefresh }) => {
+const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
   console.log(request);
-  
 
   const fields = [
     {
       type: 'select',
       name: 'finance_status',
       label: 'Статус',
-      options: statusSelector,
+      options:
+        userRole === 4
+          ? approveStatusFin
+          : userRole === 5
+          ? approveStatusBuh
+          : [],
       validation: { required: 'This field is required' },
     },
     {
       type: 'textarea',
       name: 'comment',
       label: 'Коментар',
+      validation: { required: 'This field is required' },
     },
   ];
 
   const buttons = [
     {
-      label: 'Save',
+      label: 'Відправити',
       className: 'submitBtn',
       type: 'submit',
     },
@@ -51,8 +59,10 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh }) => {
                 formData.append(key, '');
               }
             });
+            formData.append('id', request.id);
 
-            // await changeFinStatus(formData);
+            if (userRole === 4) await changeFinStatus(formData);
+            if (userRole === 5) await changeBuhStatus(formData);
             onRefresh();
             closeModal();
             Notify.success('Статус заявки змінено!');
@@ -62,8 +72,8 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh }) => {
           }
         }}
         defaultValues={{
-          finance_status: '',
-          comment: '',
+          finance_status: userRole === 4 ? '10' : userRole === 5 ? '18' : '',
+          comment: request.comment || '',
         }}
       />
     </div>

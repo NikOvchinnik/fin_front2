@@ -14,6 +14,9 @@ import { deleteRequest, postRequest } from '../../../helpers/axios/requests';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
 import ModalWindow from '../../ModalWindow/ModalWindow';
 
+
+const refundIds = [15, 16, 17, 18, 19];
+
 const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
@@ -46,7 +49,11 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
         setCurrencyOptions(currencySelector);
 
         const expenseCategories = await getExpenseCategories();
-        const expenseCategorySelector = expenseCategories.map(e => ({
+        const filteredExpenseCategories =
+          formType === 'refund'
+            ? expenseCategories.filter(e => refundIds.includes(e.id))
+            : expenseCategories.filter(e => !refundIds.includes(e.id));
+        const expenseCategorySelector = filteredExpenseCategories.map(e => ({
           value: e.id,
           label: e.name,
         }));
@@ -156,12 +163,12 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
 
   const buttons = [
     {
-      label: 'Delete',
+      label: 'Видалити',
       className: 'deleteBtn',
       onClick: () => setModalConfirmOpen(true),
     },
     {
-      label: 'Save',
+      label: 'Зберегти',
       className: 'submitBtn',
       type: 'submit',
     },

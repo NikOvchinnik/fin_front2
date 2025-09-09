@@ -11,6 +11,17 @@ export const getFinRequests = async ({ startDate, endDate }) => {
   }
 };
 
+export const getBuhRequests = async ({ startDate, endDate }) => {
+  try {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return await axios.get('/api/all-requests-for-buh', { params });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getMyRequests = async ({ userId, startDate, endDate }) => {
   try {
     const params = {};

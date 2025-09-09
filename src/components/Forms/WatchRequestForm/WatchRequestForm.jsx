@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import Form from '../../Form/Form';
-import style from './NewRequestForm.module.css';
+import style from './WatchRequestForm.module.css';
 import { Notify } from 'notiflix';
 import { getProjects } from '../../../helpers/axios/projects';
 import {
@@ -14,11 +14,13 @@ import { postRequest } from '../../../helpers/axios/requests';
 
 const refundIds = [15, 16, 17, 18, 19];
 
-const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
+const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
+
+  console.log(request);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -53,6 +55,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
           value: e.id,
           label: e.name,
         }));
+
         setExpenseCategoryOptions(expenseCategorySelector);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
@@ -68,6 +71,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       label: 'Підрозділ',
       options: projectOptions,
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'autocomplete-select',
@@ -75,6 +79,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       label: 'Стаття витрат',
       options: expenseCategoryOptions,
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'autocomplete-select',
@@ -82,30 +87,35 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       label: 'Форма оплати',
       options: paymentFormOptions,
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'text',
       name: 'contractor_id',
       label: 'Контрагент',
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'text',
       name: 'payment_details',
       label: 'Реквізити',
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'textarea',
       name: 'purpose',
       label: 'Призначення',
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'date',
       name: 'payment_date_await',
       label: 'Дата оплати',
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'autocomplete-select',
@@ -113,6 +123,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       label: 'Період оплати',
       options: periodOptions,
       validation: { required: 'This field is required' },
+      readOnly: true,
     },
     {
       type: 'number-select-group',
@@ -120,38 +131,42 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
         name: 'amount',
         label: 'Сума',
         validation: { required: 'This field is required' },
+        readOnly: true,
       },
       select: {
         name: 'currency_id',
         label: 'Валюта',
         options: currencyOptions,
         validation: { required: 'This field is required' },
+        readOnly: true,
       },
     },
-    {
-      type: 'textarea',
-      name: 'comment',
-      label: 'Коментар',
-    },
-    {
-      type: 'file',
-      name: 'files',
-      label: 'Файли',
-    },
+    // {
+    //   type: 'textarea',
+    //   name: 'comment',
+    //   label: 'Коментар',
+    //   readOnly: true,
+    // },
   ];
 
   const buttons = [
     {
-      label: 'Створити',
+      label: 'Зробити копію',
       className: 'submitBtn',
       type: 'submit',
     },
   ];
 
   return (
-    <div className={style.newContainer}>
+    <div className={style.editContainer}>
+      <h2 className={style.title}>Перегляд заявки</h2>
+      {request.comment && (
+        <p className={style.comment}>
+          <span>Коментар:</span>
+          {request.comment}
+        </p>
+      )}
       <Form
-        title="Створити заявку"
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {
@@ -178,22 +193,23 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
           }
         }}
         defaultValues={{
-          project_id: '',
-          payment_form_id: '',
-          contractor_id: '',
-          payment_details: '',
-          purpose: '',
-          amount: '',
-          currency_id: '',
-          payment_period: '',
-          payment_date_await: dayjs().format('YYYY-MM-DD'),
-          expense_category_id: '',
-          comment: '',
-          files: '',
+          project_id: request.project_id || '',
+          expense_category_id: request.expense_category_id || '',
+          payment_form_id: request.payment_form_id || '',
+          contractor_id: request.contractor_id || '',
+          payment_details: request.payment_details || '',
+          purpose: request.purpose || '',
+          payment_date_await:
+            request.payment_date_await || dayjs().format('YYYY-MM-DD'),
+          payment_period: request.payment_period || '',
+          amount: request.amount ?? '',
+          currency_id: request.currency_id || '',
+          comment: request.comment || '',
+          files: request.files || '',
         }}
       />
     </div>
   );
 };
 
-export default NewRequestForm;
+export default WatchRequestForm;

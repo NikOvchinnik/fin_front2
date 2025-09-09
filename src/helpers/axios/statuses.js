@@ -23,3 +23,11 @@ export const changeFinStatus = async payload => {
     throw error;
   }
 };
+
+export const changeBuhStatus = async payload => {
+  try {
+    return await axios.post('/api/change-status-by-buh', payload);
+  } catch (error) {
+    throw error;
+  }
+};

@@ -3,7 +3,7 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './RequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getFinRequests } from '../../helpers/axios/requests';
+import { getBuhRequests, getFinRequests } from '../../helpers/axios/requests';
 import { getCurrencies } from '../../helpers/axios/payments';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
@@ -11,7 +11,7 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getStatusStyle, statusSelector } from '../../helpers/status';
+import { getStatusStyle, statusSelectorBuh, statusSelectorFin } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import Form from '../../components/Form/Form';
 import { getProjects } from '../../helpers/axios/projects';
@@ -52,10 +52,19 @@ const RequestsPage = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoadingTable(true);
-      const requests = await getFinRequests({
-        startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
-        endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
-      });
+      let requests;
+      if (userRole === 5) {
+        requests = await getBuhRequests({
+          startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
+          endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+        });
+      } else {
+        requests = await getFinRequests({
+          startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
+          endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+        });
+      }
+
       setDataRequests(requests);
 
       const projects = await getProjects();
@@ -836,19 +845,26 @@ const RequestsPage = () => {
                 </label>
               </form>
             </div>
-            <ul className={style.statuscontainer}>
-              {statusSelector.map(status => (
-                <li key={status.value}>
-                  <button
-                    className={`${style.statusBtn} ${
-                      activeStatus === status.value ? style.activeBtn : ''
-                    }`}
-                    onClick={() => setActiveStatus(status.value)}
-                  >
-                    {status.label}
-                  </button>
-                </li>
-              ))}
+            <ul
+              className={style.statuscontainer} 
+              style={{
+                maxWidth: userRole === 5 ? '660px' : '1040px',
+              }}
+            >
+              {(userRole === 5 ? statusSelectorBuh : statusSelectorFin).map(
+                status => (
+                  <li key={status.value}>
+                    <button
+                      className={`${style.statusBtn} ${
+                        activeStatus === status.value ? style.activeBtn : ''
+                      }`}
+                      onClick={() => setActiveStatus(status.value)}
+                    >
+                      {status.label}
+                    </button>
+                  </li>
+                )
+              )}
             </ul>
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
@@ -883,6 +899,7 @@ const RequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}
+              userRole={userRole}
             />
           </ModalWindow>
           <ModalWindow

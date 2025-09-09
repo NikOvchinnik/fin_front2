@@ -10,7 +10,7 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getStatusStyle, statusSelector } from '../../helpers/status';
+import { getStatusStyle, statusSelectorFin } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
@@ -18,6 +18,7 @@ import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { useNavigate, useParams } from 'react-router-dom';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
+import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -30,6 +31,7 @@ const MyRequestsPage = () => {
   });
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
+  const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
@@ -238,6 +240,15 @@ const MyRequestsPage = () => {
           >
             <Icon id="edit" className={style.editIcon} />
           </button>
+          <button
+            className={style.editBtn}
+            onClick={() => {
+              setSelectedRequest(request);
+              openModalWatch();
+            }}
+          >
+            <Icon id="eye" className={style.editIcon} />
+          </button>
           {(request.status === 'Чернетка' ||
             request.status === 'Потребує виправлень') && (
             <button
@@ -397,6 +408,14 @@ const MyRequestsPage = () => {
     setModalEditIsOpen(false);
   };
 
+  const openModalWatch = () => {
+    setModalWatchIsOpen(true);
+  };
+
+  const closeModalWatch = () => {
+    setModalWatchIsOpen(false);
+  };
+
   const closeModalConfirm = () => {
     setModalSendIsOpen(false);
   };
@@ -480,7 +499,7 @@ const MyRequestsPage = () => {
               </div>
             </div>
             <ul className={style.statuscontainer}>
-              {statusSelector.map(status => (
+              {statusSelectorFin.map(status => (
                 <li key={status.value}>
                   <button
                     className={`${style.statusBtn} ${
@@ -526,6 +545,17 @@ const MyRequestsPage = () => {
               formType="request"
             />
           </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalWatchOpen}
+            onCloseModal={closeModalWatch}
+          >
+            <WatchRequestForm
+              request={selectedRequest}
+              closeModal={closeModalWatch}
+              onRefresh={fetchData}
+              formType="request"
+            />
+          </ModalWindow>
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
             <NewRequestForm
               closeModal={closeModal}
@@ -538,7 +568,7 @@ const MyRequestsPage = () => {
             onCloseModal={closeModalConfirm}
           >
             <ConfirmModal
-              title="Send request"
+              title="Відправити заявку"
               message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor_id}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}

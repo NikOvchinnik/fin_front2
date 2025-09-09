@@ -182,6 +182,7 @@ const Form = ({
             render={({ field: input }) => (
               <Autocomplete
                 options={field.options || []}
+                disabled={field.readOnly || false}
                 getOptionLabel={option => option.label || ''}
                 value={
                   field.options.find(opt => opt.value === input.value) || null
@@ -304,9 +305,14 @@ const Form = ({
                       e.target.style.height = 'auto';
                       e.target.style.height = `${e.target.scrollHeight}px`;
                     }}
-                    // onBlur={e => {
-                    //   e.target.style.height = 'auto';
-                    // }}
+                    slotProps={{
+                      input: {
+                        readOnly: field.readOnly || false,
+                        style: field.readOnly
+                          ? { color: '#999', backgroundColor: '#f5f5f5' }
+                          : {},
+                      },
+                    }}
                   />
                 </Tooltip>
               </InputWrapper>
@@ -325,6 +331,7 @@ const Form = ({
                   <Checkbox
                     {...input}
                     checked={field.checked ?? !!input.value}
+                    disabled={field.readOnly || false}
                     onChange={e => {
                       const newChecked = e.target.checked;
                       input.onChange(newChecked);
@@ -353,6 +360,7 @@ const Form = ({
                         <Checkbox
                           {...input}
                           checked={!!input.value}
+                          disabled={checkbox.readOnly || false}
                           onChange={e => {
                             const newChecked = e.target.checked;
                             input.onChange(newChecked);
@@ -383,6 +391,7 @@ const Form = ({
                   input.onChange(e);
                   field.onChange && field.onChange(e.target.value);
                 }}
+                disabled={field.readOnly || false}
               >
                 {field.options.map((option, index) => (
                   <FormControlLabel
@@ -390,6 +399,7 @@ const Form = ({
                     value={option.value}
                     control={<Radio />}
                     label={option.label}
+                    disabled={field.readOnly || false}
                   />
                 ))}
               </RadioGroup>
@@ -409,7 +419,7 @@ const Form = ({
                   <Select
                     {...input}
                     label={field.label || ''}
-                    disabled={field.disabled || false}
+                    disabled={field.disabled || field.readOnly || false}
                     onChange={e => {
                       input.onChange(e);
                       field.onChange && field.onChange(e.target.value);
@@ -448,6 +458,7 @@ const Form = ({
                     <Select
                       {...input}
                       label={subField.label || ''}
+                      disabled={subField.readOnly || false}
                       onChange={e => {
                         input.onChange(e);
                         subField.onChange && subField.onChange(e.target.value);
@@ -485,6 +496,14 @@ const Form = ({
                   fullWidth
                   error={!!errors[field.text.name]}
                   helperText={errors[field.text.name]?.message}
+                  slotProps={{
+                    input: {
+                      readOnly: field.readOnly || false,
+                      style: field.readOnly
+                        ? { color: '#999', backgroundColor: '#f5f5f5' }
+                        : {},
+                    },
+                  }}
                 />
               )}
             />
@@ -499,6 +518,7 @@ const Form = ({
                   )}
                   <Select
                     {...input}
+                    disabled={field.select.readOnly || false}
                     onChange={e => {
                       input.onChange(e);
                       field.select.onChange &&
@@ -538,6 +558,14 @@ const Form = ({
                   fullWidth
                   error={!!errors[field.number.name]}
                   helperText={errors[field.number.name]?.message}
+                  slotProps={{
+                    input: {
+                      readOnly: field.number.readOnly || false,
+                      style: field.number.readOnly
+                        ? { color: '#999', backgroundColor: '#f5f5f5' }
+                        : {},
+                    },
+                  }}
                 />
               )}
             />
@@ -552,7 +580,8 @@ const Form = ({
                   )}
                   <Select
                     {...input}
-                    label={field.select.label} // важливо, щоб label був тут
+                    label={field.select.label}
+                    disabled={field.select.readOnly || false}
                     onChange={e => {
                       input.onChange(e);
                       field.select.onChange &&
@@ -586,6 +615,7 @@ const Form = ({
                 <input
                   type="file"
                   multiple
+                  disabled={field.readOnly || false}
                   onChange={e => {
                     const files = Array.from(e.target.files);
                     input.onChange(files);
@@ -620,6 +650,7 @@ const Form = ({
                     label={field.label || ''}
                     multiple
                     value={input.value || []}
+                    disabled={field.readOnly || false}
                     onChange={e => {
                       input.onChange(e.target.value);
                       field.onChange && field.onChange(e.target.value);

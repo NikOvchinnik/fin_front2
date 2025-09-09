@@ -167,7 +167,6 @@
 }
 
 .statuscontainer {
-  max-width: 1040px;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;

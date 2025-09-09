@@ -19,7 +19,7 @@ export const getStatusStyle = status => {
   }
 };
 
-export const statusSelector = [
+export const statusSelectorFin = [
   { value: 'Всі', label: 'Всі' },
   { value: 'Очікує затвердження', label: 'Очікує затвердження' },
   { value: 'Передано на оплату', label: 'Передано на оплату' },
@@ -29,4 +29,33 @@ export const statusSelector = [
     label: 'Потребує виправлень',
   },
   { value: 'Скасовано', label: 'Скасовано' },
+];
+
+export const statusSelectorBuh = [
+  { value: 'Всі', label: 'Всі' },
+  { value: 'Передано на оплату', label: 'Передано на оплату' },
+  { value: 'Сплачено', label: 'Сплачено' },
+  { value: 'Скасовано', label: 'Скасовано' },
+];
+
+export const approveStatusFin = [
+  { value: '10', label: 'Передано на оплату' },
+  {
+    value: '9',
+    label: 'Потребує виправлень',
+  },
+  { value: '14', label: 'Скасовано фінансами' },
+];
+
+export const approveStatusBuh = [
+  { value: '18', label: 'Сплачено' },
+  {
+    value: '19',
+    label: 'Сплачено і очікуються документи від контрагента після оплати',
+  },
+  {
+    value: '16',
+    label: 'Потребує виправлень',
+  },
+  { value: '20', label: 'Скасовано' },
 ];
