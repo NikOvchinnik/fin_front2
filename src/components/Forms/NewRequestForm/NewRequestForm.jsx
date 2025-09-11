@@ -11,6 +11,10 @@ import {
 import { periodOptions } from '../../../helpers/paymentPeriods';
 import dayjs from 'dayjs';
 import { postRequest } from '../../../helpers/axios/requests';
+import {
+  getContractors,
+  postContractors,
+} from '../../../helpers/axios/contractors';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -18,6 +22,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
+  const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
 
   useEffect(() => {
@@ -54,6 +59,13 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
           label: e.name,
         }));
         setExpenseCategoryOptions(expenseCategorySelector);
+
+        const contractors = await getContractors();
+        const contractorSelector = contractors.map(e => ({
+          value: e.id,
+          label: e.name,
+        }));
+        setContractorsOptions(contractorSelector);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
@@ -84,9 +96,10 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       validation: { required: 'This field is required' },
     },
     {
-      type: 'text',
+      type: 'autocomplete-input',
       name: 'contractor_id',
       label: 'Контрагент',
+      options: contractorsOptions,
       validation: { required: 'This field is required' },
     },
     {
@@ -156,17 +169,40 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
         buttons={buttons}
         onSubmit={async data => {
           try {
-            const formData = new FormData();
-            Object.entries(data).forEach(([key, value]) => {
-              if (key === 'files' && value instanceof FileList) {
-                Array.from(value).forEach(file => {
-                  formData.append('files', file);
-                });
-              } else {
-                if (typeof value === 'string') value = value.trim();
-                formData.append(key, value ?? '');
+            let contractorId = data.contractor_id;
+
+            const existingContractor = contractorsOptions.find(c => {
+              if (String(c.value) === String(contractorId)) return true;
+
+              if (typeof contractorId === 'string') {
+                return c.label.toLowerCase() === contractorId.toLowerCase();
               }
+
+              return false;
             });
+
+            if (existingContractor) {
+              contractorId = existingContractor.value;
+            } else {
+              const newContractor = await postContractors({
+                name: contractorId,
+              });
+              contractorId = newContractor.id;
+            }
+
+              const formData = new FormData();
+              Object.entries({ ...data, contractor_id: contractorId }).forEach(
+                ([key, value]) => {
+                  if (key === 'files' && value instanceof FileList) {
+                    Array.from(value).forEach(file => {
+                      formData.append('files', file);
+                    });
+                  } else {
+                    if (typeof value === 'string') value = value.trim();
+                    formData.append(key, value ?? '');
+                  }
+                }
+              );
 
             await postRequest(formData);
             onRefresh();

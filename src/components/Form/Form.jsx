@@ -631,6 +631,49 @@ const Form = ({
             )}
           />
         );
+      case 'autocomplete-input':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            rules={field.validation}
+            render={({ field: input }) => (
+              <Autocomplete
+                freeSolo
+                options={field.options || []}
+                disabled={field.readOnly || false}
+                getOptionLabel={option =>
+                  typeof option === 'string' ? option : option.label || ''
+                }
+                value={
+                  field.options.find(opt => opt.value === input.value) ||
+                  input.value ||
+                  ''
+                }
+                onChange={(_, newValue) => {
+                  // Якщо newValue — це об'єкт із value, беремо value, інакше — сам рядок
+                  const valueToSet = newValue?.value ?? newValue ?? '';
+                  input.onChange(valueToSet);
+                  field.onChange && field.onChange(valueToSet);
+                }}
+                renderInput={params => (
+                  <TextField
+                    {...params}
+                    label={field.label || ''}
+                    placeholder={field.placeholder || ''}
+                    fullWidth
+                    error={!!errors[field.name]}
+                    helperText={errors[field.name]?.message}
+                    onChange={e => {
+                      input.onChange(e.target.value);
+                      field.onChange && field.onChange(e.target.value);
+                    }}
+                  />
+                )}
+              />
+            )}
+          />
+        );
       case 'multiselect':
         return (
           <Controller

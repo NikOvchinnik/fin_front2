@@ -11,7 +11,11 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getStatusStyle, statusSelectorBuh, statusSelectorFin } from '../../helpers/status';
+import {
+  getStatusStyle,
+  statusSelectorBuh,
+  statusSelectorFin,
+} from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import Form from '../../components/Form/Form';
 import { getProjects } from '../../helpers/axios/projects';
@@ -196,7 +200,7 @@ const RequestsPage = () => {
           case 'project':
             return req.project?.name || '';
           case 'contractor':
-            return req.contractor_id || '';
+            return req.contractor || '';
           case 'purpose':
             return req.purpose || '';
           case 'payment_period':
@@ -316,8 +320,8 @@ const RequestsPage = () => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project?.name || '',
       project_plain: request.project?.name || '',
-      contractor: request.contractor_id || '',
-      contractor_plain: request.contractor_id || '',
+      contractor: request.contractor || '',
+      contractor_plain: request.contractor || '',
       purpose: (
         <p>
           <ExpandableText text={request.purpose || ''} limit={50} />
@@ -379,6 +383,21 @@ const RequestsPage = () => {
       tech_plain: request.payment_date_await
         ? request.payment_date_await.slice(0, 7)
         : '',
+      files: (
+        <div className={style.linkContainer}>
+          {request.files?.map((file, index) => (
+            <a
+              key={file.id || index}
+              href={file.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Link {index + 1}
+            </a>
+          ))}
+        </div>
+      ),
+      files_plain: request.files?.map(file => file.file_url) || '',
       status: (
         <span
           style={{
@@ -675,6 +694,10 @@ const RequestsPage = () => {
       ),
     },
     {
+      accessorKey: 'files',
+      header: 'Файли',
+    },
+    {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
@@ -846,7 +869,7 @@ const RequestsPage = () => {
               </form>
             </div>
             <ul
-              className={style.statuscontainer} 
+              className={style.statuscontainer}
               style={{
                 maxWidth: userRole === 5 ? '660px' : '1040px',
               }}

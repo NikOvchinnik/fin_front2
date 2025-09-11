@@ -11,6 +11,7 @@ import {
 import { periodOptions } from '../../../helpers/paymentPeriods';
 import dayjs from 'dayjs';
 import { postRequest } from '../../../helpers/axios/requests';
+import { getContractors } from '../../../helpers/axios/contractors';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -19,6 +20,7 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
+  const [contractorsOptions, setContractorsOptions] = useState([]);
 
   console.log(request);
 
@@ -55,8 +57,14 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           value: e.id,
           label: e.name,
         }));
-
         setExpenseCategoryOptions(expenseCategorySelector);
+
+        const contractors = await getContractors();
+        const contractorSelector = contractors.map(e => ({
+          value: e.id,
+          label: e.name,
+        }));
+        setContractorsOptions(contractorSelector);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
@@ -90,9 +98,10 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       readOnly: true,
     },
     {
-      type: 'text',
+      type: 'autocomplete-input',
       name: 'contractor_id',
       label: 'Контрагент',
+      options: contractorsOptions,
       validation: { required: 'This field is required' },
       readOnly: true,
     },

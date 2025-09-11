@@ -12,7 +12,9 @@ export const getStatusStyle = status => {
       return { color: '#6b9429' };
     case 'Потребує виправлень':
       return { color: '#c74736' };
-    case 'Скасовано':
+    case 'Фінанси: Скасовано':
+      return { color: '#c74736' };
+    case 'Бухгалтер: Скасовано':
       return { color: '#c74736' };
     default:
       return { color: '#6c757d' };
@@ -39,23 +41,23 @@ export const statusSelectorBuh = [
 ];
 
 export const approveStatusFin = [
-  { value: '10', label: 'Передано на оплату' },
+  { value: ' 4', label: 'Передано на оплату' },
   {
-    value: '9',
+    value: '3',
     label: 'Потребує виправлень',
   },
   { value: '14', label: 'Скасовано фінансами' },
 ];
 
 export const approveStatusBuh = [
-  { value: '18', label: 'Сплачено' },
+  { value: '5', label: 'Сплачено' },
   {
-    value: '19',
-    label: 'Сплачено і очікуються документи від контрагента після оплати',
+    value: '6',
+    label: 'Сплачено і очікуються документи від контрагента',
   },
   {
-    value: '16',
+    value: '3',
     label: 'Потребує виправлень',
   },
-  { value: '20', label: 'Скасовано' },
+  { value: '20', label: 'Скасовано бухгалтером' },
 ];

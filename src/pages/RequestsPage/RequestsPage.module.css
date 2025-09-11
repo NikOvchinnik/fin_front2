@@ -203,6 +203,13 @@
   text-align: center;
 }
 
+.linkContainer{
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--button);
+}
+
 @media screen and (min-width: 1024px) {
   .mainContainer {
     gap: 24px;

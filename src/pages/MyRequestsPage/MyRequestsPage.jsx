@@ -99,7 +99,7 @@ const MyRequestsPage = () => {
           case 'payment_date_await':
             return req.payment_date_await || '';
           case 'contractor':
-            return req.contractor_id || '';
+            return req.contractor || '';
           case 'purpose':
             return req.purpose || '';
           case 'payment_period':
@@ -193,8 +193,8 @@ const MyRequestsPage = () => {
         </p>
       ),
       payment_date_await_plain: request.payment_date_await || '',
-      contractor: request.contractor_id || '',
-      contractor_plain: request.contractor_id || '',
+      contractor: request.contractor || '',
+      contractor_plain: request.contractor || '',
       purpose: (
         <p>
           <ExpandableText text={request.purpose || ''} limit={50} />
@@ -569,7 +569,7 @@ const MyRequestsPage = () => {
           >
             <ConfirmModal
               title="Відправити заявку"
-              message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor_id}?`}
+              message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
             />
