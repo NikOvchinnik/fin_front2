@@ -22,8 +22,6 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
 
-  console.log(request);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -168,6 +166,17 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
 
   return (
     <div className={style.editContainer}>
+      {request.files?.length > 0 && (
+        <ul className={style.linkContainer}>
+          {request.files.map((file, index) => (
+            <li key={file.id}>
+              <a href={file.file_url} target="_blank" rel="noreferrer">
+                Link {index + 1}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
       <h2 className={style.title}>Перегляд заявки</h2>
       {request.comment && (
         <p className={style.comment}>
@@ -214,7 +223,6 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           amount: request.amount ?? '',
           currency_id: request.currency_id || '',
           comment: request.comment || '',
-          files: request.files || '',
         }}
       />
     </div>

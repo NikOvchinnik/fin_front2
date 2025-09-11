@@ -15,6 +15,7 @@ import {
   getContractors,
   postContractors,
 } from '../../../helpers/axios/contractors';
+import Loader from '../../Loader/Loader';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -24,10 +25,12 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
         const projects = await getProjects();
         const projectSelector = projects.map(p => ({
           value: p.id,
@@ -68,6 +71,8 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
         setContractorsOptions(contractorSelector);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -162,73 +167,85 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   ];
 
   return (
-    <div className={style.newContainer}>
-      <Form
-        title="Створити заявку"
-        fields={fields}
-        buttons={buttons}
-        onSubmit={async data => {
-          try {
-            let contractorId = data.contractor_id;
+    <>
+      {loading ? (
+        <Loader />
+      ) : (
+        <div className={style.newContainer}>
+          <Form
+            title="Створити заявку"
+            fields={fields}
+            buttons={buttons}
+            onSubmit={async data => {
+              try {
+                setLoading(true);
+                let contractorId = data.contractor_id;
 
-            const existingContractor = contractorsOptions.find(c => {
-              if (String(c.value) === String(contractorId)) return true;
+                const existingContractor = contractorsOptions.find(c => {
+                  if (String(c.value) === String(contractorId)) return true;
 
-              if (typeof contractorId === 'string') {
-                return c.label.toLowerCase() === contractorId.toLowerCase();
-              }
+                  if (typeof contractorId === 'string') {
+                    return c.label.toLowerCase() === contractorId.toLowerCase();
+                  }
 
-              return false;
-            });
+                  return false;
+                });
 
-            if (existingContractor) {
-              contractorId = existingContractor.value;
-            } else {
-              const newContractor = await postContractors({
-                name: contractorId,
-              });
-              contractorId = newContractor.id;
-            }
+                if (existingContractor) {
+                  contractorId = existingContractor.value;
+                } else {
+                  const newContractor = await postContractors({
+                    name: contractorId,
+                  });
+                  contractorId = newContractor.id;
+                }
 
-              const formData = new FormData();
-              Object.entries({ ...data, contractor_id: contractorId }).forEach(
-                ([key, value]) => {
-                  if (key === 'files' && value instanceof FileList) {
-                    Array.from(value).forEach(file => {
-                      formData.append('files', file);
-                    });
+                const formData = new FormData();
+
+                Object.entries({
+                  ...data,
+                  contractor_id: contractorId,
+                }).forEach(([key, value]) => {
+                  if (key === 'files' && value) {
+                    if (value instanceof FileList || Array.isArray(value)) {
+                      Array.from(value).forEach(file =>
+                        formData.append('files', file)
+                      );
+                    }
                   } else {
                     if (typeof value === 'string') value = value.trim();
                     formData.append(key, value ?? '');
                   }
-                }
-              );
+                });
 
-            await postRequest(formData);
-            onRefresh();
-            closeModal();
-            Notify.success('Нову заявку створено!');
-          } catch (error) {
-            Notify.failure('Сталася помилка, спробуйте ще раз');
-            console.error('Error: ', error);
-          }
-        }}
-        defaultValues={{
-          project_id: '',
-          payment_form_id: '',
-          contractor_id: '',
-          payment_details: '',
-          purpose: '',
-          amount: '',
-          currency_id: '',
-          payment_period: '',
-          payment_date_await: dayjs().format('YYYY-MM-DD'),
-          expense_category_id: '',
-          comment: '',
-          files: '',
-        }}
-      />
-    </div>
+                await postRequest(formData);
+                setLoading(false);
+                onRefresh();
+                closeModal();
+                Notify.success('Нову заявку створено!');
+              } catch (error) {
+                Notify.failure('Сталася помилка, спробуйте ще раз');
+                console.error('Error: ', error);
+              }
+            }}
+            defaultValues={{
+              project_id: '',
+              payment_form_id: '',
+              contractor_id: '',
+              payment_details: '',
+              purpose: '',
+              amount: '',
+              currency_id: '',
+              payment_period: '',
+              payment_date_await: dayjs().format('YYYY-MM-DD'),
+              expense_category_id: '',
+              comment: '',
+              files: '',
+            }}
+          />
+        </div>
+      )}
+    </>
   );
 };
 

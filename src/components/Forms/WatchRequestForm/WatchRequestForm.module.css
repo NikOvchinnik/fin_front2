@@ -37,6 +37,34 @@
   left: 0;
 }
 
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 18px;
+}
+
+.linkContainer li {
+  display: flex;
+  gap: 4px;
+}
+
+.linkContainer a {
+  color: var(--button);
+  padding: 4px 8px;
+  border: 1px solid var(--button);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.linkContainer a:hover {
+  background: var(--button);
+  color: white;
+}
+
 @media screen and (min-width: 1024px) {
   .editContainer {
     width: 620px;
@@ -48,5 +76,10 @@
     line-height: 1.33;
     margin-bottom: 36px;
     text-align: center;
+  }
+
+  .linkContainer {
+    display: flex;
+    flex-direction: row;
   }
 }

@@ -47,8 +47,6 @@ const LoginForm = () => {
       if (err.response?.status === 401) {
         Notify.failure('Невірний логін або пароль');
       } else {
-        console.log(err);
-        
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
     }

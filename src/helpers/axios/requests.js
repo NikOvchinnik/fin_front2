@@ -69,3 +69,11 @@ export const sendRequest = async id => {
     throw error;
   }
 };
+
+export const deleteLink = async id => {
+  try {
+    return await axios.delete(`/api/request-files/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};

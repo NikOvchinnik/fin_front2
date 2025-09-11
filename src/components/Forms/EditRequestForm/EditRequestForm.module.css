@@ -5,8 +5,51 @@
   width: 360px;
 }
 
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 24px;
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 14px;
+}
+
+.linkContainer li {
+  display: flex;
+  gap: 4px;
+}
+
+.linkContainer a {
+  color: var(--button);
+  padding: 4px 8px;
+  border: 1px solid var(--button);
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.linkContainer a:hover {
+  background: var(--button);
+  color: white;
+}
+
+.deleteBtn {
+  display: flex;
+}
+
+.deleteIcon {
+  fill: var(--warning);
+  width: 14px;
+  height: 14px;
+}
+
 @media screen and (min-width: 1024px) {
   .editContainer {
     width: 620px;
+  }
+
+  .linkContainer {
+    display: flex;
+    flex-direction: row;
   }
 }
