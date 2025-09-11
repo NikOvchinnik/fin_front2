@@ -41,7 +41,7 @@ export const statusSelectorBuh = [
 ];
 
 export const approveStatusFin = [
-  { value: ' 4', label: 'Передано на оплату' },
+  { value: '4', label: 'Передано на оплату' },
   {
     value: '3',
     label: 'Потребує виправлень',
@@ -61,3 +61,28 @@ export const approveStatusBuh = [
   },
   { value: '20', label: 'Скасовано бухгалтером' },
 ];
+
+export const getShortStatus = statusName => {
+  if (!statusName) return '';
+  if (
+    statusName ===
+    'Сплачено і очікуються документи від контрагента після оплати'
+  )
+    return 'Сплачено, чекаємо документи';
+  return statusName;
+};
+
+export const getActiveStatus = statusName => {
+  if (!statusName) return '';
+  if (
+    statusName ===
+    'Сплачено і очікуються документи від контрагента після оплати'
+  )
+    return 'Сплачено';
+    if (
+      statusName === 'Фінанси: Скасовано' ||
+      statusName === 'Бухгалтер: Скасовано'
+    )
+      return 'Скасовано';
+  return statusName;
+};

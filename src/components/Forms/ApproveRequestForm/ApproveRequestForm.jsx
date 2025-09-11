@@ -8,12 +8,11 @@ import style from './ApproveRequestForm.module.css';
 import { Notify } from 'notiflix';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
-  console.log(request);
 
   const fields = [
     {
       type: 'select',
-      name: 'finance_status',
+      name: 'status',
       label: 'Статус',
       options:
         userRole === 4
@@ -47,19 +46,17 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
         buttons={buttons}
         onSubmit={async data => {
           try {
-            const formData = new FormData();
-            Object.entries(data).forEach(([key, value]) => {
-              if (typeof value === 'string') {
-                value = value.trim();
-              }
+               const formData = new FormData();
+               const backendFieldName =
+                 userRole === 4
+                   ? 'finance_status'
+                   : userRole === 5
+                   ? 'buh_status'
+                   : 'status';
 
-              if (value !== null && value !== undefined && value !== '') {
-                formData.append(key, value);
-              } else {
-                formData.append(key, '');
-              }
-            });
-            formData.append('id', request.id);
+               formData.append(backendFieldName, data.status);
+               formData.append('id', request.id);
+               formData.append('comment', data.comment?.trim() || '');
 
             if (userRole === 4) await changeFinStatus(formData);
             if (userRole === 5) await changeBuhStatus(formData);
@@ -72,7 +69,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
           }
         }}
         defaultValues={{
-          finance_status: userRole === 4 ? '10' : userRole === 5 ? '18' : '',
+          status: userRole === 4 ? '4' : userRole === 5 ? '5' : '',
           comment: request.comment || '',
         }}
       />

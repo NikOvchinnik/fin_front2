@@ -10,7 +10,7 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getStatusStyle, statusSelectorFin } from '../../helpers/status';
+import { getActiveStatus, getShortStatus, getStatusStyle, statusSelectorFin } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
@@ -86,7 +86,9 @@ const MyRefundsPage = () => {
     let filteredRows = dataRequests;
 
     if (activeStatus && activeStatus !== 'Всі') {
-      filteredRows = filteredRows.filter(row => row.status === activeStatus);
+      filteredRows = filteredRows.filter(
+        row => getActiveStatus(row.status) === activeStatus
+      );
     }
 
     let sortedRows = [...filteredRows];
@@ -99,7 +101,7 @@ const MyRefundsPage = () => {
           case 'payment_date_await':
             return req.payment_date_await || '';
           case 'contractor':
-            return req.contractor_id || '';
+            return req.contractor || '';
           case 'purpose':
             return req.purpose || '';
           case 'payment_period':
@@ -193,8 +195,8 @@ const MyRefundsPage = () => {
         </p>
       ),
       payment_date_await_plain: request.payment_date_await || '',
-      contractor: request.contractor_id || '',
-      contractor_plain: request.contractor_id || '',
+      contractor: request.contractor || '',
+      contractor_plain: request.contractor|| '',
       purpose: (
         <p>
           <ExpandableText text={request.purpose || ''} limit={50} />
@@ -216,7 +218,7 @@ const MyRefundsPage = () => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {request.status || ''}
+           {getShortStatus(request.status)}
         </span>
       ),
       status_plain: request.status || '',
@@ -569,7 +571,7 @@ const MyRefundsPage = () => {
           >
             <ConfirmModal
               title="Відправити заявку"
-              message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor_id}?`}
+              message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
             />

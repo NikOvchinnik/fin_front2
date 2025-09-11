@@ -10,7 +10,7 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getStatusStyle, statusSelectorFin } from '../../helpers/status';
+import { getActiveStatus, getShortStatus, getStatusStyle, statusSelectorFin } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
@@ -86,7 +86,9 @@ const MyRequestsPage = () => {
     let filteredRows = dataRequests;
 
     if (activeStatus && activeStatus !== 'Всі') {
-      filteredRows = filteredRows.filter(row => row.status === activeStatus);
+      filteredRows = filteredRows.filter(
+        row => getActiveStatus(row.status) === activeStatus
+      );
     }
 
     let sortedRows = [...filteredRows];
@@ -216,7 +218,7 @@ const MyRequestsPage = () => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {request.status || ''}
+          {getShortStatus(request.status)}
         </span>
       ),
       status_plain: request.status || '',

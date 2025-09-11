@@ -12,6 +12,8 @@ import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import {
+  getActiveStatus,
+  getShortStatus,
   getStatusStyle,
   statusSelectorBuh,
   statusSelectorFin,
@@ -184,7 +186,7 @@ const RequestsPage = () => {
 
     if (activeStatus && activeStatus !== 'Всі') {
       filteredRows = filteredRows.filter(
-        row => row.status?.name === activeStatus
+        row => getActiveStatus(row.status?.name) === activeStatus
       );
     }
 
@@ -409,7 +411,7 @@ const RequestsPage = () => {
             color: getStatusStyle(request.status?.name).color,
           }}
         >
-          {request.status?.name || ''}
+          {getShortStatus(request.status?.name)}
         </span>
       ),
       status_plain: request.status?.name || '',
@@ -417,7 +419,16 @@ const RequestsPage = () => {
         <button
           className={style.editBtn}
           onClick={() => {
-            if (request.status?.name === 'Очікує затвердження') {
+            if (
+              request.status?.name === 'Очікує затвердження' ??
+              userRole === 4
+            ) {
+              setSelectedRequest(request);
+              openModal();
+            } else if (
+              request.status?.name === 'Передано на оплату' ??
+              userRole === 5
+            ) {
               setSelectedRequest(request);
               openModal();
             } else {
