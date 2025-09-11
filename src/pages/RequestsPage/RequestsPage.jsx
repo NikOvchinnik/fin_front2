@@ -25,6 +25,7 @@ import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import ApproveRequestForm from '../../components/Forms/ApproveRequestForm/ApproveRequestForm';
+import ApproveWatchForm from '../../components/Forms/ApproveWatchForm/ApproveWatchForm';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -46,6 +47,7 @@ const RequestsPage = () => {
   });
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
+  const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -416,30 +418,43 @@ const RequestsPage = () => {
       ),
       status_plain: request.status?.name || '',
       action: (
-        <button
-          className={style.editBtn}
-          onClick={() => {
-            if (
-              request.status?.name === 'Очікує затвердження' ??
-              userRole === 4
-            ) {
+        <div className={style.actionContainer}>
+          {(userRole === 4 || userRole === 5) && (
+            <button
+              className={style.editBtn}
+              onClick={() => {
+                if (
+                  request.status?.name === 'Очікує затвердження' ??
+                  userRole === 4
+                ) {
+                  setSelectedRequest(request);
+                  openModal();
+                } else if (
+                  request.status?.name === 'Передано на оплату' ??
+                  userRole === 5
+                ) {
+                  setSelectedRequest(request);
+                  openModal();
+                } else {
+                  Notify.warning(
+                    `Ви не можете редагувати статус ${request.status?.name}!`
+                  );
+                }
+              }}
+            >
+              <Icon id="edit" className={style.editIcon} />
+            </button>
+          )}
+          <button
+            className={style.editBtn}
+            onClick={() => {
               setSelectedRequest(request);
-              openModal();
-            } else if (
-              request.status?.name === 'Передано на оплату' ??
-              userRole === 5
-            ) {
-              setSelectedRequest(request);
-              openModal();
-            } else {
-              Notify.warning(
-                `Ви не можете редагувати статус ${request.status?.name}!`
-              );
-            }
-          }}
-        >
-          <Icon id="edit" className={style.editIcon} />
-        </button>
+              openModalWatch();
+            }}
+          >
+            <Icon id="eye" className={style.editIcon} />
+          </button>
+        </div>
       ),
     }));
   }, [
@@ -722,14 +737,10 @@ const RequestsPage = () => {
         </div>
       ),
     },
-    ...(userRole === 4 || userRole === 5
-      ? [
-          {
-            accessorKey: 'action',
-            header: 'Дія',
-          },
-        ]
-      : []),
+    {
+      accessorKey: 'action',
+      header: 'Дія',
+    },
   ];
 
   const filteredColumns = useMemo(() => {
@@ -753,6 +764,14 @@ const RequestsPage = () => {
 
   const closeModalColumns = () => {
     setModalColumnsIsOpen(false);
+  };
+
+  const openModalWatch = () => {
+    setModalWatchIsOpen(true);
+  };
+
+  const closeModalWatch = () => {
+    setModalWatchIsOpen(false);
   };
 
   const exportToCSV = () => {
@@ -945,6 +964,17 @@ const RequestsPage = () => {
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalWatchOpen}
+            onCloseModal={closeModalWatch}
+          >
+            <ApproveWatchForm
+              request={selectedRequest}
+              closeModal={closeModalWatch}
+              onRefresh={fetchData}
+              userRole={userRole}
             />
           </ModalWindow>
         </section>

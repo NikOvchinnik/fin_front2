@@ -40,6 +40,31 @@ export const statusSelectorBuh = [
   { value: 'Скасовано', label: 'Скасовано' },
 ];
 
+export const approveStatus = [
+  {
+    value: '1',
+    label: 'Чернетка',
+  },
+  {
+    value: '2',
+    label: 'Очікує затвердження',
+  },
+  {
+    value: '3',
+    label: 'Потребує виправлень',
+  },
+  { value: '4', label: 'Передано на оплату' },
+  { value: '5', label: 'Сплачено' },
+  {
+    value: '6',
+    label: 'Сплачено і очікуються документи від контрагента',
+  },
+  { value: '14', label: 'Скасовано фінансами' },
+  { value: '20', label: 'Скасовано бухгалтером' },
+];
+
+
+
 export const approveStatusFin = [
   { value: '4', label: 'Передано на оплату' },
   {

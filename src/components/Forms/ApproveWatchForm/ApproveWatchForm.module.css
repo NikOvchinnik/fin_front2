@@ -1,0 +1,12 @@
+.editContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  width: 360px;
+}
+
+@media screen and (min-width: 1024px) {
+  .editContainer {
+    width: 620px;
+  }
+}
