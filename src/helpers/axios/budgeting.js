@@ -40,3 +40,14 @@ export const getBudgetingCEO = async ({ startDate, endDate }) => {
     throw error;
   }
 };
+
+export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
+  try {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    return await axios.get(`/api/personal-budgeting/${userId}`, { params });
+  } catch (error) {
+    throw error;
+  }
+};

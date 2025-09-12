@@ -23,8 +23,13 @@ const routesConfig = [
   },
   {
     path: 'budgeting',
-    roles: [1, 2, 3, 4, 5],
+    roles: [1, 2, 4],
     element: lazy(() => import('../pages/BudgetingPage/BudgetingPage')),
+  },
+  {
+    path: 'my_budgeting/:userId',
+    roles: [1, 2, 3, 4, 5],
+    element: lazy(() => import('../pages/MyBudgetingPage/MyBudgetingPage')),
   },
   {
     path: 'exchange_rate',
@@ -33,7 +38,7 @@ const routesConfig = [
   },
   {
     path: 'history',
-    roles: [1],
+    roles: [1, 2, 4, 5],
     element: lazy(() => import('../pages/HistoryPage/HistoryPage')),
   },
 ];

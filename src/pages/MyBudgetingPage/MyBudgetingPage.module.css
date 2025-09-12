@@ -1,0 +1,278 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.fullWidthText {
+  white-space: nowrap;
+}
+
+.breakText {
+  word-break: break-word;
+}
+
+.copyText {
+  display: flex;
+  justify-content: end;
+  cursor: pointer;
+}
+
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.dateContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 60px;
+}
+
+.formsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+}
+
+.csvBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 175px;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.csvBtn:hover,
+.csvBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.checkboxContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelCheckboxContainer {
+  display: flex;
+  width: 100%;
+}
+
+.checkboxInput {
+  appearance: none;
+  border: 1px solid #d6d6d6;
+  background: #fff;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  display: inline-block;
+  position: relative;
+}
+
+.checkboxInput:checked {
+  background-color: var(--button);
+  border-color: var(--button);
+}
+
+.checkboxInput:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 6px;
+  width: 6px;
+  height: 12px;
+  border: solid white;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.sortContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 24px;
+}
+
+.editBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--table-edit);
+  border-radius: 4px;
+  fill: var(--table-edit);
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.editBtn:hover,
+.editBtn:focus {
+  fill: var(--border-hover);
+  border: 1px solid var(--border-hover);
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: #333333;
+  color: #333333;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.statuscontainer {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  background: var(--toggle-lang-background);
+}
+
+.statusBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 28px;
+  transition: all 0.3s ease;
+}
+
+.activeBtn {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.statusBtn:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
+.noDataText {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  text-align: center;
+}
+
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--button);
+}
+
+.actionContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.btnsContainer {
+  display: flex;
+  gap: 12px;
+}
+
+.newBtn {
+  border: 2px solid var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 207px;
+  color: var(--button);
+  transition: all 0.3s ease;
+}
+
+.newBtn span {
+  margin-left: 8px;
+  font-size: 18px;
+}
+
+.newBtn:hover,
+.newBtn:focus {
+  border: 2px solid var(--button-hover);
+  color: var(--button-hover);
+}
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #81c784;
+  border-radius: 4px;
+  fill: #81c784;
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.sendBtn:hover,
+.sendBtn:focus {
+  fill: #66bb6a;
+  border: 1px solid #66bb6a;
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+  }
+
+  .dateContainer {
+    flex-direction: row;
+    gap: 20px;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0;
+  }
+
+  .formsContainer {
+    flex-direction: row;
+    gap: 20px;
+  }
+}

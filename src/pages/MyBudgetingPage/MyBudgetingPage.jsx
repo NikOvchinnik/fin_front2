@@ -1,25 +1,18 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import DocTitle from '../../components/DocTitle/DocTitle';
-import style from './BudgetingPage.module.css';
+import style from './MyBudgetingPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getCurrencies } from '../../helpers/axios/payments';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import Form from '../../components/Form/Form';
-import { getProjects } from '../../helpers/axios/projects';
-import { selectUserRole } from '../../redux/auth/selectors';
+import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
-import {
-  getBudgetingCEO,
-  getBudgetingFinancial,
-  getBudgetingHd,
-} from '../../helpers/axios/budgeting';
+import { getMyBudgeting } from '../../helpers/axios/budgeting';
 import {
   geBudgetingStatusStyle,
   getActiveBudgetingStatus,
@@ -27,16 +20,11 @@ import {
   statusSelectorBudgetingFin,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
-import ApproveBudgetingForm from '../../components/Forms/ApproveBudgetingForm/ApproveBudgetingForm';
-import ApproveBudgetingWatchForm from '../../components/Forms/ApproveBudgetingWatchForm/ApproveBudgetingWatchForm';
+import { useParams } from 'react-router-dom';
 
-const BudgetingPage = () => {
+const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
-  const [projectOptions, setProjectOptions] = useState([]);
-  const [currenciesOptions, setCurrenciesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -48,9 +36,7 @@ const BudgetingPage = () => {
     key: 'created_at',
     direction: 'desc',
   });
-  const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
-  const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -59,49 +45,19 @@ const BudgetingPage = () => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+  const userSelectorId = useSelector(selectUserId);
+  const { userId } = useParams();
 
   const fetchData = useCallback(async () => {
     try {
       setLoadingTable(true);
-      let requests;
-      if (userRole === 4) {
-        requests = await getBudgetingFinancial({
-          startDate: startDate ? startDate.format('MM.YYYY') : null,
-          endDate: endDate ? endDate.format('MM.YYYY') : null,
-        });
-      } else if (userRole === 2) {
-        requests = await getBudgetingHd({
-          startDate: startDate ? startDate.format('MM.YYYY') : null,
-          endDate: endDate ? endDate.format('MM.YYYY') : null,
-        });
-      } else if (userRole === 1) {
-        requests = await getBudgetingCEO({
-          startDate: startDate ? startDate.format('MM.YYYY') : null,
-          endDate: endDate ? endDate.format('MM.YYYY') : null,
-        });
-      }
+      const requests = await getMyBudgeting({
+        userId,
+        startDate: startDate ? startDate.format('MM.YYYY') : null,
+        endDate: endDate ? endDate.format('MM.YYYY') : null,
+      });
 
-      setDataRequests(requests || []);
-
-      const projects = await getProjects();
-      const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
-        ...(projects || []).map(p => ({
-          value: p.id,
-          label: p.name,
-        })),
-      ];
-      setProjectOptions(projectSelector);
-
-      const currencies = await getCurrencies();
-      const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
-        ...(currencies || []).map(c => ({
-          value: c.id,
-          label: c.name,
-        })),
-      ];
-      setCurrenciesOptions(currencySelector);
+      setDataRequests(requests);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
@@ -111,7 +67,11 @@ const BudgetingPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    fetchData();
+    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+      navigate('/');
+    } else {
+      fetchData();
+    }
   }, [fetchData]);
 
   const handleSort = key => {
@@ -160,32 +120,6 @@ const BudgetingPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
-      filteredRows = filteredRows.filter(
-        row => row.project_id === selectedProject
-      );
-    }
-
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
-      filteredRows = filteredRows.filter(
-        row => row.currency_id === selectedCurrency
-      );
-    }
-
-    if (filters.applicant) {
-      filteredRows = filteredRows.filter(row =>
-        row.applicant.toLowerCase().includes(filters.applicant)
-      );
-    }
-
-    if (filters.expense_category) {
-      filteredRows = filteredRows.filter(row =>
-        row.expense_category?.name
-          .toLowerCase()
-          .includes(filters.expense_category)
-      );
-    }
-
     if (activeStatus && activeStatus !== 'Всі') {
       filteredRows = filteredRows.filter(
         row => getActiveBudgetingStatus(row.status?.name) === activeStatus
@@ -221,8 +155,6 @@ const BudgetingPage = () => {
               : '';
           case 'expense_category':
             return req.expense_category?.name ?? '';
-          case 'applicant':
-            return req.applicant ?? '';
           case 'tech':
             return req.plan_period ?? '';
           case 'status':
@@ -356,8 +288,6 @@ const BudgetingPage = () => {
 
       expense_category: request.expense_category?.name || '',
       expense_category_plain: request.expense_category?.name || '',
-      applicant: request.applicant || '',
-      applicant_plain: request.applicant || '',
       tech: request.plan_period ? request.plan_period : '',
       tech_plain: request.plan_period ? request.plan_period : '',
       status: (
@@ -377,34 +307,26 @@ const BudgetingPage = () => {
       status_plain: request.status?.name || '',
       action: (
         <div className={style.actionContainer}>
-          {(userRole === 4 || userRole === 1 || userRole === 2) && (
-            <button
-              className={style.editBtn}
-              onClick={() => {
-                if (request.status?.id === 5 && userRole === 4) {
-                  setSelectedRequest(request);
-                  openModal();
-                } else if (request.status?.id === 8 && userRole === 1) {
-                  setSelectedRequest(request);
-                  openModal();
-                } else if (request.status?.id === 2 && userRole === 2) {
-                  setSelectedRequest(request);
-                  openModal();
-                } else {
-                  Notify.warning(
-                    `Ви не можете редагувати статус ${request.status?.name}!`
-                  );
-                }
-              }}
-            >
-              <Icon id="edit" className={style.editIcon} />
-            </button>
-          )}
+          <button
+            className={style.editBtn}
+            onClick={() => {
+              if (request.status?.id === 1 || request.status?.id === 4) {
+                setSelectedRequest(request);
+                openModal();
+              } else {
+                Notify.warning(
+                  `Ви не можете редагувати статус ${request.status?.name}!`
+                );
+              }
+            }}
+          >
+            <Icon id="edit" className={style.editIcon} />
+          </button>
           <button
             className={style.editBtn}
             onClick={() => {
               setSelectedRequest(request);
-              openModalWatch();
+              //   openModalWatch();
             }}
           >
             <Icon id="eye" className={style.editIcon} />
@@ -412,14 +334,7 @@ const BudgetingPage = () => {
         </div>
       ),
     }));
-  }, [
-    dataRequests,
-    selectedProject,
-    selectedCurrency,
-    activeStatus,
-    filters,
-    sortConfig,
-  ]);
+  }, [dataRequests, activeStatus, filters, sortConfig]);
 
   const columns = [
     {
@@ -549,20 +464,6 @@ const BudgetingPage = () => {
       ),
     },
     {
-      accessorKey: 'applicant',
-      header: (
-        <div className={style.sortContainer}>
-          <p>Заявник</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('applicant')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
@@ -617,28 +518,12 @@ const BudgetingPage = () => {
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
-  const openModal = () => {
-    setModalIsOpen(true);
-  };
-
-  const closeModal = () => {
-    setModalIsOpen(false);
-  };
-
   const openModalColumns = () => {
     setModalColumnsIsOpen(true);
   };
 
   const closeModalColumns = () => {
     setModalColumnsIsOpen(false);
-  };
-
-  const openModalWatch = () => {
-    setModalWatchIsOpen(true);
-  };
-
-  const closeModalWatch = () => {
-    setModalWatchIsOpen(false);
   };
 
   const exportToCSV = () => {
@@ -682,6 +567,18 @@ const BudgetingPage = () => {
     document.body.removeChild(link);
   };
 
+  const handleSend = async () => {
+    try {
+      //   await sendRequest(selectedRequest.id);
+      fetchData();
+      closeModalConfirm();
+      Notify.success('Заявку відправлено!');
+    } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
   return (
     <>
       {loading ? (
@@ -698,61 +595,14 @@ const BudgetingPage = () => {
                 setEndDate={setEndDate}
                 onLoading={setLoadingTable}
               />
-              <button className={style.csvBtn} onClick={exportToCSV}>
-                Експорт у CSV
-              </button>
-            </div>
-            <div className={style.formsContainer}>
-              <Form
-                fields={[
-                  {
-                    type: 'select',
-                    name: 'project',
-                    label: 'Підрозділ',
-                    options: projectOptions,
-                    onChange: value => setSelectedProject(value),
-                  },
-                ]}
-                defaultValues={{
-                  project: selectedProject,
-                }}
-              />
-              <Form
-                fields={[
-                  {
-                    type: 'select',
-                    name: 'currency',
-                    label: 'Валюта',
-                    options: currenciesOptions,
-                    onChange: value => setSelectedCurrency(value),
-                  },
-                ]}
-                defaultValues={{
-                  currency: selectedCurrency,
-                }}
-              />
-              <form className={style.searchContainer}>
-                <label className={style.labelContainer}>
-                  <input
-                    type="text"
-                    name="applicant"
-                    className={style.inputContainer}
-                    placeholder="Заявник"
-                    onChange={handleSearchChange}
-                  />
-                </label>
-              </form>
-              <form className={style.searchContainer}>
-                <label className={style.labelContainer}>
-                  <input
-                    type="text"
-                    name="expense_category"
-                    className={style.inputContainer}
-                    placeholder="Стаття витрат"
-                    onChange={handleSearchChange}
-                  />
-                </label>
-              </form>
+              <div className={style.btnsContainer}>
+                <button className={style.newBtn} onClick={console.log(1)}>
+                  Створити заявку <span>+</span>
+                </button>
+                <button className={style.csvBtn} onClick={exportToCSV}>
+                  Експорт у CSV
+                </button>
+              </div>
             </div>
             <ul
               className={style.statuscontainer}
@@ -801,14 +651,6 @@ const BudgetingPage = () => {
               enableHorizontalScroll={isMobile ? false : true}
             />
           )}
-          <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
-            <ApproveBudgetingForm
-              request={selectedRequest}
-              closeModal={closeModal}
-              onRefresh={fetchData}
-              userRole={userRole}
-            />
-          </ModalWindow>
           <ModalWindow
             isModalOpen={isModalColumnsOpen}
             onCloseModal={closeModalColumns}
@@ -820,21 +662,10 @@ const BudgetingPage = () => {
               handleColumnToggle={handleColumnToggle}
             />
           </ModalWindow>
-          <ModalWindow
-            isModalOpen={isModalWatchOpen}
-            onCloseModal={closeModalWatch}
-          >
-            <ApproveBudgetingWatchForm
-              request={selectedRequest}
-              closeModal={closeModalWatch}
-              onRefresh={fetchData}
-              userRole={userRole}
-            />
-          </ModalWindow>
         </section>
       )}
     </>
   );
 };
 
-export default BudgetingPage;
+export default MyBudgetingPage;

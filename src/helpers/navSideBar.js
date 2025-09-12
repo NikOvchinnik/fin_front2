@@ -28,6 +28,11 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'piggy-bank',
       },
       {
+        page: 'Мій бюджет',
+        link: `/my_budgeting/${userId}`,
+        icon: 'coins',
+      },
+      {
         page: 'Історія',
         link: `/history`,
         icon: 'history',
@@ -57,6 +62,16 @@ export const getNavSideBar = (userId, userName) => [
         link: `/budgeting`,
         icon: 'piggy-bank',
       },
+      {
+        page: 'Мій бюджет',
+        link: `/my_budgeting/${userId}`,
+        icon: 'coins',
+      },
+      {
+        page: 'Історія',
+        link: `/history`,
+        icon: 'history',
+      },
     ],
   },
   {
@@ -73,9 +88,9 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'refund',
       },
       {
-        page: 'Бюджетування',
-        link: `/budgeting`,
-        icon: 'piggy-bank',
+        page: 'Мій бюджет',
+        link: `/my_budgeting/${userId}`,
+        icon: 'coins',
       },
     ],
   },
@@ -103,9 +118,19 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'piggy-bank',
       },
       {
+        page: 'Мій бюджет',
+        link: `/my_budgeting/${userId}`,
+        icon: 'coins',
+      },
+      {
         page: 'Курс валют',
         link: `/exchange_rate`,
         icon: 'dollar',
+      },
+      {
+        page: 'Історія',
+        link: `/history`,
+        icon: 'history',
       },
     ],
   },
@@ -128,9 +153,14 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'refund',
       },
       {
-        page: 'Бюджетування',
-        link: `/budgeting`,
-        icon: 'piggy-bank',
+        page: 'Мій бюджет',
+        link: `/my_budgeting/${userId}`,
+        icon: 'coins',
+      },
+      {
+        page: 'Історія',
+        link: `/history`,
+        icon: 'history',
       },
     ],
   },
