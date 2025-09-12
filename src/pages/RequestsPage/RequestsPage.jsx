@@ -424,13 +424,13 @@ const RequestsPage = () => {
               className={style.editBtn}
               onClick={() => {
                 if (
-                  request.status?.name === 'Очікує затвердження' ??
+                  request.status?.name === 'Очікує затвердження' &&
                   userRole === 4
                 ) {
                   setSelectedRequest(request);
                   openModal();
                 } else if (
-                  request.status?.name === 'Передано на оплату' ??
+                  request.status?.name === 'Передано на оплату' &&
                   userRole === 5
                 ) {
                   setSelectedRequest(request);
