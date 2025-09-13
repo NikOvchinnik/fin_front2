@@ -214,7 +214,9 @@ const RequestsPage = () => {
           case 'currency':
             return req.currency?.name || '';
           case 'amount_uah':
-            return req.amount && req.currency?.rate
+            return req.paid_in_uah !== null && req.paid_in_uah !== undefined
+              ? req.paid_in_uah
+              : req.amount && req.currency?.rate
               ? req.amount * req.currency.rate
               : '';
           case 'expense_category':
@@ -339,11 +341,15 @@ const RequestsPage = () => {
       currency: request.currency?.name || '',
       currency_plain: request.currency?.name || '',
       amount_uah:
-        request.amount && request.currency?.rate
+        request.paid_in_uah !== null && request.paid_in_uah !== undefined
+          ? request.paid_in_uah.toLocaleString('uk-UA')
+          : request.amount && request.currency?.rate
           ? (request.amount * request.currency.rate).toLocaleString('uk-UA')
           : '',
       amount_uah_plain:
-        request.amount && request.currency?.rate
+        request.paid_in_uah !== null && request.paid_in_uah !== undefined
+          ? request.paid_in_uah
+          : request.amount && request.currency?.rate
           ? request.amount * request.currency.rate
           : '',
       expense_category: request.expense_category?.name || '',

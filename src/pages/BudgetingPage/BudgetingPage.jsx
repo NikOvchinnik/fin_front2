@@ -212,12 +212,16 @@ const BudgetingPage = () => {
           case 'currency':
             return req.currency ?? '';
           case 'amount_uah_optimistic':
-            return req.amount_optimistic && req.currency_rate
-              ? req.amount_optimistic * req.currency_rate
+            return req.amount_optimistic &&
+              (req.currency_rate_at_approval || req.currency_rate)
+              ? req.amount_optimistic *
+                  (req.currency_rate_at_approval || req.currency_rate)
               : '';
           case 'amount_uah_pessimistic':
-            return req.amount_pessimistic && req.currency_rate
-              ? req.amount_pessimistic * req.currency_rate
+            return req.amount_pessimistic &&
+              (req.currency_rate_at_approval || req.currency_rate)
+              ? req.amount_pessimistic *
+                  (req.currency_rate_at_approval || req.currency_rate)
               : '';
           case 'expense_category':
             return req.expense_category?.name ?? '';
@@ -333,27 +337,33 @@ const BudgetingPage = () => {
       currency: request.currency || '',
       currency_plain: request.currency || '',
       amount_uah_optimistic:
-        request.amount_optimistic && request.currency_rate
-          ? (request.amount_optimistic * request.currency_rate).toLocaleString(
-              'uk-UA'
-            )
+        request.amount_optimistic &&
+        (request.currency_rate_at_approval || request.currency_rate)
+          ? (
+              request.amount_optimistic *
+              (request.currency_rate_at_approval || request.currency_rate)
+            ).toLocaleString('uk-UA')
           : '',
       amount_uah_optimistic_plain:
-        request.amount_optimistic && request.currency_rate
-          ? request.amount_optimistic * request.currency_rate
+        request.amount_optimistic &&
+        (request.currency_rate_at_approval || request.currency_rate)
+          ? request.amount_optimistic *
+            (request.currency_rate_at_approval || request.currency_rate)
           : '',
-
       amount_uah_pessimistic:
-        request.amount_pessimistic && request.currency_rate
-          ? (request.amount_pessimistic * request.currency_rate).toLocaleString(
-              'uk-UA'
-            )
+        request.amount_pessimistic &&
+        (request.currency_rate_at_approval || request.currency_rate)
+          ? (
+              request.amount_pessimistic *
+              (request.currency_rate_at_approval || request.currency_rate)
+            ).toLocaleString('uk-UA')
           : '',
       amount_uah_pessimistic_plain:
-        request.amount_pessimistic && request.currency_rate
-          ? request.amount_pessimistic * request.currency_rate
+        request.amount_pessimistic &&
+        (request.currency_rate_at_approval || request.currency_rate)
+          ? request.amount_pessimistic *
+            (request.currency_rate_at_approval || request.currency_rate)
           : '',
-
       expense_category: request.expense_category?.name || '',
       expense_category_plain: request.expense_category?.name || '',
       applicant: request.applicant || '',
