@@ -219,13 +219,14 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
                 });
 
                 await postRequest(formData);
-                setLoading(false);
                 onRefresh();
                 closeModal();
                 Notify.success('Нову заявку створено!');
               } catch (error) {
                 Notify.failure('Сталася помилка, спробуйте ще раз');
                 console.error('Error: ', error);
+              } finally {
+                setLoading(false);
               }
             }}
             defaultValues={{

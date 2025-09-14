@@ -51,3 +51,27 @@ export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
     throw error;
   }
 };
+
+export const postMyBudgeting = async payload => {
+  try {
+    return await axios.post('/api/save-budgeting', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteMyBudgeting = async id => {
+  try {
+    return await axios.delete(`/api/delete-budgeting/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const sendBudgeting = async id => {
+  try {
+    return await axios.post(`/api/send-budgeting/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};

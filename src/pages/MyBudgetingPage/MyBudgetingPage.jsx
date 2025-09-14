@@ -12,7 +12,7 @@ import dayjs from 'dayjs';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
-import { getMyBudgeting } from '../../helpers/axios/budgeting';
+import { getMyBudgeting, sendBudgeting } from '../../helpers/axios/budgeting';
 import {
   geBudgetingStatusStyle,
   getActiveBudgetingStatus,
@@ -21,6 +21,10 @@ import {
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
 import { useParams } from 'react-router-dom';
+import BudgetNewForm from '../../components/Forms/BudgetNewForm/BudgetNewForm';
+import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
+import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
+import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 
 const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -37,6 +41,10 @@ const MyBudgetingPage = () => {
     direction: 'desc',
   });
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
+  const [isModalOpen, setModalIsOpen] = useState(false);
+  const [isModalEditOpen, setModalEditIsOpen] = useState(false);
+  const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -322,7 +330,7 @@ const MyBudgetingPage = () => {
             onClick={() => {
               if (request.status?.id === 1 || request.status?.id === 4) {
                 setSelectedRequest(request);
-                openModal();
+                openModalEdit();
               } else {
                 Notify.warning(
                   `Ви не можете редагувати статус ${request.status?.name}!`
@@ -336,11 +344,24 @@ const MyBudgetingPage = () => {
             className={style.editBtn}
             onClick={() => {
               setSelectedRequest(request);
-              //   openModalWatch();
+              openModalWatch();
             }}
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
+          {(request.status?.id === 1 || request.status?.id === 4) && (
+            <button
+              className={style.sendBtn}
+              onClick={() => {
+                if (request.status?.id === 1 || request.status?.id === 4) {
+                  setSelectedRequest(request);
+                  setModalSendIsOpen(true);
+                }
+              }}
+            >
+              <Icon id="paper-plane" className={style.editIcon} />
+            </button>
+          )}
         </div>
       ),
     }));
@@ -536,6 +557,34 @@ const MyBudgetingPage = () => {
     setModalColumnsIsOpen(false);
   };
 
+  const openModal = () => {
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
+  };
+
+  const openModalEdit = () => {
+    setModalEditIsOpen(true);
+  };
+
+  const closeModalEdit = () => {
+    setModalEditIsOpen(false);
+  };
+
+  const openModalWatch = () => {
+    setModalWatchIsOpen(true);
+  };
+
+  const closeModalWatch = () => {
+    setModalWatchIsOpen(false);
+  };
+
+  const closeModalConfirm = () => {
+    setModalSendIsOpen(false);
+  };
+
   const exportToCSV = () => {
     if (!requestsRows || requestsRows.length === 0) return;
 
@@ -579,10 +628,10 @@ const MyBudgetingPage = () => {
 
   const handleSend = async () => {
     try {
-      //   await sendRequest(selectedRequest.id);
+      await sendBudgeting(selectedRequest.id);
       fetchData();
       closeModalConfirm();
-      Notify.success('Заявку відправлено!');
+      Notify.success('Бюджет відправлено!');
     } catch (error) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
       console.error('Error: ', error);
@@ -606,8 +655,8 @@ const MyBudgetingPage = () => {
                 onLoading={setLoadingTable}
               />
               <div className={style.btnsContainer}>
-                <button className={style.newBtn} onClick={console.log(1)}>
-                  Створити заявку <span>+</span>
+                <button className={style.newBtn} onClick={openModal}>
+                  Створити бюджет <span>+</span>
                 </button>
                 <button className={style.csvBtn} onClick={exportToCSV}>
                   Експорт у CSV
@@ -670,6 +719,40 @@ const MyBudgetingPage = () => {
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}
+            />
+          </ModalWindow>
+          <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
+            <BudgetNewForm closeModal={closeModal} onRefresh={fetchData} />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalEditOpen}
+            onCloseModal={closeModalEdit}
+          >
+            <BudgetEditForm
+              request={selectedRequest}
+              closeModal={closeModalEdit}
+              onRefresh={fetchData}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalWatchOpen}
+            onCloseModal={closeModalWatch}
+          >
+            <BudgetWatchForm
+              request={selectedRequest}
+              closeModal={closeModalWatch}
+              onRefresh={fetchData}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalSendOpen}
+            onCloseModal={closeModalConfirm}
+          >
+            <ConfirmModal
+              title="Відправити бюджет"
+              message={`Ви впевнені, що хочете відправити бюджет на затвердження ${selectedRequest?.purpose}?`}
+              onConfirm={handleSend}
+              onClose={closeModalConfirm}
             />
           </ModalWindow>
         </section>

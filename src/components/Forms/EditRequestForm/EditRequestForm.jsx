@@ -296,13 +296,14 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
                 formData.append('id', request.id);
 
                 await postRequest(formData);
-                setLoading(false);
                 onRefresh();
                 closeModal();
                 Notify.success('Інформацію змінено!');
               } catch (error) {
                 Notify.failure('Сталася помилка, спробуйте ще раз');
                 console.error('Error: ', error);
+              } finally {
+                setLoading(false);
               }
             }}
             defaultValues={{

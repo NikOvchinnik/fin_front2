@@ -604,6 +604,62 @@ const Form = ({
             />
           </div>
         );
+      case 'number-number-group':
+        return (
+          <div className={style.inputRow}>
+            <Controller
+              name={field.number1.name}
+              control={control}
+              rules={field.number1.validation}
+              render={({ field: input }) => (
+                <TextField
+                  {...input}
+                  type="number"
+                  step="0.01"
+                  label={field.number1.label || ''}
+                  placeholder={field.number1.placeholder || ''}
+                  fullWidth
+                  error={!!errors[field.number1.name]}
+                  helperText={errors[field.number1.name]?.message}
+                  slotProps={{
+                    input: {
+                      readOnly: field.number1.readOnly || false,
+                      style: field.number1.readOnly
+                        ? { color: '#999', backgroundColor: '#f5f5f5' }
+                        : {},
+                    },
+                  }}
+                />
+              )}
+            />
+
+            <Controller
+              name={field.number2.name}
+              control={control}
+              rules={field.number2.validation}
+              render={({ field: input }) => (
+                <TextField
+                  {...input}
+                  type="number"
+                  step="0.01"
+                  label={field.number2.label || ''}
+                  placeholder={field.number2.placeholder || ''}
+                  fullWidth
+                  error={!!errors[field.number2.name]}
+                  helperText={errors[field.number2.name]?.message}
+                  slotProps={{
+                    input: {
+                      readOnly: field.number2.readOnly || false,
+                      style: field.number2.readOnly
+                        ? { color: '#999', backgroundColor: '#f5f5f5' }
+                        : {},
+                    },
+                  }}
+                />
+              )}
+            />
+          </div>
+        );
       case 'file':
         return (
           <Controller
