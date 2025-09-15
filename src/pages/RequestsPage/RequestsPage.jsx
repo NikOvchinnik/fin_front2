@@ -947,7 +947,7 @@ const RequestsPage = () => {
               columns={filteredColumns}
               styles="analyticTable"
               fixedFirstColumn={isMobile ? true : false}
-              visibleColumns={20}
+              visibleColumns={25}
               visibleColumnsMobile={2}
               rowsPerPage={25}
               enableHorizontalScroll={isMobile ? false : true}
