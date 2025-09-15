@@ -381,10 +381,14 @@ const RequestsPage = () => {
       payer_plain: request.payment_form?.payer || '',
       beneficiary: request.project?.name || '',
       beneficiary_plain: request.project?.name || '',
-      planned_balance_optimistic: request.planned_balance_optimistic ?? '',
+      planned_balance_optimistic: request.planned_balance_optimistic
+        ? request.planned_balance_optimistic.toLocaleString('uk-UA')
+        : '',
       planned_balance_optimistic_plain:
         request.planned_balance_optimistic ?? '',
-      planned_balance_pessimistic: request.planned_balance_pessimistic ?? '',
+      planned_balance_pessimistic: request.planned_balance_pessimistic
+        ? request.planned_balance_pessimistic.toLocaleString('uk-UA')
+        : '',
       planned_balance_pessimistic_plain:
         request.planned_balance_pessimistic ?? '',
       tech: request.payment_date_await
