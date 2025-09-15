@@ -5,12 +5,12 @@ import style from './UserNewForm.module.css';
 import { Notify } from 'notiflix';
 import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
-import { getUnits } from '../../../helpers/axios/units';
+import { getProjects } from '../../../helpers/axios/projects';
 
 const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
-  const [unitsOptions, setUnitsOptions] = useState([]);
+  const [projectsOptions, setProjectsOptions] = useState([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -29,12 +29,12 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
         }));
         setDepartmentsOptions(departmentSelector);
 
-        const units = await getUnits();
-        const unitSelector = units.map(u => ({
-          value: u.id,
-          label: u.name,
+        const projects = await getProjects();
+        const projectSelector = projects.map(p => ({
+          value: p.id,
+          label: p.name,
         }));
-        setUnitsOptions(unitSelector);
+        setProjectsOptions(projectSelector);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
@@ -76,15 +76,15 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
     },
     {
       type: 'select',
-      name: 'department_id',
-      label: 'Департамент',
-      options: departmentsOptions,
+      name: 'project_id',
+      label: 'Підрозділ',
+      options: projectsOptions,
     },
     {
       type: 'select',
-      name: 'unit_id',
-      label: 'Підрозділ',
-      options: unitsOptions,
+      name: 'department_id',
+      label: 'Департамент',
+      options: departmentsOptions,
     },
   ];
 
@@ -133,7 +133,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
           slack_id: '',
           role_id: 3,
           department_id: 1,
-          unit_id: 6,
+          project_id: 6,
         }}
       />
     </div>

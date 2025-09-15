@@ -7,12 +7,12 @@ import { Notify } from 'notiflix';
 import { deleteUser, patchUser } from '../../../helpers/axios/users';
 import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
-import { getUnits } from '../../../helpers/axios/units';
+import { getProjects } from '../../../helpers/axios/projects';
 
 const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
-  const [unitsOptions, setUnitsOptions] = useState([]);
+  const [projectsOptions, setProjectsOptions] = useState([]);
   const [isModalConfirmOpen, setModalConfirmOpen] = useState(false);
 
   useEffect(() => {
@@ -32,12 +32,12 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
         }));
         setDepartmentsOptions(departmentSelector);
 
-        const units = await getUnits();
-        const unitSelector = units.map(u => ({
-          value: u.id,
-          label: u.name,
+        const projects = await getProjects();
+        const projectSelector = projects.map(p => ({
+          value: p.id,
+          label: p.name,
         }));
-        setUnitsOptions(unitSelector);
+        setProjectsOptions(projectSelector);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
@@ -96,15 +96,15 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
     },
     {
       type: 'select',
-      name: 'department_id',
-      label: 'Департамент',
-      options: departmentsOptions,
+      name: 'project_id',
+      label: 'Підрозділ',
+      options: projectsOptions,
     },
     {
       type: 'select',
-      name: 'unit_id',
-      label: 'Підрозділ',
-      options: unitsOptions,
+      name: 'department_id',
+      label: 'Департамент',
+      options: departmentsOptions,
     },
   ];
 
@@ -158,7 +158,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
           slack_id: user.user_slack_id || '',
           role_id: user.user_role_id || '',
           department_id: user.user_department_id || '',
-          unit_id: user.user_unit_id || '',
+          project_id: user.user_project_id || '',
         }}
       />
       <ModalWindow

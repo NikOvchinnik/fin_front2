@@ -8,26 +8,10 @@ const initialState = {
     name: '',
     role: 0,
     departmentId: null,
-    unitId: null,
+    projectId: null,
   },
   token: null,
 };
-
-// const parseToken = token => {
-//   try {
-//     const decodedToken = jwtDecode(token);
-//      return {
-//        id: decodedToken.user_id || null,
-//        name: decodedToken.user_name || '',
-//        role: decodedToken.user_role || 0,
-//        departmentId: decodedToken.user_department_id || null,
-//        unitId: decodedToken.user_unit_id || null,
-//      };
-//   } catch (error) {
-//     console.error('Invalid token:', error);
-//     return initialState.user;
-//   }
-// };
 
 const authSlice = createSlice({
   name: 'auth',
@@ -42,7 +26,7 @@ const authSlice = createSlice({
         name: user.user_name,
         role: user.user_role,
         departmentId: user.user_department_id,
-        unitId: user.user_unit_id,
+        projectId: user.user_project_id,
       };
     },
     logout: () => initialState,
