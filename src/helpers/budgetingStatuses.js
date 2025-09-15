@@ -59,6 +59,16 @@ export const getActiveBudgetingStatus = statusName => {
   return statusName;
 };
 
+export const approveBudgetingStatus = [
+  { value: 9, label: 'СЕО: Затверджено' },
+  { value: 10, label: 'СЕО: Скасовано' },
+  { value: 7, label: 'Фінанси: Затверджено' },
+  { value: 8, label: 'На затвердження СЕО' },
+  { value: 6, label: 'Фінанси: Скасовано' },
+  { value: 4, label: 'Потребує виправлень' },
+  { value: 3, label: 'Керівник відділу: Скасовано' },
+];
+
 export const approveBudgetingStatusFin = [
   { value: 7, label: 'Фінанси: Затверджено' },
   { value: 8, label: 'На затвердження СЕО' },

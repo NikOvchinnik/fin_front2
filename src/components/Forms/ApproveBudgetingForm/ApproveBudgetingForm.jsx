@@ -1,3 +1,4 @@
+import { updateBudgetingStatus } from '../../../helpers/axios/budgeting';
 import {
   approveBudgetingStatusCEO,
   approveBudgetingStatusFin,
@@ -65,19 +66,10 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
         onSubmit={async data => {
           try {
             const formData = new FormData();
-            // const backendFieldName =
-            //   userRole === 4
-            //     ? 'finance_status'
-            //     : userRole === 5
-            //     ? 'buh_status'
-            //     : 'status';
+            formData.append('status_id', data.status);
+            formData.append('comment', data.comment?.trim() || '');
 
-            // formData.append(backendFieldName, data.status);
-            // formData.append('id', request.id);
-            // formData.append('comment', data.comment?.trim() || '');
-
-            // if (userRole === 4) await changeFinStatus(formData);
-            // if (userRole === 5) await changeBuhStatus(formData);
+            await updateBudgetingStatus(request.id, formData);
             onRefresh();
             closeModal();
             Notify.success('Статус бюджету змінено!');

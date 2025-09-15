@@ -1,8 +1,4 @@
-import {
-  approveBudgetingStatusCEO,
-  approveBudgetingStatusFin,
-  approveBudgetingStatusHd,
-} from '../../../helpers/budgetingStatuses';
+import { approveBudgetingStatus } from '../../../helpers/budgetingStatuses';
 import Form from '../../Form/Form';
 import style from './ApproveBudgetingWatchForm.module.css';
 
@@ -17,14 +13,7 @@ const ApproveBudgetingWatchForm = ({
       type: 'select',
       name: 'status',
       label: 'Статус',
-      options:
-        userRole === 4
-          ? approveBudgetingStatusFin
-          : userRole === 1
-          ? approveBudgetingStatusCEO
-          : userRole === 2
-          ? approveBudgetingStatusHd
-          : [],
+      options: approveBudgetingStatus,
       validation: { required: 'This field is required' },
       readOnly: true,
     },
@@ -60,8 +49,7 @@ const ApproveBudgetingWatchForm = ({
         title="Перегляд заявки"
         fields={fields}
         defaultValues={{
-          status:
-            userRole === 4 ? 7 : userRole === 1 ? 9 : userRole === 2 ? 5 : '',
+          status: request.status?.id,
           comment:
             userRole === 4
               ? request.finance_comment || ''

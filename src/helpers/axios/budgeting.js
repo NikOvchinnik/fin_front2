@@ -75,3 +75,11 @@ export const sendBudgeting = async id => {
     throw error;
   }
 };
+
+export const updateBudgetingStatus = async (id, payload) => {
+  try {
+    return await axios.post(`/api/update-budgeting-status/${id}`, payload);
+  } catch (error) {
+    throw error;
+  }
+};

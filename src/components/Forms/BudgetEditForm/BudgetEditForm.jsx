@@ -207,6 +207,23 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
         <Loader />
       ) : (
         <div className={style.newContainer}>
+          <ul className={style.commentsList}>
+            {request.applicant_comment && (
+              <li className={style.commentApplicant}>
+                Коментар заявника: {request.applicant_comment}
+              </li>
+            )}
+            {request.finance_comment && (
+              <li className={style.commentFinance}>
+                Коментар фінанси: {request.finance_comment}
+              </li>
+            )}
+            {request.ceo_comment && (
+              <li className={style.commentCeo}>
+                Коментар CEO: {request.ceo_comment}
+              </li>
+            )}
+          </ul>
           <Form
             title="Редагувати бюджет"
             fields={fields}
