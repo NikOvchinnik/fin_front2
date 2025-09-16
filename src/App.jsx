@@ -10,6 +10,7 @@ import {
 import LayoutSideBar from './components/LayoutSideBar/LayoutSideBar';
 
 const HomePage = lazy(() => import('./pages/HomePage/HomePage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage/ResetPasswordPage'));
 
 const App = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
@@ -39,6 +40,7 @@ const App = () => {
 
   return (
     <Routes>
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       {isAuthenticated && (
         <Route element={<LayoutSideBar />}>
           {filteredRoutes.map(({ path, element: Element }) => {

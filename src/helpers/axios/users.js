@@ -18,6 +18,15 @@ export const forgotPassword = async formData => {
   }
 };
 
+export const resetPassword = async formData => {
+  try {
+    const res = await axios.post('/api/reset_password', formData);
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getUsers = async () => {
   try {
     return await axios.get('/api/get-users');
