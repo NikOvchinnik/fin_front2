@@ -167,7 +167,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
       >
         <ConfirmModal
           title="Delete user"
-          message={`Ви впевнені, що хочете видалити юзера ${user.first_name} ${user.last_name}?`}
+          message={`Ви впевнені, що хочете видалити юзера ${user.user_first_name} ${user.user_last_name}?`}
           onConfirm={handleDelete}
           onClose={closeModalConfirm}
         />

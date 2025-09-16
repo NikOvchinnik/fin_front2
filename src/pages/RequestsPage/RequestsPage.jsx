@@ -370,12 +370,12 @@ const RequestsPage = () => {
       payment_details_plain: request.payment_details || '',
       payment_form: request.payment_form?.name || '',
       payment_form_plain: request.payment_form?.name || '',
-      applicant:
-        `${request.applicant_id?.last_name} ${request.applicant_id?.first_name}` ||
-        '',
-      applicant_plain:
-        `${request.applicant_id?.last_name} ${request.applicant_id?.first_name}` ||
-        '',
+      applicant: request.applicant
+        ? `${request.applicant.last_name} ${request.applicant.first_name}`
+        : '',
+      applicant_plain: request.applicant
+        ? `${request.applicant.last_name} ${request.applicant.first_name}`
+        : '',
       payer: request.payment_form?.payer || '',
       payer_plain: request.payment_form?.payer || '',
       beneficiary: request.project?.name || '',
