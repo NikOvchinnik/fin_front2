@@ -236,8 +236,8 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
               period: request.plan_period || '',
               week: request.week || '',
               purpose: request.purpose || '',
-              amount_opt: request.amount_optimistic || '',
-              amount_pes: request.amount_pessimistic || '',
+              amount_opt: request.amount_optimistic ?? 0,
+              amount_pes: request.amount_pessimistic ?? 0,
               currency: request.currency_id || '',
               comment: request.applicant_comment || '',
             }}

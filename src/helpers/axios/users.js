@@ -9,6 +9,15 @@ export const loginUser = async formData => {
   }
 };
 
+export const forgotPassword = async formData => {
+  try {
+    const res = await axios.post('/api/forgot_password', formData);
+    return res;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getUsers = async () => {
   try {
     return await axios.get('/api/get-users');

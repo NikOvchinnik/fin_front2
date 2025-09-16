@@ -9,6 +9,8 @@ import { Notify } from 'notiflix/build/notiflix-notify-aio';
 import { useDispatch } from 'react-redux';
 import { loginSuccess } from '../../redux/auth/slice';
 import { loginUser } from '../../helpers/axios/users';
+import ResetPassword from '../Forms/ResetPassword/ResetPassword';
+import ModalWindow from '../../components/ModalWindow/ModalWindow';
 
 const schemaYup = Yup.object().shape({
   login: Yup.string().required('*вкажіть ваш email'),
@@ -24,6 +26,7 @@ const LoginForm = () => {
   const dispatch = useDispatch();
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [showEmailTooltip, setShowEmailTooltip] = useState(false);
+  const [isModalOpen, setModalIsOpen] = useState(false);
 
   const {
     register,
@@ -50,6 +53,14 @@ const LoginForm = () => {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
     }
+  };
+
+  const openModal = () => {
+    setModalIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalIsOpen(false);
   };
 
   return (
@@ -110,13 +121,16 @@ const LoginForm = () => {
           </button>
         </form>
         <button
-          onClick={() => Notify.info('Терпіння, фіча ще не працює')}
+          onClick={openModal}
           type="button"
           className={style.formBtnReset}
         >
           Не пам'ятаю пароль
         </button>
       </div>
+      <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
+        <ResetPassword closeModal={closeModal} />
+      </ModalWindow>
     </div>
   );
 };

@@ -210,15 +210,16 @@ const RequestsPage = () => {
           case 'payment_period':
             return req.payment_period || '';
           case 'amount':
-            return req.amount || '';
+            return req.amount ?? 0;
           case 'currency':
             return req.currency?.name || '';
           case 'amount_uah':
-            return req.paid_in_uah !== null && req.paid_in_uah !== undefined
-              ? req.paid_in_uah
-              : req.amount && req.currency?.rate
-              ? req.amount * req.currency.rate
-              : '';
+            return (
+              req.paid_in_uah ??
+              (req.amount != null && req.currency?.rate != null
+                ? req.amount * req.currency.rate
+                : 0)
+            );
           case 'expense_category':
             return req.expense_category?.name || '';
           case 'payment_details':
@@ -234,9 +235,9 @@ const RequestsPage = () => {
           case 'beneficiary':
             return req.project?.name || '';
           case 'planned_balance_optimistic':
-            return req.planned_balance_optimistic ?? '';
+            return req.planned_balance_optimistic ?? 0;
           case 'planned_balance_pessimistic':
-            return req.planned_balance_pessimistic ?? '';
+            return req.planned_balance_pessimistic ?? 0;
           case 'tech':
             return req.payment_date_await
               ? req.payment_date_await.slice(0, 7)
@@ -336,22 +337,20 @@ const RequestsPage = () => {
       purpose_plain: request.purpose || '',
       payment_period: request.payment_period || '',
       payment_period_plain: request.payment_period || '',
-      amount: request.amount ? request.amount.toLocaleString('uk-UA') : '',
-      amount_plain: request.amount ?? '',
+      amount: request.amount ? request.amount.toLocaleString('uk-UA') : 0,
+      amount_plain: request.amount ?? 0,
       currency: request.currency?.name || '',
       currency_plain: request.currency?.name || '',
       amount_uah:
-        request.paid_in_uah !== null && request.paid_in_uah !== undefined
-          ? request.paid_in_uah.toLocaleString('uk-UA')
-          : request.amount && request.currency?.rate
+        request.paid_in_uah ??
+        (request.amount != null && request.currency?.rate != null
           ? (request.amount * request.currency.rate).toLocaleString('uk-UA')
-          : '',
+          : '0'),
       amount_uah_plain:
-        request.paid_in_uah !== null && request.paid_in_uah !== undefined
-          ? request.paid_in_uah
-          : request.amount && request.currency?.rate
+        request.paid_in_uah ??
+        (request.amount != null && request.currency?.rate != null
           ? request.amount * request.currency.rate
-          : '',
+          : 0),
       expense_category: request.expense_category?.name || '',
       expense_category_plain: request.expense_category?.name || '',
       payment_details: (
@@ -381,16 +380,18 @@ const RequestsPage = () => {
       payer_plain: request.payment_form?.payer || '',
       beneficiary: request.project?.name || '',
       beneficiary_plain: request.project?.name || '',
-      planned_balance_optimistic: request.planned_balance_optimistic
-        ? request.planned_balance_optimistic.toLocaleString('uk-UA')
-        : '',
-      planned_balance_optimistic_plain:
-        request.planned_balance_optimistic ?? '',
-      planned_balance_pessimistic: request.planned_balance_pessimistic
-        ? request.planned_balance_pessimistic.toLocaleString('uk-UA')
-        : '',
+      planned_balance_optimistic:
+        request.planned_balance_optimistic != null
+          ? request.planned_balance_optimistic.toLocaleString('uk-UA')
+          : '0',
+      planned_balance_optimistic_plain: request.planned_balance_optimistic ?? 0,
+
+      planned_balance_pessimistic:
+        request.planned_balance_pessimistic != null
+          ? request.planned_balance_pessimistic.toLocaleString('uk-UA')
+          : '0',
       planned_balance_pessimistic_plain:
-        request.planned_balance_pessimistic ?? '',
+        request.planned_balance_pessimistic ?? 0,
       tech: request.payment_date_await
         ? request.payment_date_await.slice(0, 7)
         : '',

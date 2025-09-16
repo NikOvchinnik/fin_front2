@@ -10,7 +10,12 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getActiveStatus, getShortStatus, getStatusStyle, statusSelectorFin } from '../../helpers/status';
+import {
+  getActiveStatus,
+  getShortStatus,
+  getStatusStyle,
+  statusSelectorFin,
+} from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
@@ -107,7 +112,7 @@ const MyRequestsPage = () => {
           case 'payment_period':
             return req.payment_period || '';
           case 'amount':
-            return req.amount || '';
+            return req.amount ?? 0;
           case 'currency':
             return req.currency || '';
           case 'status':
@@ -205,8 +210,9 @@ const MyRequestsPage = () => {
       purpose_plain: request.purpose || '',
       payment_period: request.payment_period || '',
       payment_period_plain: request.payment_period || '',
-      amount: request.amount ? request.amount.toLocaleString('uk-UA') : '',
-      amount_plain: request.amount || '',
+      amount:
+        request.amount != null ? request.amount.toLocaleString('uk-UA') : '',
+      amount_plain: request.amount ?? 0,
       currency: request.currency || '',
       currency_plain: request.currency || '',
       status: (

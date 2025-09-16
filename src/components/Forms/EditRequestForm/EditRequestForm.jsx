@@ -316,7 +316,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
               payment_date_await:
                 requestData.payment_date_await || dayjs().format('YYYY-MM-DD'),
               payment_period: requestData.payment_period || '',
-              amount: requestData.amount ?? '',
+              amount: requestData.amount ?? 0,
               currency_id: requestData.currency_id || '',
               comment: requestData.comment || '',
               files: [],
