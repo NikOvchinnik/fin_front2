@@ -122,8 +122,21 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати',
-      validation: { required: 'This field is required' },
+      label: 'Дата оплати(тільки вт. або чт.)',
+      validation: {
+        required: 'This field is required',
+        validate: value => {
+          if (!value) return "Дата обов'язкова";
+          const selected = new Date(value);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (selected < today) return 'Неможна обрати минулу дату';
+          const day = selected.getDay();
+          if (day !== 2 && day !== 4) return 'Можна обрати тільки Вт або Чт';
+          return true;
+        },
+      },
+      min: dayjs().format('YYYY-MM-DD'),
     },
     {
       type: 'autocomplete-select',

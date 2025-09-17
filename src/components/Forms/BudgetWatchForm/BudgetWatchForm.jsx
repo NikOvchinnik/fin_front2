@@ -8,7 +8,7 @@ import {
 } from '../../../helpers/axios/payments';
 import dayjs from 'dayjs';
 import Loader from '../../Loader/Loader';
-import { defaultPeriods } from '../../../helpers/periods';
+import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
 
@@ -25,22 +25,31 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     if (!period) return [];
 
     const [month, year] = period.split('.');
-    const start = dayjs(`${year}-${month}-01`);
-    const end = start.endOf('month');
+    const startOfMonth = dayjs(`${year}-${month}-01`);
+    const endOfMonth = startOfMonth.endOf('month');
 
-    let current = start.startOf('isoWeek');
     const weeks = [];
+    let currentStart = startOfMonth;
 
-    while (current.isBefore(end) || current.isSame(end, 'day')) {
-      const weekStart = current.format('YYYY-MM-DD');
-      const weekEnd = current.add(6, 'day').format('YYYY-MM-DD');
+    while (
+      currentStart.isBefore(endOfMonth) ||
+      currentStart.isSame(endOfMonth, 'day')
+    ) {
+      let weekStart = currentStart;
+      let weekEnd = currentStart.add(6 - currentStart.day() + 1, 'day');
+
+      if (weekEnd.isAfter(endOfMonth)) {
+        weekEnd = endOfMonth;
+      }
+
       weeks.push({
-        value: `${weekStart}_${weekEnd}`,
-        label: `${current.format('DD.MM')} - ${current
-          .add(6, 'day')
-          .format('DD.MM')}`,
+        value: `${weekStart.format('YYYY-MM-DD')}_${weekEnd.format(
+          'YYYY-MM-DD'
+        )}`,
+        label: `${weekStart.format('DD.MM')} - ${weekEnd.format('DD.MM')}`,
       });
-      current = current.add(7, 'day');
+
+      currentStart = weekEnd.add(1, 'day');
     }
 
     return weeks;
@@ -116,7 +125,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       type: 'select',
       name: 'period',
       label: 'Плановий період',
-      options: defaultPeriods,
+      options: generateDefaultPeriods(12),
       validation: { required: 'This field is required' },
       onChange: value => setWeeksOptions(getWeeksOfMonth(value)),
       readOnly: true,
