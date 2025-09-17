@@ -594,7 +594,7 @@ const RequestsPage = () => {
       accessorKey: 'amount_uah',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH</p>
+          <p>Сума UAH</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah')}
@@ -692,7 +692,7 @@ const RequestsPage = () => {
       accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс оптимістичний</p>
+          <p>Баланс оптимістичний (залишок)</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_optimistic')}
@@ -706,7 +706,7 @@ const RequestsPage = () => {
       accessorKey: 'planned_balance_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс песимістичний</p>
+          <p>Баланс песимістичний (залишок)</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_pessimistic')}

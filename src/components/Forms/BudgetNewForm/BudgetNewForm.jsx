@@ -8,11 +8,9 @@ import {
 } from '../../../helpers/axios/payments';
 import dayjs from 'dayjs';
 import Loader from '../../Loader/Loader';
-import { getDepartments } from '../../../helpers/axios/departments';
 import { defaultPeriods } from '../../../helpers/periods';
 import { useSelector } from 'react-redux';
 import {
-  selectUserDepartmentId,
   selectUserId,
   selectUserName,
   selectUserRole,
