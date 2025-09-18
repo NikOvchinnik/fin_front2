@@ -80,7 +80,7 @@ const ResetPasswordPage = () => {
           ) : (
             <div className={style.loginContent}>
               <NavLink to="/">
-                <img src="/logo.svg" alt="logo" className={style.logo} />
+                <img src="/logo_black.svg" alt="logo" className={style.logo} />
               </NavLink>
               <form
                 onSubmit={handleSubmit(onSubmit)}

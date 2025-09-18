@@ -87,7 +87,7 @@ const SideBar = () => {
         <div className={style.logoContainer}>
           <NavLink to="/">
             <img
-              src="/logo.svg"
+              src="/logo_white.svg"
               alt="logo"
               className={`${style.logo} ${
                 isCollapsed ? style.logoCollapsed : ''

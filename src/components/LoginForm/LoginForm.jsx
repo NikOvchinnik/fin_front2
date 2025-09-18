@@ -67,7 +67,7 @@ const LoginForm = () => {
     <div className={style.loginContainer}>
       <div className={style.loginContent}>
         <NavLink to="/">
-          <img src="/logo.svg" alt="logo" className={style.logo} />
+          <img src="/logo_black.svg" alt="logo" className={style.logo} />
         </NavLink>
         <form onSubmit={handleSubmit(onSubmit)} className={style.formContainer}>
           <h2 className={style.formTitle}>Вхід</h2>
