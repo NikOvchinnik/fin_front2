@@ -55,7 +55,7 @@ const BudgetingPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
   const [visibleColumns, setVisibleColumns] = useState(() => {
-    const saved = localStorage.getItem('visibleColumns');
+    const saved = localStorage.getItem('visibleBudgetColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
@@ -150,7 +150,7 @@ const BudgetingPage = () => {
         }
         if (updated.length === columns.length) updated = 'All';
       }
-      localStorage.setItem('visibleColumns', JSON.stringify(updated));
+      localStorage.setItem('visibleBudgetColumns', JSON.stringify(updated));
       return updated;
     });
   };
