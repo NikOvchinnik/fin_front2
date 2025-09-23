@@ -24,6 +24,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
+import { exportToCSV } from '../../helpers/exportToCSV';
 
 const MyRefundsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -428,47 +429,6 @@ const MyRefundsPage = () => {
     setModalSendIsOpen(false);
   };
 
-  const exportToCSV = () => {
-    if (!requestsRows || requestsRows.length === 0) return;
-
-    const columnsForExport = columns;
-
-    const headers = columnsForExport.map(col => {
-      if (typeof col.header === 'string') return col.header;
-      if (col.header.props && col.header.props.children) {
-        const p = col.header.props.children.find?.(c => c?.type === 'p');
-        if (p && p.props && typeof p.props.children === 'string')
-          return p.props.children;
-        return col.accessorKey;
-      }
-      return col.accessorKey;
-    });
-
-    const rows = requestsRows.map(row =>
-      columnsForExport.map(col => {
-        const plainKey = `${col.accessorKey}_plain`;
-        const value = row[plainKey] ?? '';
-        return `"${String(value).replace(/"/g, '""')}"`;
-      })
-    );
-
-    const csvContent = [headers.map(h => `"${h}"`).join(',')]
-      .concat(rows.map(r => r.join(',')))
-      .join('\r\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute(
-      'download',
-      `my_refunds_${dayjs().format('YYYY-MM-DD')}.csv`
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
   const handleSend = async () => {
     try {
       await sendRequest(selectedRequest.id);
@@ -501,7 +461,16 @@ const MyRefundsPage = () => {
                 <button className={style.newBtn} onClick={openModal}>
                   Заявка на повернення <span>+</span>
                 </button>
-                <button className={style.csvBtn} onClick={exportToCSV}>
+                <button
+                  className={style.csvBtn}
+                  onClick={() =>
+                    exportToCSV({
+                      rows: requestsRows,
+                      columns: filteredColumns,
+                      filePrefix: 'my_refunds',
+                    })
+                  }
+                >
                   Експорт у CSV
                 </button>
               </div>
