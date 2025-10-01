@@ -31,28 +31,57 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     const weeks = [];
     let currentStart = startOfMonth;
 
+    if (currentStart.day() !== 1) {
+      const offset = currentStart.day() === 0 ? 6 : currentStart.day() - 1;
+      currentStart = currentStart.subtract(offset, 'day');
+      if (currentStart.isBefore(startOfMonth)) currentStart = startOfMonth;
+    }
+
     while (
       currentStart.isBefore(endOfMonth) ||
       currentStart.isSame(endOfMonth, 'day')
     ) {
       let weekStart = currentStart;
-      let weekEnd = currentStart.add(6 - currentStart.day() + 1, 'day');
+      let weekEnd = weekStart.add(6 - weekStart.day() + 1, 'day');
+      if (weekEnd.isAfter(endOfMonth)) weekEnd = endOfMonth;
 
-      if (weekEnd.isAfter(endOfMonth)) {
-        weekEnd = endOfMonth;
-      }
-
-      weeks.push({
-        value: `${weekStart.format('YYYY-MM-DD')}_${weekEnd.format(
-          'YYYY-MM-DD'
-        )}`,
-        label: `${weekStart.format('DD.MM')} - ${weekEnd.format('DD.MM')}`,
-      });
+      weeks.push({ start: weekStart, end: weekEnd });
 
       currentStart = weekEnd.add(1, 'day');
     }
 
-    return weeks;
+    const hasTueOrThu = week => {
+      for (
+        let d = week.start;
+        d.isBefore(week.end) || d.isSame(week.end, 'day');
+        d = d.add(1, 'day')
+      ) {
+        const dow = d.day();
+        if (dow === 2 || dow === 4) return true;
+      }
+      return false;
+    };
+
+    const adjusted = [];
+    for (let i = 0; i < weeks.length; i++) {
+      const week = weeks[i];
+      if (!hasTueOrThu(week)) {
+        if (i > 0) {
+          adjusted[adjusted.length - 1].end = week.end;
+        } else if (weeks[i + 1]) {
+          weeks[i + 1].start = week.start;
+        }
+      } else {
+        adjusted.push(week);
+      }
+    }
+
+    return adjusted.map(week => ({
+      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
+        'YYYY-MM-DD'
+      )}`,
+      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
+    }));
   };
 
   const defaultWeeks = getWeeksOfMonth(request.plan_period || defaultPeriod);
