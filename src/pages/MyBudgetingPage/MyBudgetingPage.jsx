@@ -96,14 +96,6 @@ const MyBudgetingPage = () => {
     });
   };
 
-  const handleSearchChange = event => {
-    const { name, value } = event.target;
-    setFilters(prevFilters => ({
-      ...prevFilters,
-      [name]: value.toLowerCase().trim(),
-    }));
-  };
-
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
       let updated;
@@ -267,12 +259,18 @@ const MyBudgetingPage = () => {
       purpose_plain: request.purpose || '',
       amount_optimistic:
         request.amount_optimistic != null
-          ? request.amount_optimistic.toLocaleString('uk-UA')
+          ? request.amount_optimistic.toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
           : '',
       amount_optimistic_plain: request.amount_optimistic ?? 0,
       amount_pessimistic:
         request.amount_pessimistic != null
-          ? request.amount_pessimistic.toLocaleString('uk-UA')
+          ? request.amount_pessimistic.toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
           : '',
       amount_pessimistic_plain: request.amount_pessimistic ?? 0,
       currency: request.currency || '',
@@ -283,7 +281,10 @@ const MyBudgetingPage = () => {
           ? (
               request.amount_optimistic *
               (request.currency_rate_at_approval ?? request.currency_rate)
-            ).toLocaleString('uk-UA')
+            ).toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
           : '',
       amount_uah_optimistic_plain:
         request.amount_optimistic != null &&
@@ -298,7 +299,10 @@ const MyBudgetingPage = () => {
           ? (
               request.amount_pessimistic *
               (request.currency_rate_at_approval ?? request.currency_rate)
-            ).toLocaleString('uk-UA')
+            ).toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
           : '',
       amount_uah_pessimistic_plain:
         request.amount_pessimistic != null &&
@@ -368,6 +372,51 @@ const MyBudgetingPage = () => {
       ),
     }));
   }, [dataRequests, activeStatus, filters, sortConfig]);
+
+  const totals = useMemo(() => {
+    if (!requestsRows.length) return null;
+
+    const totalsByCurrencyOptimistic = requestsRows.reduce((acc, row) => {
+      const currency = row.currency_plain || 'N/A';
+      const amount = row.amount_optimistic_plain || 0;
+
+      if (!acc[currency]) {
+        acc[currency] = 0;
+      }
+      acc[currency] += amount;
+
+      return acc;
+    }, {});
+
+    const totalsByCurrencyPessimistic = requestsRows.reduce((acc, row) => {
+      const currency = row.currency_plain || 'N/A';
+      const amount = row.amount_pessimistic_plain || 0;
+
+      if (!acc[currency]) {
+        acc[currency] = 0;
+      }
+      acc[currency] += amount;
+
+      return acc;
+    }, {});
+
+    const totalUAHOptimistic = requestsRows.reduce(
+      (acc, row) => acc + (row.amount_uah_optimistic_plain || 0),
+      0
+    );
+
+    const totalUAHPessimistic = requestsRows.reduce(
+      (acc, row) => acc + (row.amount_uah_pessimistic_plain || 0),
+      0
+    );
+
+    return {
+      totalsByCurrencyOptimistic,
+      totalsByCurrencyPessimistic,
+      totalUAHOptimistic,
+      totalUAHPessimistic,
+    };
+  }, [requestsRows]);
 
   const columns = [
     {
@@ -669,16 +718,83 @@ const MyBudgetingPage = () => {
               </p>
             </div>
           ) : (
-            <Table
-              data={requestsRows}
-              columns={filteredColumns}
-              styles="analyticTable"
-              fixedFirstColumn={isMobile ? true : false}
-              visibleColumns={25}
-              visibleColumnsMobile={2}
-              rowsPerPage={25}
-              enableHorizontalScroll={isMobile ? false : true}
-            />
+            <>
+              <Table
+                data={requestsRows}
+                columns={filteredColumns}
+                styles="analyticTable"
+                fixedFirstColumn={isMobile ? true : false}
+                visibleColumns={25}
+                visibleColumnsMobile={2}
+                rowsPerPage={25}
+                enableHorizontalScroll={isMobile ? false : true}
+              />
+              {totals && (
+                <div className={style.totalsContainer}>
+                  <div className={style.totalContainer}>
+                    <p className={style.totalTitle}>
+                      Всього валюти (Оптимістична):
+                    </p>
+                    <ul className={style.totalList}>
+                      {Object.entries(totals.totalsByCurrencyOptimistic).map(
+                        ([cur, sum]) => (
+                          <li key={cur} className={style.totalText}>
+                            <span>{cur}:</span>{' '}
+                            {sum.toLocaleString('uk-UA', {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            })}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className={style.totalContainer}>
+                    <p className={style.totalTitle}>
+                      Всього валюти (Песимістична):
+                    </p>
+                    <ul className={style.totalList}>
+                      {Object.entries(totals.totalsByCurrencyPessimistic).map(
+                        ([cur, sum]) => (
+                          <li key={cur} className={style.totalText}>
+                            <span>{cur}:</span>{' '}
+                            {sum.toLocaleString('uk-UA', {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            })}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className={style.totalContainer}>
+                    <p className={style.totalTitle}>
+                      Всього в UAH (Оптимістична):
+                    </p>
+                    <p className={style.totalText}>
+                      {totals.totalUAHOptimistic.toLocaleString('uk-UA', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+
+                  <div className={style.totalContainer}>
+                    <p className={style.totalTitle}>
+                      Всього в UAH (Песимістична):
+                    </p>
+                    <p className={style.totalText}>
+                      {totals.totalUAHPessimistic.toLocaleString('uk-UA', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           <ModalWindow
             isModalOpen={isModalColumnsOpen}

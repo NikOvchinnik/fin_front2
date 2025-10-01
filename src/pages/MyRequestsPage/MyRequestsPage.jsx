@@ -261,18 +261,31 @@ const MyRequestsPage = () => {
       payment_period: request.payment_period || '',
       payment_period_plain: request.payment_period || '',
       amount:
-        request.amount != null ? request.amount.toLocaleString('uk-UA') : '',
+        request.amount != null
+          ? request.amount.toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
+          : '',
       amount_plain: request.amount ?? 0,
       amount_uah:
-        request.paid_in_uah ??
-        (request.amount != null && request.currency?.rate != null
-          ? (request.amount * request.currency.rate).toLocaleString('uk-UA')
-          : '0'),
+        request.paid_in_uah != null
+          ? request.paid_in_uah.toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
+          : request.amount != null && request.currency?.rate != null
+          ? (request.amount * request.currency.rate).toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
+          : '',
       amount_uah_plain:
-        request.paid_in_uah ??
-        (request.amount != null && request.currency?.rate != null
+        request.paid_in_uah != null
+          ? request.paid_in_uah
+          : request.amount != null && request.currency?.rate != null
           ? request.amount * request.currency.rate
-          : 0),
+          : 0,
       currency: request.currency?.name || '',
       currency_plain: request.currency?.name || '',
       expense_category: request.expense_category || '',
@@ -296,13 +309,19 @@ const MyRequestsPage = () => {
       payment_form_plain: request.payment_form || '',
       planned_balance_optimistic:
         request.planned_balance_optimistic != null
-          ? request.planned_balance_optimistic.toLocaleString('uk-UA')
+          ? request.planned_balance_optimistic.toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
           : '0',
       planned_balance_optimistic_plain: request.planned_balance_optimistic ?? 0,
 
       planned_balance_pessimistic:
         request.planned_balance_pessimistic != null
-          ? request.planned_balance_pessimistic.toLocaleString('uk-UA')
+          ? request.planned_balance_pessimistic.toLocaleString('uk-UA', {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 2,
+            })
           : '0',
       planned_balance_pessimistic_plain:
         request.planned_balance_pessimistic ?? 0,
@@ -384,6 +403,29 @@ const MyRequestsPage = () => {
       ),
     }));
   }, [dataRequests, activeStatus, sortConfig]);
+
+  const totals = useMemo(() => {
+    if (!requestsRows.length) return null;
+
+    const totalsByCurrency = requestsRows.reduce((acc, row) => {
+      const currency = row.currency_plain || 'N/A';
+      const amount = row.amount_plain || 0;
+
+      if (!acc[currency]) {
+        acc[currency] = 0;
+      }
+      acc[currency] += amount;
+
+      return acc;
+    }, {});
+
+    const totalUAH = requestsRows.reduce(
+      (acc, row) => acc + (row.amount_uah_plain || 0),
+      0
+    );
+
+    return { totalsByCurrency, totalUAH };
+  }, [requestsRows]);
 
   const columns = [
     {
@@ -726,16 +768,47 @@ const MyRequestsPage = () => {
               </p>
             </div>
           ) : (
-            <Table
-              data={requestsRows}
-              columns={filteredColumns}
-              styles="analyticTable"
-              fixedFirstColumn={isMobile ? true : false}
-              visibleColumns={25}
-              visibleColumnsMobile={2}
-              rowsPerPage={25}
-              enableHorizontalScroll={isMobile ? false : true}
-            />
+            <>
+              <Table
+                data={requestsRows}
+                columns={filteredColumns}
+                styles="analyticTable"
+                fixedFirstColumn={isMobile ? true : false}
+                visibleColumns={25}
+                visibleColumnsMobile={2}
+                rowsPerPage={25}
+                enableHorizontalScroll={isMobile ? false : true}
+              />
+              {totals && (
+                <div className={style.totalsContainer}>
+                  <div className={style.totalContainer}>
+                    <p className={style.totalTitle}>Всього валюти:</p>
+                    <ul className={style.totalList}>
+                      {Object.entries(totals.totalsByCurrency).map(
+                        ([cur, sum]) => (
+                          <li key={cur} className={style.totalText}>
+                            <span>{cur}:</span>{' '}
+                            {sum.toLocaleString('uk-UA', {
+                              minimumFractionDigits: 0,
+                              maximumFractionDigits: 2,
+                            })}
+                          </li>
+                        )
+                      )}
+                    </ul>
+                  </div>
+                  <div className={style.totalContainer}>
+                    <p className={style.totalTitle}>Всього сума в UAH:</p>
+                    <p className={style.totalText}>
+                      {totals.totalUAH.toLocaleString('uk-UA', {
+                        minimumFractionDigits: 0,
+                        maximumFractionDigits: 2,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </>
           )}
           <ModalWindow
             isModalOpen={isModalEditOpen}

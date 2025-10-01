@@ -195,7 +195,7 @@
   color: var(--white);
 }
 
-.noDataText{
+.noDataText {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -203,7 +203,7 @@
   text-align: center;
 }
 
-.linkContainer{
+.linkContainer {
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -213,6 +213,36 @@
 .actionContainer {
   display: flex;
   gap: 8px;
+}
+
+.totalsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.totalContainer {
+  display: flex;
+  gap: 30px;
+}
+
+.totalTitle {
+  font-weight: 700;
+}
+
+.totalList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.totalText {
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  margin-top: 3px;
 }
 
 @media screen and (min-width: 1024px) {
@@ -231,5 +261,10 @@
   .formsContainer {
     flex-direction: row;
     gap: 20px;
+  }
+
+  .totalsContainer {
+    flex-direction: row;
+    gap: 50px;
   }
 }
