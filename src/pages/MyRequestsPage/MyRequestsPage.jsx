@@ -25,6 +25,7 @@ import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
+import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -39,9 +40,14 @@ const MyRequestsPage = () => {
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
+  const [visibleColumns, setVisibleColumns] = useState(() => {
+    const saved = localStorage.getItem('visibleMyRequestsColumns');
+    return saved ? JSON.parse(saved) : 'All';
+  });
   const { userId } = useParams();
   const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
@@ -86,6 +92,26 @@ const MyRequestsPage = () => {
     });
   };
 
+  const handleColumnToggle = accessorKey => {
+    setVisibleColumns(prev => {
+      let updated;
+      if (prev === 'All') {
+        updated = columns
+          .map(c => c.accessorKey)
+          .filter(key => key !== accessorKey);
+      } else {
+        if (prev.includes(accessorKey)) {
+          updated = prev.filter(key => key !== accessorKey);
+        } else {
+          updated = [...prev, accessorKey];
+        }
+        if (updated.length === columns.length) updated = 'All';
+      }
+      localStorage.setItem('visibleMyRequestsColumns', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const requestsRows = useMemo(() => {
     if (!dataRequests) return [];
 
@@ -106,16 +132,37 @@ const MyRequestsPage = () => {
             return req.created_at || '';
           case 'payment_date_await':
             return req.payment_date_await || '';
+          case 'project':
+            return req.project || '';
           case 'contractor':
             return req.contractor || '';
           case 'purpose':
             return req.purpose || '';
           case 'payment_period':
             return req.payment_period || '';
+          case 'currency':
+            return req.currency?.name || '';
           case 'amount':
             return req.amount ?? 0;
+          case 'amount_uah':
+            return (
+              req.paid_in_uah ??
+              (req.amount != null && req.currency?.rate != null
+                ? req.amount * req.currency.rate
+                : 0)
+            );
+          case 'expense_category':
+            return req.expense_category || '';
+          case 'payment_details':
+            return req.payment_details || '';
           case 'currency':
-            return req.currency || '';
+            return req.currency?.name || '';
+          case 'payment_form':
+            return req.payment_form || '';
+          case 'planned_balance_optimistic':
+            return req.planned_balance_optimistic ?? 0;
+          case 'planned_balance_pessimistic':
+            return req.planned_balance_pessimistic ?? 0;
           case 'status':
             return req.status || '';
           default:
@@ -201,6 +248,8 @@ const MyRequestsPage = () => {
         </p>
       ),
       payment_date_await_plain: request.payment_date_await || '',
+      project: request.project || '',
+      project_plain: request.project || '',
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -214,8 +263,64 @@ const MyRequestsPage = () => {
       amount:
         request.amount != null ? request.amount.toLocaleString('uk-UA') : '',
       amount_plain: request.amount ?? 0,
-      currency: request.currency || '',
-      currency_plain: request.currency || '',
+      amount_uah:
+        request.paid_in_uah ??
+        (request.amount != null && request.currency?.rate != null
+          ? (request.amount * request.currency.rate).toLocaleString('uk-UA')
+          : '0'),
+      amount_uah_plain:
+        request.paid_in_uah ??
+        (request.amount != null && request.currency?.rate != null
+          ? request.amount * request.currency.rate
+          : 0),
+      currency: request.currency?.name || '',
+      currency_plain: request.currency?.name || '',
+      expense_category: request.expense_category || '',
+      expense_category_plain: request.expense_category || '',
+      payment_details: (
+        <p className={style.breakText}>
+          <span
+            className={style.copyText}
+            onClick={() => {
+              navigator.clipboard.writeText(request.payment_details || '');
+              Notify.success('Текст скопійовано!');
+            }}
+          >
+            <Icon id="copy" className={style.sortIcon} />
+          </span>
+          <ExpandableText text={request.payment_details || ''} limit={20} />
+        </p>
+      ),
+      payment_details_plain: request.payment_details || '',
+      payment_form: request.payment_form || '',
+      payment_form_plain: request.payment_form || '',
+      planned_balance_optimistic:
+        request.planned_balance_optimistic != null
+          ? request.planned_balance_optimistic.toLocaleString('uk-UA')
+          : '0',
+      planned_balance_optimistic_plain: request.planned_balance_optimistic ?? 0,
+
+      planned_balance_pessimistic:
+        request.planned_balance_pessimistic != null
+          ? request.planned_balance_pessimistic.toLocaleString('uk-UA')
+          : '0',
+      planned_balance_pessimistic_plain:
+        request.planned_balance_pessimistic ?? 0,
+      files: (
+        <div className={style.linkContainer}>
+          {request.files?.map((file, index) => (
+            <a
+              key={file.id || index}
+              href={file.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Link {index + 1}
+            </a>
+          ))}
+        </div>
+      ),
+      files_plain: request.files?.map(file => file.file_url) || '',
       status: (
         <span
           style={{
@@ -310,6 +415,34 @@ const MyRequestsPage = () => {
       ),
     },
     {
+      accessorKey: 'project',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Підрозділ</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('project')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'payment_form',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Форма оплати</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('payment_form')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
@@ -317,6 +450,20 @@ const MyRequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('contractor')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'payment_details',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Реквізити</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('payment_details')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -380,6 +527,66 @@ const MyRequestsPage = () => {
       ),
     },
     {
+      accessorKey: 'amount_uah',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Сума UAH</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('amount_uah')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'expense_category',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Стаття витрат</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('expense_category')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'planned_balance_optimistic',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Баланс оптимістичний (залишок)</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('planned_balance_optimistic')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'planned_balance_pessimistic',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Баланс песимістичний (залишок)</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('planned_balance_pessimistic')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'files',
+      header: 'Файли',
+    },
+    {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
@@ -398,6 +605,11 @@ const MyRequestsPage = () => {
       header: 'Дія',
     },
   ];
+
+  const filteredColumns = useMemo(() => {
+    if (visibleColumns === 'All') return columns;
+    return columns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [columns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -427,6 +639,14 @@ const MyRequestsPage = () => {
 
   const closeModalConfirm = () => {
     setModalSendIsOpen(false);
+  };
+
+  const openModalColumns = () => {
+    setModalColumnsIsOpen(true);
+  };
+
+  const closeModalColumns = () => {
+    setModalColumnsIsOpen(false);
   };
 
   const handleSend = async () => {
@@ -489,6 +709,12 @@ const MyRequestsPage = () => {
                 </li>
               ))}
             </ul>
+            <div>
+              <button className={style.filterBtn} onClick={openModalColumns}>
+                <Icon id="filter_list" className={style.filterIcon} />
+                Фільтр колонок
+              </button>
+            </div>
           </div>
           {loadingTable ? (
             <Loader />
@@ -502,7 +728,7 @@ const MyRequestsPage = () => {
           ) : (
             <Table
               data={requestsRows}
-              columns={columns}
+              columns={filteredColumns}
               styles="analyticTable"
               fixedFirstColumn={isMobile ? true : false}
               visibleColumns={25}
@@ -549,6 +775,17 @@ const MyRequestsPage = () => {
               message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalColumnsOpen}
+            onCloseModal={closeModalColumns}
+          >
+            <ModalColumnsForm
+              columns={columns}
+              closeModal={closeModalColumns}
+              visibleColumns={visibleColumns}
+              handleColumnToggle={handleColumnToggle}
             />
           </ModalWindow>
         </section>

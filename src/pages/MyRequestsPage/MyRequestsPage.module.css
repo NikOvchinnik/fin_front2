@@ -193,6 +193,33 @@
   gap: 12px;
 }
 
+.filterBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: #333333;
+  color: #333333;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--button);
+}
+
 @media screen and (min-width: 1024px) {
   .mainContainer {
     gap: 24px;

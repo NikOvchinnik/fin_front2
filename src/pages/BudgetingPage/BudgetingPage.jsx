@@ -562,20 +562,6 @@ const BudgetingPage = () => {
       ),
     },
     {
-      accessorKey: 'applicant',
-      header: (
-        <div className={style.sortContainer}>
-          <p>Заявник</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('applicant')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
@@ -583,6 +569,20 @@ const BudgetingPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'applicant',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Заявник</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('applicant')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>

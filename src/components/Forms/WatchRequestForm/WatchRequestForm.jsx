@@ -221,7 +221,7 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
             request.payment_date_await || dayjs().format('YYYY-MM-DD'),
           payment_period: request.payment_period || '',
           amount: request.amount ?? 0,
-          currency_id: request.currency_id || '',
+          currency_id: request.currency?.id || '',
           comment: request.comment || '',
         }}
       />

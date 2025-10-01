@@ -522,6 +522,20 @@ const RequestsPage = () => {
       ),
     },
     {
+      accessorKey: 'payment_form',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Форма оплати</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('payment_form')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
@@ -529,6 +543,20 @@ const RequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('contractor')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'payment_details',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Реквізити</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('payment_details')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -627,34 +655,6 @@ const RequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('applicant')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'payment_details',
-      header: (
-        <div className={style.sortContainer}>
-          <p>Реквізити</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('payment_details')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'payment_form',
-      header: (
-        <div className={style.sortContainer}>
-          <p>Форма оплати</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('payment_form')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
