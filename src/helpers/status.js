@@ -6,9 +6,13 @@ export const getStatusStyle = status => {
       return { color: '#c79a1b' };
     case 'Передано на оплату':
       return { color: '#378a9e' };
-    case 'Сплачено':
+    case 'Фінанси: Сплачено':
       return { color: '#6b9429' };
-    case 'Сплачено і очікуються документи від контрагента після оплати':
+    case 'Фінанси: Сплачено, очікуються документи':
+      return { color: '#6b9429' };
+    case 'Бухгалтер: Сплачено':
+      return { color: '#6b9429' };
+    case 'Бухгалтер: Сплачено, очікуються документи':
       return { color: '#6b9429' };
     case 'Потребує виправлень':
       return { color: '#c74736' };
@@ -54,16 +58,16 @@ export const approveStatus = [
     label: 'Потребує виправлень',
   },
   { value: '4', label: 'Передано на оплату' },
-  { value: '5', label: 'Сплачено' },
+  { value: '5', label: 'Бухгалтер: Сплачено' },
   {
     value: '6',
-    label: 'Сплачено і очікуються документи від контрагента',
+    label: 'Бухгалтер: Сплачено, очікуються документи',
   },
-  { value: '14', label: 'Скасовано фінансами' },
-  { value: '20', label: 'Скасовано бухгалтером' },
+  { value: '14', label: 'Фінанси: Скасовано' },
+  { value: '20', label: 'Бухгалтер: Скасовано' },
+  { value: '21', label: 'Фінанси: Сплачено' },
+  { value: '22', label: 'Фінанси: Сплачено, очікуються документи' },
 ];
-
-
 
 export const approveStatusFin = [
   { value: '4', label: 'Передано на оплату' },
@@ -71,43 +75,59 @@ export const approveStatusFin = [
     value: '3',
     label: 'Потребує виправлень',
   },
-  { value: '14', label: 'Скасовано фінансами' },
+  {
+    value: '21',
+    label: 'Фінанси: Сплачено',
+  },
+  {
+    value: '22',
+    label: 'Фінанси: Сплачено, очікуються документи',
+  },
+  { value: '14', label: 'Фінанси: Скасовано' },
 ];
 
 export const approveStatusBuh = [
-  { value: '5', label: 'Сплачено' },
+  { value: '5', label: 'Бухгалтер: Сплачено' },
   {
     value: '6',
-    label: 'Сплачено і очікуються документи від контрагента',
+    label: 'Бухгалтер: Сплачено, очікуються документи',
   },
   {
     value: '3',
     label: 'Потребує виправлень',
   },
-  { value: '20', label: 'Скасовано бухгалтером' },
+  { value: '20', label: 'Бухгалтер: Скасовано' },
 ];
 
 export const getShortStatus = statusName => {
   if (!statusName) return '';
-  if (
-    statusName ===
-    'Сплачено і очікуються документи від контрагента після оплати'
-  )
-    return 'Сплачено, чекаємо документи';
+  // if (
+  //   statusName ===
+  //   'Сплачено і очікуються документи від контрагента після оплати'
+  // )
+  //   return 'Сплачено, чекаємо документи';
   return statusName;
 };
 
 export const getActiveStatus = statusName => {
   if (!statusName) return '';
-  if (
-    statusName ===
-    'Сплачено і очікуються документи від контрагента після оплати'
-  )
+
+  const paidStatuses = [
+    'Фінанси: Сплачено',
+    'Фінанси: Сплачено, очікуються документи',
+    'Бухгалтер: Сплачено',
+    'Бухгалтер: Сплачено, очікуються документи',
+  ];
+
+  const canceledStatuses = ['Фінанси: Скасовано', 'Бухгалтер: Скасовано'];
+
+  if (paidStatuses.includes(statusName)) {
     return 'Сплачено';
-    if (
-      statusName === 'Фінанси: Скасовано' ||
-      statusName === 'Бухгалтер: Скасовано'
-    )
-      return 'Скасовано';
+  }
+
+  if (canceledStatuses.includes(statusName)) {
+    return 'Скасовано';
+  }
+
   return statusName;
 };
