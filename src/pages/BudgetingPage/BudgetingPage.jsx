@@ -841,66 +841,69 @@ const BudgetingPage = () => {
               />
               {totals && (
                 <div className={style.totalsContainer}>
-                  <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>
-                      Всього валюти (Оптимістична):
-                    </p>
-                    <ul className={style.totalList}>
-                      {Object.entries(totals.totalsByCurrencyOptimistic).map(
-                        ([cur, sum]) => (
-                          <li key={cur} className={style.totalText}>
-                            <span>{cur}:</span>{' '}
-                            {sum.toLocaleString('uk-UA', {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 2,
-                            })}
-                          </li>
-                        )
-                      )}
-                    </ul>
-                  </div>
+                  <div className={style.currencyContainer}>
+                    <div className={style.totalContainer}>
+                      <p className={style.totalTitle}>
+                        Всього валюти (Оптимістична):
+                      </p>
+                      <ul className={style.totalList}>
+                        {Object.entries(totals.totalsByCurrencyOptimistic).map(
+                          ([cur, sum]) => (
+                            <li key={cur} className={style.totalText}>
+                              <span>{cur}:</span>{' '}
+                              {sum.toLocaleString('uk-UA', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })}
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
 
-                  <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>
-                      Всього валюти (Песимістична):
-                    </p>
-                    <ul className={style.totalList}>
-                      {Object.entries(totals.totalsByCurrencyPessimistic).map(
-                        ([cur, sum]) => (
-                          <li key={cur} className={style.totalText}>
-                            <span>{cur}:</span>{' '}
-                            {sum.toLocaleString('uk-UA', {
-                              minimumFractionDigits: 0,
-                              maximumFractionDigits: 2,
-                            })}
-                          </li>
-                        )
-                      )}
-                    </ul>
+                    <div className={style.totalContainer}>
+                      <p className={style.totalTitle}>
+                        Всього валюти (Песимістична):
+                      </p>
+                      <ul className={style.totalList}>
+                        {Object.entries(totals.totalsByCurrencyPessimistic).map(
+                          ([cur, sum]) => (
+                            <li key={cur} className={style.totalText}>
+                              <span>{cur}:</span>{' '}
+                              {sum.toLocaleString('uk-UA', {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 2,
+                              })}
+                            </li>
+                          )
+                        )}
+                      </ul>
+                    </div>
                   </div>
+                  <div className={style.currencyContainer}>
+                    <div className={style.totalContainer}>
+                      <p className={style.totalTitle}>
+                        Всього в UAH (Оптимістична):
+                      </p>
+                      <p className={style.totalText}>
+                        {totals.totalUAHOptimistic.toLocaleString('uk-UA', {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
 
-                  <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>
-                      Всього в UAH (Оптимістична):
-                    </p>
-                    <p className={style.totalText}>
-                      {totals.totalUAHOptimistic.toLocaleString('uk-UA', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
-                  </div>
-
-                  <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>
-                      Всього в UAH (Песимістична):
-                    </p>
-                    <p className={style.totalText}>
-                      {totals.totalUAHPessimistic.toLocaleString('uk-UA', {
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 2,
-                      })}
-                    </p>
+                    <div className={style.totalContainer}>
+                      <p className={style.totalTitle}>
+                        Всього в UAH (Песимістична):
+                      </p>
+                      <p className={style.totalText}>
+                        {totals.totalUAHPessimistic.toLocaleString('uk-UA', {
+                          minimumFractionDigits: 0,
+                          maximumFractionDigits: 2,
+                        })}
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}

@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import {
   changeBuhStatus,
   changeFinStatus,
@@ -23,6 +24,23 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
       validation: { required: 'This field is required' },
     },
     {
+      type: 'date',
+      name: 'payment_date_await',
+      label: 'Дата оплати',
+      validation: {
+        required: 'This field is required',
+        validate: value => {
+          if (!value) return "Дата обов'язкова";
+          const selected = new Date(value);
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          if (selected < today) return 'Неможна обрати минулу дату';
+          return true;
+        },
+      },
+      min: dayjs().format('YYYY-MM-DD'),
+    },
+    {
       type: 'textarea',
       name: 'comment',
       label: 'Коментар',
@@ -46,17 +64,18 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
         buttons={buttons}
         onSubmit={async data => {
           try {
-               const formData = new FormData();
-               const backendFieldName =
-                 userRole === 4
-                   ? 'finance_status'
-                   : userRole === 5
-                   ? 'buh_status'
-                   : 'status';
+            const formData = new FormData();
+            const backendFieldName =
+              userRole === 4
+                ? 'finance_status'
+                : userRole === 5
+                ? 'buh_status'
+                : 'status';
 
-               formData.append(backendFieldName, data.status);
-               formData.append('id', request.id);
-               formData.append('comment', data.comment?.trim() || '');
+            formData.append(backendFieldName, data.status);
+            formData.append('id', request.id);
+            formData.append('comment', data.comment?.trim() || '');
+            formData.append('payment_date_await', data.payment_date_await);
 
             if (userRole === 4) await changeFinStatus(formData);
             if (userRole === 5) await changeBuhStatus(formData);
@@ -71,6 +90,8 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
         defaultValues={{
           status: userRole === 4 ? '4' : userRole === 5 ? '5' : '',
           comment: request.comment || '',
+          payment_date_await:
+            request.payment_date_await || dayjs().format('YYYY-MM-DD'),
         }}
       />
     </div>

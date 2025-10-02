@@ -261,13 +261,18 @@
 .totalsContainer {
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
   gap: 20px;
+}
+
+.currencyContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .totalContainer {
   display: flex;
-  gap: 30px;
+  gap: 15px;
 }
 
 .totalTitle {
