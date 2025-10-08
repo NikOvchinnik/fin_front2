@@ -27,18 +27,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
       type: 'date',
       name: 'payment_date_await',
       label: 'Дата оплати',
-      validation: {
-        required: 'This field is required',
-        validate: value => {
-          if (!value) return "Дата обов'язкова";
-          const selected = new Date(value);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          if (selected < today) return 'Неможна обрати минулу дату';
-          return true;
-        },
-      },
-      min: dayjs().format('YYYY-MM-DD'),
+      validation: { required: 'This field is required' },
     },
     {
       type: 'textarea',
