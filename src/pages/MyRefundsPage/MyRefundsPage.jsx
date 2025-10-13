@@ -26,6 +26,7 @@ import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
+import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 
 const MyRefundsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -39,6 +40,7 @@ const MyRefundsPage = () => {
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
@@ -61,7 +63,6 @@ const MyRefundsPage = () => {
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
       });
-
       setDataRequests(requests);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
@@ -398,6 +399,24 @@ const MyRefundsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
+          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
+            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+            <button
+              className={style.sendBtn}
+              onClick={() => {
+                if (
+                  request.status ===
+                    'Фінанси: Сплачено, очікуються документи' ||
+                  request.status === 'Бухгалтер: Сплачено, очікуються документи'
+                ) {
+                  setSelectedRequest(request);
+                  setModalSendFilesIsOpen(true);
+                }
+              }}
+            >
+              <Icon id="send-files" className={style.editIcon} />
+            </button>
+          )}
         </div>
       ),
     }));
@@ -682,6 +701,10 @@ const MyRefundsPage = () => {
     setModalSendIsOpen(false);
   };
 
+  const closeModalSendFiles = () => {
+    setModalSendFilesIsOpen(false);
+  };
+
   const openModalColumns = () => {
     setModalColumnsIsOpen(true);
   };
@@ -858,6 +881,18 @@ const MyRefundsPage = () => {
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalSendFilesOpen}
+            onCloseModal={closeModalSendFiles}
+          >
+            <SendFilesForm
+              request={selectedRequest}
+              closeModal={closeModalSendFiles}
+              onRefresh={fetchData}
+              formType="myRequest"
+              userRole={userRole}
             />
           </ModalWindow>
         </section>

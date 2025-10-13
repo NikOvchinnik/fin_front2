@@ -77,3 +77,11 @@ export const deleteLink = async id => {
     throw error;
   }
 };
+
+export const sendFilesRequest = async payload => {
+  try {
+    return await axios.post('/api/update-status-and-files', payload);
+  } catch (error) {
+    throw error;
+  }
+};

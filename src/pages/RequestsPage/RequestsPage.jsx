@@ -27,6 +27,7 @@ import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColum
 import ApproveRequestForm from '../../components/Forms/ApproveRequestForm/ApproveRequestForm';
 import ApproveWatchForm from '../../components/Forms/ApproveWatchForm/ApproveWatchForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
+import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,7 @@ const RequestsPage = () => {
   });
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
+  const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
@@ -485,6 +487,27 @@ const RequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
+          {(request.status?.name ===
+            'Фінанси: Сплачено, очікуються документи' ||
+            request.status?.name ===
+              'Бухгалтер: Сплачено, очікуються документи') && (
+            <button
+              className={style.sendBtn}
+              onClick={() => {
+                if (
+                  request.status?.name ===
+                    'Фінанси: Сплачено, очікуються документи' ||
+                  request.status?.name ===
+                    'Бухгалтер: Сплачено, очікуються документи'
+                ) {
+                  setSelectedRequest(request);
+                  setModalSendFilesIsOpen(true);
+                }
+              }}
+            >
+              <Icon id="send-files" className={style.editIcon} />
+            </button>
+          )}
         </div>
       ),
     }));
@@ -828,6 +851,10 @@ const RequestsPage = () => {
     setModalWatchIsOpen(false);
   };
 
+  const closeModalSendFiles = () => {
+    setModalSendFilesIsOpen(false);
+  };
+
   return (
     <>
       {loading ? (
@@ -1027,6 +1054,18 @@ const RequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModalWatch}
               onRefresh={fetchData}
+              userRole={userRole}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalSendFilesOpen}
+            onCloseModal={closeModalSendFiles}
+          >
+            <SendFilesForm
+              request={selectedRequest}
+              closeModal={closeModalSendFiles}
+              onRefresh={fetchData}
+              formType="requests"
               userRole={userRole}
             />
           </ModalWindow>

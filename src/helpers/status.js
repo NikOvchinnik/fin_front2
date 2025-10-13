@@ -69,6 +69,19 @@ export const approveStatus = [
   { value: '22', label: 'Фінанси: Сплачено, очікуються документи' },
 ];
 
+export const approveFilesFin = [
+  { value: '21', label: 'Всі документи додано' }, //Фінанси: Сплачено
+  { value: '22', label: 'Очікуються ще документи' }, //Фінанси: Сплачено, очікуються документи
+];
+
+export const approveFilesBuh = [
+  { value: '5', label: 'Всі документи додано' }, //Бухгалтер: Сплачено
+  {
+    value: '6',
+    label: 'Очікуються ще документи',
+  }, //Бухгалтер: Сплачено, очікуються документи
+];
+
 export const approveStatusFin = [
   { value: '4', label: 'Передано на оплату' },
   {

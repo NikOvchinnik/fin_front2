@@ -26,6 +26,7 @@ import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestF
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
+import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,7 @@ const MyRequestsPage = () => {
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
@@ -61,7 +63,7 @@ const MyRequestsPage = () => {
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
       });
-
+      
       setDataRequests(requests);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
@@ -399,6 +401,24 @@ const MyRequestsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
+          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
+            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+            <button
+              className={style.sendBtn}
+              onClick={() => {
+                if (
+                  request.status ===
+                    'Фінанси: Сплачено, очікуються документи' ||
+                  request.status === 'Бухгалтер: Сплачено, очікуються документи'
+                ) {
+                  setSelectedRequest(request);
+                  setModalSendFilesIsOpen(true);
+                }
+              }}
+            >
+              <Icon id="send-files" className={style.editIcon} />
+            </button>
+          )}
         </div>
       ),
     }));
@@ -683,6 +703,10 @@ const MyRequestsPage = () => {
     setModalSendIsOpen(false);
   };
 
+  const closeModalSendFiles = () => {
+    setModalSendFilesIsOpen(false);
+  };
+
   const openModalColumns = () => {
     setModalColumnsIsOpen(true);
   };
@@ -859,6 +883,18 @@ const MyRequestsPage = () => {
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalSendFilesOpen}
+            onCloseModal={closeModalSendFiles}
+          >
+            <SendFilesForm
+              request={selectedRequest}
+              closeModal={closeModalSendFiles}
+              onRefresh={fetchData}
+              formType="myRequest"
+              userRole={userRole}
             />
           </ModalWindow>
         </section>

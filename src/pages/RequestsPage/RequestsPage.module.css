@@ -245,6 +245,24 @@
   margin-top: 3px;
 }
 
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #81c784;
+  border-radius: 4px;
+  fill: #81c784;
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.sendBtn:hover,
+.sendBtn:focus {
+  fill: #66bb6a;
+  border: 1px solid #66bb6a;
+}
+
 @media screen and (min-width: 1024px) {
   .mainContainer {
     gap: 24px;
