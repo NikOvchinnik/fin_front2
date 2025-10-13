@@ -44,6 +44,8 @@ const BudgetingPage = () => {
     applicant: '',
     payer: '',
     expense_category: '',
+    purpose: '',
+    week: '',
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'created_at',
@@ -55,6 +57,7 @@ const BudgetingPage = () => {
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
+  const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleBudgetColumns');
     return saved ? JSON.parse(saved) : 'All';
@@ -184,6 +187,22 @@ const BudgetingPage = () => {
         row.expense_category?.name
           .toLowerCase()
           .includes(filters.expense_category)
+      );
+    }
+
+    if (filters.purpose) {
+      filteredRows = filteredRows.filter(row =>
+        row.purpose?.toLowerCase().includes(filters.purpose)
+      );
+    }
+
+    if (filters.week) {
+      filteredRows = filteredRows.filter(row =>
+        row.week
+          .split('_')
+          .map(d => dayjs(d).format('DD.MM.YYYY'))
+          .join(' - ')
+          .includes(filters.week)
       );
     }
 
@@ -740,6 +759,16 @@ const BudgetingPage = () => {
                 Експорт у CSV
               </button>
             </div>
+            <div>
+              <button
+                className={style.filterBtn}
+                type="button"
+                onClick={() => setShowAllFilters(prev => !prev)}
+              >
+                <Icon id="filter_list" className={style.filterIcon} />
+                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+              </button>
+            </div>
             <div className={style.formsContainer}>
               <Form
                 fields={[
@@ -792,6 +821,32 @@ const BudgetingPage = () => {
                 </label>
               </form>
             </div>
+            {showAllFilters && (
+              <div className={style.formsContainer}>
+                <form className={style.searchContainer}>
+                  <label className={style.labelContainer}>
+                    <input
+                      type="text"
+                      name="week"
+                      className={style.inputContainer}
+                      placeholder="Тиждень"
+                      onChange={handleSearchChange}
+                    />
+                  </label>
+                </form>
+                <form className={style.searchContainer}>
+                  <label className={style.labelContainer}>
+                    <input
+                      type="text"
+                      name="purpose"
+                      className={style.inputContainer}
+                      placeholder="Призначення"
+                      onChange={handleSearchChange}
+                    />
+                  </label>
+                </form>
+              </div>
+            )}
             <ul
               className={style.statuscontainer}
               style={{
