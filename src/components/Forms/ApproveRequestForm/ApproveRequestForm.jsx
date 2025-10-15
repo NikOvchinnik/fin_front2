@@ -9,7 +9,6 @@ import style from './ApproveRequestForm.module.css';
 import { Notify } from 'notiflix';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
-
   const fields = [
     {
       type: 'select',
@@ -47,6 +46,23 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
 
   return (
     <div className={style.editContainer}>
+      <ul className={style.commentsList}>
+        {request.comment && (
+          <li className={style.commentApplicant}>
+            Коментар заявника: {request.comment}
+          </li>
+        )}
+        {request.finance_comment && (
+          <li className={style.commentFinance}>
+            Коментар фінанси: {request.finance_comment}
+          </li>
+        )}
+        {request.accounting_comment && (
+          <li className={style.commentBuh}>
+            Коментар бухгалтерія: {request.accounting_comment}
+          </li>
+        )}
+      </ul>
       <Form
         title="Погодження заявки"
         fields={fields}
@@ -78,7 +94,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
         }}
         defaultValues={{
           status: userRole === 4 ? '4' : userRole === 5 ? '5' : '',
-          comment: request.comment || '',
+          comment: '',
           payment_date_await:
             request.payment_date_await || dayjs().format('YYYY-MM-DD'),
         }}

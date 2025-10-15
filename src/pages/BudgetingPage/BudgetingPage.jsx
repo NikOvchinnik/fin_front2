@@ -46,6 +46,7 @@ const BudgetingPage = () => {
     expense_category: '',
     purpose: '',
     week: '',
+    request_id: '',
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'created_at',
@@ -190,6 +191,12 @@ const BudgetingPage = () => {
       );
     }
 
+    if (filters.request_id) {
+      filteredRows = filteredRows.filter(row =>
+        String(row.id).includes(filters.request_id)
+      );
+    }
+
     if (filters.purpose) {
       filteredRows = filteredRows.filter(row =>
         row.purpose?.toLowerCase().includes(filters.purpose)
@@ -217,6 +224,8 @@ const BudgetingPage = () => {
     if (sortConfig.key) {
       const getFieldValue = (req, key) => {
         switch (key) {
+          case 'request_id':
+            return req.id || '';
           case 'created_at':
             return req.created_at ?? '';
           case 'project':
@@ -317,7 +326,8 @@ const BudgetingPage = () => {
     }
 
     return sortedRows.map(request => ({
-      id: request.id,
+      request_id: request.id,
+      request_id_plain: request.id,
       created_at: (
         <p className={style.fullWidthText}>
           {dayjs(request.created_at).format('YYYY-MM-DD') || ''}
@@ -339,8 +349,8 @@ const BudgetingPage = () => {
             .join(' - ')
         : '',
       purpose: (
-        <p>
-          <ExpandableText text={request.purpose || ''} limit={50} />
+        <p className={style.breakText}>
+          <ExpandableText text={request.purpose || ''} limit={20} />
         </p>
       ),
       purpose_plain: request.purpose || '',
@@ -511,6 +521,20 @@ const BudgetingPage = () => {
   }, [requestsRows]);
 
   const columns = [
+    {
+      accessorKey: 'request_id',
+      header: (
+        <div className={style.sortContainer}>
+          <p>ID</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('request_id')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
     {
       accessorKey: 'created_at',
       header: (
@@ -823,6 +847,17 @@ const BudgetingPage = () => {
             </div>
             {showAllFilters && (
               <div className={style.formsContainer}>
+                <form className={style.searchContainer}>
+                  <label className={style.labelContainer}>
+                    <input
+                      type="text"
+                      name="request_id"
+                      className={style.inputContainer}
+                      placeholder="ID заявки"
+                      onChange={handleSearchChange}
+                    />
+                  </label>
+                </form>
                 <form className={style.searchContainer}>
                   <label className={style.labelContainer}>
                     <input

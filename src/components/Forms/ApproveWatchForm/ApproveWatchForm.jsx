@@ -31,12 +31,29 @@ const ApproveWatchForm = ({ request, closeModal, onRefresh, userRole }) => {
 
   return (
     <div className={style.editContainer}>
+      <ul className={style.commentsList}>
+        {request.comment && (
+          <li className={style.commentApplicant}>
+            Коментар заявника: {request.comment}
+          </li>
+        )}
+        {request.finance_comment && (
+          <li className={style.commentFinance}>
+            Коментар фінанси: {request.finance_comment}
+          </li>
+        )}
+        {request.accounting_comment && (
+          <li className={style.commentBuh}>
+            Коментар бухгалтерія: {request.accounting_comment}
+          </li>
+        )}
+      </ul>
       <Form
         title="Перегляд заявки"
         fields={fields}
         defaultValues={{
           status: request.status?.id || '',
-          comment: request.comment || '',
+          comment: '',
           payment_date_await:
             request.payment_date_await || dayjs().format('YYYY-MM-DD'),
         }}

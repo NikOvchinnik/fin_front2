@@ -50,6 +50,7 @@ const RequestsPage = () => {
     purpose: '',
     paymentForm: '',
     contractor: '',
+    request_id: '',
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'created_at',
@@ -218,6 +219,12 @@ const RequestsPage = () => {
       );
     }
 
+    if (filters.request_id) {
+      filteredRows = filteredRows.filter(row =>
+        String(row.id).includes(filters.request_id)
+      );
+    }
+
     if (activeStatus && activeStatus !== 'Всі') {
       filteredRows = filteredRows.filter(
         row => getActiveStatus(row.status?.name) === activeStatus
@@ -261,6 +268,8 @@ const RequestsPage = () => {
     if (sortConfig.key) {
       const getFieldValue = (req, key) => {
         switch (key) {
+          case 'request_id':
+            return req.id || '';
           case 'created_at':
             return req.created_at || '';
           case 'payment_date_await':
@@ -376,7 +385,8 @@ const RequestsPage = () => {
     }
 
     return sortedRows.map(request => ({
-      id: request.id,
+      request_id: request.id,
+      request_id_plain: request.id,
       created_at: (
         <p className={style.fullWidthText}>
           {dayjs(request.created_at).format('YYYY-MM-DD') || ''}
@@ -394,8 +404,8 @@ const RequestsPage = () => {
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
-        <p>
-          <ExpandableText text={request.purpose || ''} limit={50} />
+        <p className={style.breakText}>
+          <ExpandableText text={request.purpose || ''} limit={20} />
         </p>
       ),
       purpose_plain: request.purpose || '',
@@ -607,6 +617,20 @@ const RequestsPage = () => {
   }, [requestsRows]);
 
   const columns = [
+    {
+      accessorKey: 'request_id',
+      header: (
+        <div className={style.sortContainer}>
+          <p>ID</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('request_id')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
     {
       accessorKey: 'created_at',
       header: (
@@ -972,20 +996,6 @@ const RequestsPage = () => {
                   project: selectedProject,
                 }}
               />
-              <Form
-                fields={[
-                  {
-                    type: 'select',
-                    name: 'currency',
-                    label: 'Валюта',
-                    options: currenciesOptions,
-                    onChange: value => setSelectedCurrency(value),
-                  },
-                ]}
-                defaultValues={{
-                  currency: selectedCurrency,
-                }}
-              />
               <form className={style.searchContainer}>
                 <label className={style.labelContainer}>
                   <input
@@ -1021,71 +1031,100 @@ const RequestsPage = () => {
               </form>
             </div>
             {showAllFilters && (
-              <div className={style.formsContainer}>
-                <form className={style.searchContainer}>
-                  <label className={style.labelContainer}>
-                    <input
-                      type="text"
-                      name="payment_date_await"
-                      className={style.inputContainer}
-                      placeholder="Кінцева дата оплати"
-                      onChange={handleSearchChange}
-                    />
-                  </label>
-                </form>
-                <form className={style.searchContainer}>
-                  <label className={style.labelContainer}>
-                    <input
-                      type="text"
-                      name="purpose"
-                      className={style.inputContainer}
-                      placeholder="Призначення"
-                      onChange={handleSearchChange}
-                    />
-                  </label>
-                </form>
-                <form className={style.searchContainer}>
-                  <label className={style.labelContainer}>
-                    <input
-                      type="text"
-                      name="payment_details"
-                      className={style.inputContainer}
-                      placeholder="Реквізити"
-                      onChange={handleSearchChange}
-                    />
-                  </label>
-                </form>
-                <Form
-                  fields={[
-                    {
-                      type: 'autocomplete-select',
-                      name: 'contractor',
-                      label: 'Контрагент',
-                      options: contractorsOptions,
-                      onChange: option =>
-                        setSelectedContractor(option?.value || ''),
-                    },
-                  ]}
-                  defaultValues={{
-                    contractor: selectedContractor,
-                  }}
-                />
-                <Form
-                  fields={[
-                    {
-                      type: 'autocomplete-select',
-                      name: 'payment_form',
-                      label: 'Форма оплати',
-                      options: paymentFormOptions,
-                      onChange: option =>
-                        setSelectedPaymentForm(option?.value || ''),
-                    },
-                  ]}
-                  defaultValues={{
-                    payment_form: selectedPaymentForm,
-                  }}
-                />
-              </div>
+              <>
+                <div className={style.formsContainer}>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="request_id"
+                        className={style.inputContainer}
+                        placeholder="ID заявки"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="payment_date_await"
+                        className={style.inputContainer}
+                        placeholder="Кінцева дата оплати"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="purpose"
+                        className={style.inputContainer}
+                        placeholder="Призначення"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                  <Form
+                    fields={[
+                      {
+                        type: 'select',
+                        name: 'currency',
+                        label: 'Валюта',
+                        options: currenciesOptions,
+                        onChange: value => setSelectedCurrency(value),
+                      },
+                    ]}
+                    defaultValues={{
+                      currency: selectedCurrency,
+                    }}
+                  />
+                </div>
+                <div className={style.formsContainer}>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="payment_details"
+                        className={style.inputContainer}
+                        placeholder="Реквізити"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                  <Form
+                    fields={[
+                      {
+                        type: 'autocomplete-select',
+                        name: 'contractor',
+                        label: 'Контрагент',
+                        options: contractorsOptions,
+                        onChange: option =>
+                          setSelectedContractor(option?.value || ''),
+                      },
+                    ]}
+                    defaultValues={{
+                      contractor: selectedContractor,
+                    }}
+                  />
+                  <Form
+                    fields={[
+                      {
+                        type: 'autocomplete-select',
+                        name: 'payment_form',
+                        label: 'Форма оплати',
+                        options: paymentFormOptions,
+                        onChange: option =>
+                          setSelectedPaymentForm(option?.value || ''),
+                      },
+                    ]}
+                    defaultValues={{
+                      payment_form: selectedPaymentForm,
+                    }}
+                  />
+                </div>
+              </>
             )}
             <ul
               className={style.statuscontainer}

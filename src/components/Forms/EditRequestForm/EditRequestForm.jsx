@@ -260,6 +260,23 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
               ))}
             </ul>
           )}
+          <ul className={style.commentsList}>
+            {request.comment && (
+              <li className={style.commentApplicant}>
+                Коментар заявника: {request.comment}
+              </li>
+            )}
+            {request.finance_comment && (
+              <li className={style.commentFinance}>
+                Коментар фінанси: {request.finance_comment}
+              </li>
+            )}
+            {request.accounting_comment && (
+              <li className={style.commentBuh}>
+                Коментар бухгалтерія: {request.accounting_comment}
+              </li>
+            )}
+          </ul>
           <Form
             title="Редагувати заявку"
             fields={fields}
@@ -341,7 +358,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           >
             <ConfirmModal
               title="Видалити заявку"
-              message={`Ви впевнені, що хочете видалити заявку  ${request.contractor_id}?`}
+              message={`Ви впевнені, що хочете видалити заявку  ${request.contractor}?`}
               onConfirm={handleDelete}
               onClose={closeModalConfirm}
             />

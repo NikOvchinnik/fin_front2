@@ -63,7 +63,7 @@ const MyRequestsPage = () => {
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
       });
-      
+
       setDataRequests(requests);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
@@ -130,6 +130,8 @@ const MyRequestsPage = () => {
     if (sortConfig.key) {
       const getFieldValue = (req, key) => {
         switch (key) {
+          case 'request_id':
+            return req.id || '';
           case 'created_at':
             return req.created_at || '';
           case 'payment_date_await':
@@ -235,7 +237,8 @@ const MyRequestsPage = () => {
     }
 
     return sortedRows.map(request => ({
-      id: request.id,
+      request_id: request.id,
+      request_id_plain: request.id,
       created_at: (
         <p className={style.fullWidthText}>
           {dayjs(request.created_at).format('YYYY-MM-DD') || ''}
@@ -255,8 +258,8 @@ const MyRequestsPage = () => {
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
-        <p>
-          <ExpandableText text={request.purpose || ''} limit={50} />
+        <p className={style.breakText}>
+          <ExpandableText text={request.purpose || ''} limit={20} />
         </p>
       ),
       purpose_plain: request.purpose || '',
@@ -448,6 +451,20 @@ const MyRequestsPage = () => {
   }, [requestsRows]);
 
   const columns = [
+    {
+      accessorKey: 'request_id',
+      header: (
+        <div className={style.sortContainer}>
+          <p>ID</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('request_id')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
     {
       accessorKey: 'created_at',
       header: (

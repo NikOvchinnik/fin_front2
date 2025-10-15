@@ -177,14 +177,25 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           ))}
         </ul>
       )}
-      <h2 className={style.title}>Перегляд заявки</h2>
-      {request.comment && (
-        <p className={style.comment}>
-          <span>Коментар:</span>
-          {request.comment}
-        </p>
-      )}
+      <ul className={style.commentsList}>
+        {request.comment && (
+          <li className={style.commentApplicant}>
+            Коментар заявника: {request.comment}
+          </li>
+        )}
+        {request.finance_comment && (
+          <li className={style.commentFinance}>
+            Коментар фінанси: {request.finance_comment}
+          </li>
+        )}
+        {request.accounting_comment && (
+          <li className={style.commentBuh}>
+            Коментар бухгалтерія: {request.accounting_comment}
+          </li>
+        )}
+      </ul>
       <Form
+        title="Перегляд заявки"
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {

@@ -5,38 +5,6 @@
   width: 360px;
 }
 
-.comment {
-  display: flex;
-  margin-bottom: 24px;
-  font-size: 18px;
-  gap: 8px;
-}
-
-.comment span {
-  font-weight: 500;
-  color: var(--active-color);
-}
-
-.title {
-  font-weight: 500;
-  font-size: 20px;
-  line-height: 1.4;
-  color: var(--modal-title);
-  margin-bottom: 52px;
-  position: relative;
-}
-
-.title::before {
-  content: '';
-  display: block;
-  width: 100%;
-  height: 1px;
-  background-color: var(--border);
-  position: absolute;
-  bottom: -16px;
-  left: 0;
-}
-
 .linkContainer {
   display: flex;
   flex-direction: column;
@@ -63,6 +31,40 @@
 .linkContainer a:hover {
   background: var(--button);
   color: white;
+}
+
+.commentsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.commentApplicant {
+  padding: 8px 12px;
+  border-left: 4px solid #e0a800;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
+
+.commentFinance {
+  padding: 8px 12px;
+  border-left: 4px solid #e67e22;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+}
+
+.commentBuh {
+  padding: 8px 12px;
+  border-left: 4px solid #9a4026;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
 }
 
 @media screen and (min-width: 1024px) {
