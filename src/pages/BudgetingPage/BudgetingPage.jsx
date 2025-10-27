@@ -21,7 +21,7 @@ import {
   getBudgetingHd,
 } from '../../helpers/axios/budgeting';
 import {
-  geBudgetingStatusStyle,
+  getBudgetingStatusStyle,
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
   statusSelectorBudgetingFin,
@@ -418,11 +418,11 @@ const BudgetingPage = () => {
         <span
           style={{
             borderLeft: `4px solid ${
-              geBudgetingStatusStyle(request.status?.id).color
+              getBudgetingStatusStyle(request.status?.id).color
             }`,
             paddingLeft: '6px',
             fontWeight: '700',
-            color: geBudgetingStatusStyle(request.status?.id).color,
+            color: getBudgetingStatusStyle(request.status?.id).color,
           }}
         >
           {getShortBudgetingStatus(request.status?.name)}
@@ -926,7 +926,7 @@ const BudgetingPage = () => {
                 fixedFirstColumn={isMobile ? true : false}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
-                rowsPerPage={25}
+                rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
               />
               {totals && (

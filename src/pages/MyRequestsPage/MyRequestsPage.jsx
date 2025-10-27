@@ -27,12 +27,33 @@ import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchReque
 import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
+import { getProjects } from '../../helpers/axios/projects';
+import { getCurrencies, getPaymentForms } from '../../helpers/axios/payments';
+import { getContractors } from '../../helpers/axios/contractors';
+import Form from '../../components/Form/Form';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
+  const [projectOptions, setProjectOptions] = useState([]);
+  const [currenciesOptions, setCurrenciesOptions] = useState([]);
+  const [paymentFormOptions, setPaymentFormOptions] = useState([]);
+  const [contractorsOptions, setContractorsOptions] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('Всі');
+  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
+  const [selectedContractor, setSelectedContractor] = useState('Всі');
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [filters, setFilters] = useState({
+    applicant: '',
+    payer: '',
+    expense_category: '',
+    purpose: '',
+    paymentForm: '',
+    contractor: '',
+    request_id: '',
+  });
   const [sortConfig, setSortConfig] = useState({
     key: 'created_at',
     direction: 'desc',
@@ -46,6 +67,7 @@ const MyRequestsPage = () => {
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
+  const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyRequestsColumns');
     return saved ? JSON.parse(saved) : 'All';
@@ -65,6 +87,46 @@ const MyRequestsPage = () => {
       });
 
       setDataRequests(requests);
+
+      const projects = await getProjects();
+      const projectSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(projects || []).map(p => ({
+          value: p.id,
+          label: p.name,
+        })),
+      ];
+      setProjectOptions(projectSelector);
+
+      const currencies = await getCurrencies();
+      const currencySelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(currencies || []).map(c => ({
+          value: c.id,
+          label: c.name,
+        })),
+      ];
+      setCurrenciesOptions(currencySelector);
+
+      const contractors = await getContractors();
+      const contractorSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(contractors || []).map(e => ({
+          value: e.id,
+          label: e.name,
+        })),
+      ];
+      setContractorsOptions(contractorSelector);
+
+      const paymentForms = await getPaymentForms();
+      const paymentFormSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(paymentForms || []).map(p => ({
+          value: p.id,
+          label: p.name,
+        })),
+      ];
+      setPaymentFormOptions(paymentFormSelector);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
@@ -94,6 +156,14 @@ const MyRequestsPage = () => {
     });
   };
 
+  const handleSearchChange = event => {
+    const { name, value } = event.target;
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [name]: value.toLowerCase().trim(),
+    }));
+  };
+
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
       let updated;
@@ -119,9 +189,65 @@ const MyRequestsPage = () => {
 
     let filteredRows = dataRequests;
 
+    if (selectedProject && selectedProject !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.project_id === selectedProject
+      );
+    }
+
+    if (selectedCurrency && selectedCurrency !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.currency?.id === selectedCurrency
+      );
+    }
+
+    if (filters.expense_category) {
+      filteredRows = filteredRows.filter(row =>
+        row.expense_category.toLowerCase().includes(filters.expense_category)
+      );
+    }
+
+    if (filters.request_id) {
+      filteredRows = filteredRows.filter(row =>
+        String(row.id).includes(filters.request_id)
+      );
+    }
+
     if (activeStatus && activeStatus !== 'Всі') {
       filteredRows = filteredRows.filter(
-        row => getActiveStatus(row.status) === activeStatus
+        row => getActiveStatus(row.status?.name) === activeStatus
+      );
+    }
+
+    if (selectedContractor && selectedContractor !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.contractor_id === selectedContractor
+      );
+    }
+
+    if (selectedPaymentForm && selectedPaymentForm !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.payment_form_id === selectedPaymentForm
+      );
+    }
+
+    if (filters.purpose) {
+      filteredRows = filteredRows.filter(row =>
+        row.purpose?.toLowerCase().includes(filters.purpose)
+      );
+    }
+
+    if (filters.payment_details) {
+      filteredRows = filteredRows.filter(row =>
+        row.payment_details?.toLowerCase().includes(filters.payment_details)
+      );
+    }
+
+    if (filters.payment_date_await) {
+      filteredRows = filteredRows.filter(row =>
+        row.payment_date_await
+          ?.toLowerCase()
+          .includes(filters.payment_date_await)
       );
     }
 
@@ -425,7 +551,16 @@ const MyRequestsPage = () => {
         </div>
       ),
     }));
-  }, [dataRequests, activeStatus, sortConfig]);
+  }, [
+    dataRequests,
+    activeStatus,
+    sortConfig,
+    selectedProject,
+    selectedCurrency,
+    selectedContractor,
+    selectedPaymentForm,
+    filters,
+  ]);
 
   const totals = useMemo(() => {
     if (!requestsRows.length) return null;
@@ -778,6 +913,139 @@ const MyRequestsPage = () => {
                 </button>
               </div>
             </div>
+            <div>
+              <button
+                className={style.filterBtn}
+                type="button"
+                onClick={() => setShowAllFilters(prev => !prev)}
+              >
+                <Icon id="filter_list" className={style.filterIcon} />
+                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+              </button>
+            </div>
+            <div className={style.formsContainer}>
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'project',
+                    label: 'Підрозділ',
+                    options: projectOptions,
+                    onChange: value => setSelectedProject(value),
+                  },
+                ]}
+                defaultValues={{
+                  project: selectedProject,
+                }}
+              />
+              <form className={style.searchContainer}>
+                <label className={style.labelContainer}>
+                  <input
+                    type="text"
+                    name="expense_category"
+                    className={style.inputContainer}
+                    placeholder="Стаття витрат"
+                    onChange={handleSearchChange}
+                  />
+                </label>
+              </form>
+              <Form
+                fields={[
+                  {
+                    type: 'autocomplete-select',
+                    name: 'contractor',
+                    label: 'Контрагент',
+                    options: contractorsOptions,
+                    onChange: option =>
+                      setSelectedContractor(option?.value || ''),
+                  },
+                ]}
+                defaultValues={{
+                  contractor: selectedContractor,
+                }}
+              />
+              <Form
+                fields={[
+                  {
+                    type: 'autocomplete-select',
+                    name: 'payment_form',
+                    label: 'Форма оплати',
+                    options: paymentFormOptions,
+                    onChange: option =>
+                      setSelectedPaymentForm(option?.value || ''),
+                  },
+                ]}
+                defaultValues={{
+                  payment_form: selectedPaymentForm,
+                }}
+              />
+            </div>
+            {showAllFilters && (
+              <>
+                <div className={style.formsContainer}>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="request_id"
+                        className={style.inputContainer}
+                        placeholder="ID заявки"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="payment_date_await"
+                        className={style.inputContainer}
+                        placeholder="Кінцева дата оплати"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="purpose"
+                        className={style.inputContainer}
+                        placeholder="Призначення"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                </div>
+                <div className={style.formsContainer}>
+                  <Form
+                    fields={[
+                      {
+                        type: 'select',
+                        name: 'currency',
+                        label: 'Валюта',
+                        options: currenciesOptions,
+                        onChange: value => setSelectedCurrency(value),
+                      },
+                    ]}
+                    defaultValues={{
+                      currency: selectedCurrency,
+                    }}
+                  />
+                  <form className={style.searchContainer}>
+                    <label className={style.labelContainer}>
+                      <input
+                        type="text"
+                        name="payment_details"
+                        className={style.inputContainer}
+                        placeholder="Реквізити"
+                        onChange={handleSearchChange}
+                      />
+                    </label>
+                  </form>
+                </div>
+              </>
+            )}
             <ul className={style.statuscontainer}>
               {statusSelectorFin.map(status => (
                 <li key={status.value}>
@@ -817,7 +1085,7 @@ const MyRequestsPage = () => {
                 fixedFirstColumn={isMobile ? true : false}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
-                rowsPerPage={25}
+                rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
               />
               {totals && (

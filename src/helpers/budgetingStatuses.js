@@ -1,4 +1,4 @@
-export const geBudgetingStatusStyle = staatusId => {
+export const getBudgetingStatusStyle = staatusId => {
   switch (staatusId) {
     case 1:
       return { color: '#c74736' }; //Чернетка

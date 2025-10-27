@@ -41,6 +41,11 @@ const routesConfig = [
     roles: [1, 2, 4, 5],
     element: lazy(() => import('../pages/HistoryPage/HistoryPage')),
   },
+  {
+    path: 'search',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/SearchPage/SearchPage')),
+  },
 ];
 
 export default routesConfig;

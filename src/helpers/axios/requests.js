@@ -46,6 +46,14 @@ export const getMyRefunds = async ({ userId, startDate, endDate }) => {
   }
 };
 
+export const getRequestById = async ({ id }) => {
+  try {
+    return await axios.get(`/api/request-by-id/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const postRequest = async payload => {
   try {
     return await axios.post('/api/save-draft', payload);

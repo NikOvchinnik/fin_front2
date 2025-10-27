@@ -1,0 +1,127 @@
+.fullWidthText {
+  white-space: nowrap;
+}
+
+.breakText {
+  word-break: break-word;
+}
+
+.copyText {
+  display: flex;
+  justify-content: end;
+  cursor: pointer;
+}
+
+.filterContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.csvBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 175px;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.csvBtn:hover,
+.csvBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.sortContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 24px;
+}
+
+.editBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--table-edit);
+  border-radius: 4px;
+  fill: var(--table-edit);
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.editBtn:hover,
+.editBtn:focus {
+  fill: var(--border-hover);
+  border: 1px solid var(--border-hover);
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #81c784;
+  border-radius: 4px;
+  fill: #81c784;
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.sendBtn:hover,
+.sendBtn:focus {
+  fill: #66bb6a;
+  border: 1px solid #66bb6a;
+}
+
+.actionContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.btnsContainer {
+  display: flex;
+  gap: 12px;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: #333333;
+  color: #333333;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.linkContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--button);
+}

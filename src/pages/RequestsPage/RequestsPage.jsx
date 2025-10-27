@@ -1129,7 +1129,7 @@ const RequestsPage = () => {
             <ul
               className={style.statuscontainer}
               style={{
-                maxWidth: userRole === 5 ? '660px' : '1040px',
+                maxWidth: userRole === 5 ? '860px' : '1300px',
               }}
             >
               {(userRole === 5 ? statusSelectorBuh : statusSelectorFin).map(
@@ -1172,7 +1172,7 @@ const RequestsPage = () => {
                 fixedFirstColumn={isMobile ? true : false}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
-                rowsPerPage={25}
+                rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
               />
               {totals && (

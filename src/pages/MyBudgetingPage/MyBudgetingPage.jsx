@@ -14,7 +14,7 @@ import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import { getMyBudgeting, sendBudgeting } from '../../helpers/axios/budgeting';
 import {
-  geBudgetingStatusStyle,
+  getBudgetingStatusStyle,
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
   statusSelectorBudgetingFin,
@@ -26,16 +26,26 @@ import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { exportToCSV } from '../../helpers/exportToCSV';
+import { getProjects } from '../../helpers/axios/projects';
+import { getCurrencies } from '../../helpers/axios/payments';
+import Form from '../../components/Form/Form';
 
 const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
+  const [projectOptions, setProjectOptions] = useState([]);
+  const [currenciesOptions, setCurrenciesOptions] = useState([]);
+  const [selectedProject, setSelectedProject] = useState('Всі');
+  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
     applicant: '',
     payer: '',
     expense_category: '',
+    purpose: '',
+    week: '',
+    request_id: '',
   });
   const [sortConfig, setSortConfig] = useState({
     key: 'created_at',
@@ -49,6 +59,7 @@ const MyBudgetingPage = () => {
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
+  const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyBudgetColumns');
     return saved ? JSON.parse(saved) : 'All';
@@ -67,6 +78,26 @@ const MyBudgetingPage = () => {
       });
 
       setDataRequests(requests);
+
+      const projects = await getProjects();
+      const projectSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(projects || []).map(p => ({
+          value: p.id,
+          label: p.name,
+        })),
+      ];
+      setProjectOptions(projectSelector);
+
+      const currencies = await getCurrencies();
+      const currencySelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(currencies || []).map(c => ({
+          value: c.id,
+          label: c.name,
+        })),
+      ];
+      setCurrenciesOptions(currencySelector);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
@@ -96,6 +127,14 @@ const MyBudgetingPage = () => {
     });
   };
 
+  const handleSearchChange = event => {
+    const { name, value } = event.target;
+    setFilters(prevFilters => ({
+      ...prevFilters,
+      [name]: value.toLowerCase().trim(),
+    }));
+  };
+
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
       let updated;
@@ -120,6 +159,54 @@ const MyBudgetingPage = () => {
     if (!dataRequests) return [];
 
     let filteredRows = dataRequests;
+
+    if (selectedProject && selectedProject !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.project_id === selectedProject
+      );
+    }
+
+    if (selectedCurrency && selectedCurrency !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.currency_id === selectedCurrency
+      );
+    }
+
+    if (filters.applicant) {
+      filteredRows = filteredRows.filter(row =>
+        row.applicant.toLowerCase().includes(filters.applicant)
+      );
+    }
+
+    if (filters.expense_category) {
+      filteredRows = filteredRows.filter(row =>
+        row.expense_category?.name
+          .toLowerCase()
+          .includes(filters.expense_category)
+      );
+    }
+
+    if (filters.request_id) {
+      filteredRows = filteredRows.filter(row =>
+        String(row.id).includes(filters.request_id)
+      );
+    }
+
+    if (filters.purpose) {
+      filteredRows = filteredRows.filter(row =>
+        row.purpose?.toLowerCase().includes(filters.purpose)
+      );
+    }
+
+    if (filters.week) {
+      filteredRows = filteredRows.filter(row =>
+        row.week
+          .split('_')
+          .map(d => dayjs(d).format('DD.MM.YYYY'))
+          .join(' - ')
+          .includes(filters.week)
+      );
+    }
 
     if (activeStatus && activeStatus !== 'Всі') {
       filteredRows = filteredRows.filter(
@@ -321,11 +408,11 @@ const MyBudgetingPage = () => {
         <span
           style={{
             borderLeft: `4px solid ${
-              geBudgetingStatusStyle(request.status?.id).color
+              getBudgetingStatusStyle(request.status?.id).color
             }`,
             paddingLeft: '6px',
             fontWeight: '700',
-            color: geBudgetingStatusStyle(request.status?.id).color,
+            color: getBudgetingStatusStyle(request.status?.id).color,
           }}
         >
           {getShortBudgetingStatus(request.status?.name)}
@@ -374,7 +461,14 @@ const MyBudgetingPage = () => {
         </div>
       ),
     }));
-  }, [dataRequests, activeStatus, filters, sortConfig]);
+  }, [
+    dataRequests,
+    selectedProject,
+    selectedCurrency,
+    activeStatus,
+    filters,
+    sortConfig,
+  ]);
 
   const totals = useMemo(() => {
     if (!requestsRows.length) return null;
@@ -699,6 +793,94 @@ const MyBudgetingPage = () => {
                 </button>
               </div>
             </div>
+            <div>
+              <button
+                className={style.filterBtn}
+                type="button"
+                onClick={() => setShowAllFilters(prev => !prev)}
+              >
+                <Icon id="filter_list" className={style.filterIcon} />
+                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+              </button>
+            </div>
+            <div className={style.formsContainer}>
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'project',
+                    label: 'Підрозділ',
+                    options: projectOptions,
+                    onChange: value => setSelectedProject(value),
+                  },
+                ]}
+                defaultValues={{
+                  project: selectedProject,
+                }}
+              />
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'currency',
+                    label: 'Валюта',
+                    options: currenciesOptions,
+                    onChange: value => setSelectedCurrency(value),
+                  },
+                ]}
+                defaultValues={{
+                  currency: selectedCurrency,
+                }}
+              />
+              <form className={style.searchContainer}>
+                <label className={style.labelContainer}>
+                  <input
+                    type="text"
+                    name="purpose"
+                    className={style.inputContainer}
+                    placeholder="Призначення"
+                    onChange={handleSearchChange}
+                  />
+                </label>
+              </form>
+              <form className={style.searchContainer}>
+                <label className={style.labelContainer}>
+                  <input
+                    type="text"
+                    name="expense_category"
+                    className={style.inputContainer}
+                    placeholder="Стаття витрат"
+                    onChange={handleSearchChange}
+                  />
+                </label>
+              </form>
+            </div>
+            {showAllFilters && (
+              <div className={style.formsContainer}>
+                <form className={style.searchContainer}>
+                  <label className={style.labelContainer}>
+                    <input
+                      type="text"
+                      name="request_id"
+                      className={style.inputContainer}
+                      placeholder="ID заявки"
+                      onChange={handleSearchChange}
+                    />
+                  </label>
+                </form>
+                <form className={style.searchContainer}>
+                  <label className={style.labelContainer}>
+                    <input
+                      type="text"
+                      name="week"
+                      className={style.inputContainer}
+                      placeholder="Тиждень"
+                      onChange={handleSearchChange}
+                    />
+                  </label>
+                </form>
+              </div>
+            )}
             <ul
               className={style.statuscontainer}
               style={{
@@ -743,7 +925,7 @@ const MyBudgetingPage = () => {
                 fixedFirstColumn={isMobile ? true : false}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
-                rowsPerPage={25}
+                rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
               />
               {totals && (

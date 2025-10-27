@@ -33,6 +33,11 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'coins',
       },
       {
+        page: 'Пошук',
+        link: `/search`,
+        icon: 'search-crm',
+      },
+      {
         page: 'Історія',
         link: `/history`,
         icon: 'history',
@@ -123,6 +128,11 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'coins',
       },
       {
+        page: 'Пошук',
+        link: `/search`,
+        icon: 'search-crm',
+      },
+      {
         page: 'Курс валют',
         link: `/exchange_rate`,
         icon: 'dollar',
@@ -156,6 +166,11 @@ export const getNavSideBar = (userId, userName) => [
         page: 'Мій бюджет',
         link: `/my_budgeting/${userId}`,
         icon: 'coins',
+      },
+      {
+        page: 'Пошук',
+        link: `/search`,
+        icon: 'search-crm',
       },
       {
         page: 'Історія',

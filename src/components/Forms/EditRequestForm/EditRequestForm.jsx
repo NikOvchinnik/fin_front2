@@ -65,10 +65,20 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
         setCurrencyOptions(currencySelector);
 
         const expenseCategories = await getExpenseCategories();
-        const filteredExpenseCategories =
-          formType === 'refund'
-            ? expenseCategories.filter(e => refundIds.includes(e.id))
-            : expenseCategories.filter(e => !refundIds.includes(e.id));
+        let filteredExpenseCategories;
+        if (formType === 'refund') {
+          filteredExpenseCategories = expenseCategories.filter(e =>
+            refundIds.includes(e.id)
+          );
+        } else if (formType === 'request') {
+           filteredExpenseCategories = expenseCategories.filter(
+             e => !refundIds.includes(e.id)
+           );
+          filteredExpenseCategories = expenseCategories;
+        } else {
+          filteredExpenseCategories = expenseCategories;
+        }
+
         const expenseCategorySelector = filteredExpenseCategories.map(e => ({
           value: e.id,
           label: e.name,

@@ -30,6 +30,7 @@ export const statusSelectorFin = [
   { value: 'Очікує затвердження', label: 'Очікує затвердження' },
   { value: 'Передано на оплату', label: 'Передано на оплату' },
   { value: 'Сплачено', label: 'Сплачено' },
+  { value: 'Очікуються документи', label: 'Очікуються документи' },
   {
     value: 'Потребує виправлень',
     label: 'Потребує виправлень',
@@ -41,6 +42,7 @@ export const statusSelectorBuh = [
   { value: 'Всі', label: 'Всі' },
   { value: 'Передано на оплату', label: 'Передано на оплату' },
   { value: 'Сплачено', label: 'Сплачено' },
+  { value: 'Очікуються документи', label: 'Очікуються документи' },
   { value: 'Скасовано', label: 'Скасовано' },
 ];
 
@@ -125,10 +127,10 @@ export const getShortStatus = statusName => {
 export const getActiveStatus = statusName => {
   if (!statusName) return '';
 
-  const paidStatuses = [
-    'Фінанси: Сплачено',
+  const paidStatuses = ['Фінанси: Сплачено', 'Бухгалтер: Сплачено'];
+
+  const awaitStatuses = [
     'Фінанси: Сплачено, очікуються документи',
-    'Бухгалтер: Сплачено',
     'Бухгалтер: Сплачено, очікуються документи',
   ];
 
@@ -138,9 +140,19 @@ export const getActiveStatus = statusName => {
     return 'Сплачено';
   }
 
+  if (awaitStatuses.includes(statusName)) {
+    return 'Очікуються документи';
+  }
+
   if (canceledStatuses.includes(statusName)) {
     return 'Скасовано';
   }
 
   return statusName;
 };
+
+
+export const searchType = [
+  { value: 'request', label: 'Заявка' },
+  { value: 'budgeting', label: 'Бюджет' },
+];

@@ -1,0 +1,33 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.formContainer {
+  margin-top: 60px;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+  }
+
+  .formContainer {
+    margin-top: 0px;
+  }
+}

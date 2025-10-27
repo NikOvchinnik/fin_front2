@@ -52,6 +52,14 @@ export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
   }
 };
 
+export const getBudgetingById = async ({ id }) => {
+  try {
+    return await axios.get(`/api/budgeting-by-id/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const postMyBudgeting = async payload => {
   try {
     return await axios.post('/api/save-budgeting', payload);
