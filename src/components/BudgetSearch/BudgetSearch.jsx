@@ -8,31 +8,27 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { selectUserRole } from '../../redux/auth/selectors';
-import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
-import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
-import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
-import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import {
   getBudgetingStatusStyle,
   getShortBudgetingStatus,
 } from '../../helpers/budgetingStatuses';
+import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
+import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
+import { sendBudgeting } from '../../helpers/axios/budgeting';
 
 const BudgetSearch = ({ dataRequests, onRefresh }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
-  const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleSearchBudgetingColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
-  const userRole = useSelector(selectUserRole);
 
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
@@ -168,8 +164,8 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
           <button
             className={style.editBtn}
             onClick={() => {
-                setSelectedRequest(request);
-                openModalEdit();
+              setSelectedRequest(request);
+              openModalEdit();
             }}
           >
             <Icon id="edit" className={style.editIcon} />
@@ -347,10 +343,6 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
     setModalSendIsOpen(false);
   };
 
-  const closeModalSendFiles = () => {
-    setModalSendFilesIsOpen(false);
-  };
-
   const openModalColumns = () => {
     setModalColumnsIsOpen(true);
   };
@@ -361,8 +353,8 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
 
   const handleSend = async () => {
     try {
-      await sendRequest(selectedRequest.id);
-      onRefresh();
+      await sendBudgeting(selectedRequest.id);
+      onRefresh(selectedRequest.id, 'budgeting');
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
@@ -400,36 +392,6 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
         visibleColumnsMobile={2}
         enableHorizontalScroll={isMobile ? false : true}
       />
-      <ModalWindow isModalOpen={isModalEditOpen} onCloseModal={closeModalEdit}>
-        <EditRequestForm
-          request={selectedRequest}
-          closeModal={closeModalEdit}
-          onRefresh={onRefresh}
-          formType="request"
-        />
-      </ModalWindow>
-      <ModalWindow
-        isModalOpen={isModalWatchOpen}
-        onCloseModal={closeModalWatch}
-      >
-        <WatchRequestForm
-          request={selectedRequest}
-          closeModal={closeModalWatch}
-          onRefresh={onRefresh}
-          formType="request"
-        />
-      </ModalWindow>
-      <ModalWindow
-        isModalOpen={isModalSendOpen}
-        onCloseModal={closeModalConfirm}
-      >
-        <ConfirmModal
-          title="Відправити заявку"
-          message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
-          onConfirm={handleSend}
-          onClose={closeModalConfirm}
-        />
-      </ModalWindow>
       <ModalWindow
         isModalOpen={isModalColumnsOpen}
         onCloseModal={closeModalColumns}
@@ -441,16 +403,33 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
           handleColumnToggle={handleColumnToggle}
         />
       </ModalWindow>
-      <ModalWindow
-        isModalOpen={isModalSendFilesOpen}
-        onCloseModal={closeModalSendFiles}
-      >
-        <SendFilesForm
+      <ModalWindow isModalOpen={isModalEditOpen} onCloseModal={closeModalEdit}>
+        <BudgetEditForm
           request={selectedRequest}
-          closeModal={closeModalSendFiles}
-          onRefresh={onRefresh}
-          formType="myRequest"
-          userRole={userRole}
+          closeModal={closeModalEdit}
+          onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
+        />
+      </ModalWindow>
+      <ModalWindow
+        isModalOpen={isModalWatchOpen}
+        onCloseModal={closeModalWatch}
+      >
+        <BudgetWatchForm
+          request={selectedRequest}
+          closeModal={closeModalWatch}
+          onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
+          formType={'all'}
+        />
+      </ModalWindow>
+      <ModalWindow
+        isModalOpen={isModalSendOpen}
+        onCloseModal={closeModalConfirm}
+      >
+        <ConfirmModal
+          title="Відправити бюджет"
+          message={`Ви впевнені, що хочете відправити бюджет на затвердження ${selectedRequest?.purpose}?`}
+          onConfirm={handleSend}
+          onClose={closeModalConfirm}
         />
       </ModalWindow>
     </>

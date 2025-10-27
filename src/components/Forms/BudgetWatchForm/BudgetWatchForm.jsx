@@ -12,7 +12,7 @@ import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
 
-const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
+const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -239,7 +239,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
           <Form
             title="Перегляд бюджету"
             fields={fields}
-            buttons={buttons}
+            buttons={formType === 'all' ? [] : buttons}
             onSubmit={async data => {
               try {
                 setLoading(true);
@@ -286,4 +286,4 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   );
 };
 
-export default BudgetEditForm;
+export default BudgetWatchForm;

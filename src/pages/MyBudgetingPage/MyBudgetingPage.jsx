@@ -1030,6 +1030,7 @@ const MyBudgetingPage = () => {
               request={selectedRequest}
               closeModal={closeModalWatch}
               onRefresh={fetchData}
+              formType={'myBudget'}
             />
           </ModalWindow>
           <ModalWindow

@@ -463,7 +463,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
   const handleSend = async () => {
     try {
       await sendRequest(selectedRequest.id);
-      onRefresh();
+      onRefresh(selectedRequest.id, 'request');
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
@@ -505,7 +505,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <EditRequestForm
           request={selectedRequest}
           closeModal={closeModalEdit}
-          onRefresh={onRefresh}
+          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
           formType="all"
         />
       </ModalWindow>
@@ -516,7 +516,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <WatchRequestForm
           request={selectedRequest}
           closeModal={closeModalWatch}
-          onRefresh={onRefresh}
+          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
           formType="all"
         />
       </ModalWindow>
@@ -549,7 +549,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <SendFilesForm
           request={selectedRequest}
           closeModal={closeModalSendFiles}
-          onRefresh={onRefresh}
+          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
           formType="myRequest"
           userRole={userRole}
         />

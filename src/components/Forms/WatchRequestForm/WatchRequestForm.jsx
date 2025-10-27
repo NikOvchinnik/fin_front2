@@ -206,7 +206,7 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       <Form
         title="Перегляд заявки"
         fields={fields}
-        buttons={buttons}
+        buttons={formType === 'all' ? [] : buttons}
         onSubmit={async data => {
           try {
             const formData = new FormData();
