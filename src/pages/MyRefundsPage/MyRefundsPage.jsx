@@ -28,7 +28,11 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getProjects } from '../../helpers/axios/projects';
-import { getCurrencies, getPaymentForms } from '../../helpers/axios/payments';
+import {
+  getCurrencies,
+  getExpenseCategories,
+  getPaymentForms,
+} from '../../helpers/axios/payments';
 import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 
@@ -39,16 +43,18 @@ const MyRefundsPage = () => {
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
+  const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
   const [selectedProject, setSelectedProject] = useState('Всі');
   const [selectedCurrency, setSelectedCurrency] = useState('Всі');
   const [selectedContractor, setSelectedContractor] = useState('Всі');
   const [selectedPaymentForm, setSelectedPaymentForm] = useState('Всі');
+  const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
+    useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
     applicant: '',
     payer: '',
-    expense_category: '',
     purpose: '',
     paymentForm: '',
     contractor: '',
@@ -126,6 +132,16 @@ const MyRefundsPage = () => {
         })),
       ];
       setPaymentFormOptions(paymentFormSelector);
+
+      const expenseCategories = await getExpenseCategories();
+      const expenseCategoriesSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(expenseCategories || []).map(c => ({
+          value: c.id,
+          label: c.name,
+        })),
+      ];
+      setExpenseCategoriesOptions(expenseCategoriesSelector);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
@@ -200,9 +216,9 @@ const MyRefundsPage = () => {
       );
     }
 
-    if (filters.expense_category) {
-      filteredRows = filteredRows.filter(row =>
-        row.expense_category.toLowerCase().includes(filters.expense_category)
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.expense_category_id === selectedExpenseCategorie
       );
     }
 
@@ -558,6 +574,7 @@ const MyRefundsPage = () => {
     selectedContractor,
     selectedPaymentForm,
     filters,
+    selectedExpenseCategorie,
   ]);
 
   const totals = useMemo(() => {
@@ -936,17 +953,21 @@ const MyRefundsPage = () => {
                   project: selectedProject,
                 }}
               />
-              <form className={style.searchContainer}>
-                <label className={style.labelContainer}>
-                  <input
-                    type="text"
-                    name="expense_category"
-                    className={style.inputContainer}
-                    placeholder="Стаття витрат"
-                    onChange={handleSearchChange}
-                  />
-                </label>
-              </form>
+              <Form
+                fields={[
+                  {
+                    type: 'autocomplete-select',
+                    name: 'expense_category',
+                    label: 'Стаття витрат',
+                    options: expenseCategoriesOptions,
+                    onChange: option =>
+                      setSelectedExpenseCategorie(option?.value || ''),
+                  },
+                ]}
+                defaultValues={{
+                  expense_category: selectedExpenseCategorie,
+                }}
+              />
               <Form
                 fields={[
                   {

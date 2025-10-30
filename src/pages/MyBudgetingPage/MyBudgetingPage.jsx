@@ -27,7 +27,10 @@ import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchF
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { exportToCSV } from '../../helpers/exportToCSV';
 import { getProjects } from '../../helpers/axios/projects';
-import { getCurrencies } from '../../helpers/axios/payments';
+import {
+  getCurrencies,
+  getExpenseCategories,
+} from '../../helpers/axios/payments';
 import Form from '../../components/Form/Form';
 
 const MyBudgetingPage = () => {
@@ -35,14 +38,16 @@ const MyBudgetingPage = () => {
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
+  const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
   const [selectedProject, setSelectedProject] = useState('Всі');
   const [selectedCurrency, setSelectedCurrency] = useState('Всі');
+  const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
+    useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
     applicant: '',
     payer: '',
-    expense_category: '',
     purpose: '',
     week: '',
     request_id: '',
@@ -98,6 +103,16 @@ const MyBudgetingPage = () => {
         })),
       ];
       setCurrenciesOptions(currencySelector);
+
+      const expenseCategories = await getExpenseCategories();
+      const expenseCategoriesSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(expenseCategories || []).map(c => ({
+          value: c.id,
+          label: c.name,
+        })),
+      ];
+      setExpenseCategoriesOptions(expenseCategoriesSelector);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
@@ -178,11 +193,9 @@ const MyBudgetingPage = () => {
       );
     }
 
-    if (filters.expense_category) {
-      filteredRows = filteredRows.filter(row =>
-        row.expense_category?.name
-          .toLowerCase()
-          .includes(filters.expense_category)
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.expense_category?.id === selectedExpenseCategorie
       );
     }
 
@@ -468,6 +481,7 @@ const MyBudgetingPage = () => {
     activeStatus,
     filters,
     sortConfig,
+    selectedExpenseCategorie,
   ]);
 
   const totals = useMemo(() => {
@@ -552,6 +566,20 @@ const MyBudgetingPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'tech',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Період</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('tech')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -664,20 +692,6 @@ const MyBudgetingPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'tech',
-      header: (
-        <div className={style.sortContainer}>
-          <p>Період</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('tech')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -843,17 +857,21 @@ const MyBudgetingPage = () => {
                   />
                 </label>
               </form>
-              <form className={style.searchContainer}>
-                <label className={style.labelContainer}>
-                  <input
-                    type="text"
-                    name="expense_category"
-                    className={style.inputContainer}
-                    placeholder="Стаття витрат"
-                    onChange={handleSearchChange}
-                  />
-                </label>
-              </form>
+              <Form
+                fields={[
+                  {
+                    type: 'autocomplete-select',
+                    name: 'expense_category',
+                    label: 'Стаття витрат',
+                    options: expenseCategoriesOptions,
+                    onChange: option =>
+                      setSelectedExpenseCategorie(option?.value || ''),
+                  },
+                ]}
+                defaultValues={{
+                  expense_category: selectedExpenseCategorie,
+                }}
+              />
             </div>
             {showAllFilters && (
               <div className={style.formsContainer}>

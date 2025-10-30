@@ -71,9 +71,9 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
             refundIds.includes(e.id)
           );
         } else if (formType === 'request') {
-           filteredExpenseCategories = expenseCategories.filter(
-             e => !refundIds.includes(e.id)
-           );
+          filteredExpenseCategories = expenseCategories.filter(
+            e => !refundIds.includes(e.id)
+          );
           filteredExpenseCategories = expenseCategories;
         } else {
           filteredExpenseCategories = expenseCategories;
@@ -183,19 +183,23 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       type: 'date',
       name: 'payment_date_await',
       label: 'Дата оплати(тільки вт. або чт.)',
-      validation: {
-        required: 'This field is required',
-        validate: value => {
-          if (!value) return "Дата обов'язкова";
-          const selected = new Date(value);
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          if (selected < today) return 'Неможна обрати минулу дату';
-          const day = selected.getDay();
-          if (day !== 2 && day !== 4) return 'Можна обрати тільки Вт або Чт';
-          return true;
-        },
-      },
+      validation:
+        formType === 'all'
+          ? { required: 'This field is required' }
+          : {
+              required: 'This field is required',
+              validate: value => {
+                if (!value) return "Дата обов'язкова";
+                const selected = new Date(value);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                if (selected < today) return 'Неможна обрати минулу дату';
+                const day = selected.getDay();
+                if (day !== 2 && day !== 4)
+                  return 'Можна обрати тільки Вт або Чт';
+                return true;
+              },
+            },
       min: dayjs().format('YYYY-MM-DD'),
     },
     {

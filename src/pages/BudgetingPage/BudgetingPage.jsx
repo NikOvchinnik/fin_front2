@@ -3,7 +3,10 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './BudgetingPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getCurrencies } from '../../helpers/axios/payments';
+import {
+  getCurrencies,
+  getExpenseCategories,
+} from '../../helpers/axios/payments';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -36,14 +39,16 @@ const BudgetingPage = () => {
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
+  const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
   const [selectedProject, setSelectedProject] = useState('Всі');
   const [selectedCurrency, setSelectedCurrency] = useState('Всі');
+  const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
+    useState('Всі');
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
     applicant: '',
     payer: '',
-    expense_category: '',
     purpose: '',
     week: '',
     request_id: '',
@@ -107,6 +112,16 @@ const BudgetingPage = () => {
         })),
       ];
       setCurrenciesOptions(currencySelector);
+
+      const expenseCategories = await getExpenseCategories();
+      const expenseCategoriesSelector = [
+        { value: 'Всі', label: 'Всі' },
+        ...(expenseCategories || []).map(c => ({
+          value: c.id,
+          label: c.name,
+        })),
+      ];
+      setExpenseCategoriesOptions(expenseCategoriesSelector);
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
@@ -177,17 +192,15 @@ const BudgetingPage = () => {
       );
     }
 
-    if (filters.applicant) {
-      filteredRows = filteredRows.filter(row =>
-        row.applicant.toLowerCase().includes(filters.applicant)
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+      filteredRows = filteredRows.filter(
+        row => row.expense_category?.id === selectedExpenseCategorie
       );
     }
 
-    if (filters.expense_category) {
+    if (filters.applicant) {
       filteredRows = filteredRows.filter(row =>
-        row.expense_category?.name
-          .toLowerCase()
-          .includes(filters.expense_category)
+        row.applicant.toLowerCase().includes(filters.applicant)
       );
     }
 
@@ -473,6 +486,7 @@ const BudgetingPage = () => {
     activeStatus,
     filters,
     sortConfig,
+    selectedExpenseCategorie,
   ]);
 
   const totals = useMemo(() => {
@@ -557,6 +571,20 @@ const BudgetingPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'tech',
+      header: (
+        <div className={style.sortContainer}>
+          <p>Період</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('tech')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -683,20 +711,6 @@ const BudgetingPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('applicant')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'tech',
-      header: (
-        <div className={style.sortContainer}>
-          <p>Період</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('tech')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -833,17 +847,21 @@ const BudgetingPage = () => {
                   />
                 </label>
               </form>
-              <form className={style.searchContainer}>
-                <label className={style.labelContainer}>
-                  <input
-                    type="text"
-                    name="expense_category"
-                    className={style.inputContainer}
-                    placeholder="Стаття витрат"
-                    onChange={handleSearchChange}
-                  />
-                </label>
-              </form>
+              <Form
+                fields={[
+                  {
+                    type: 'autocomplete-select',
+                    name: 'expense_category',
+                    label: 'Стаття витрат',
+                    options: expenseCategoriesOptions,
+                    onChange: option =>
+                      setSelectedExpenseCategorie(option?.value || ''),
+                  },
+                ]}
+                defaultValues={{
+                  expense_category: selectedExpenseCategorie,
+                }}
+              />
             </div>
             {showAllFilters && (
               <div className={style.formsContainer}>
