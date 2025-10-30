@@ -1,0 +1,105 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 70px;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.searchContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+}
+
+.statuscontainer {
+  max-width: 1020px;
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  background: var(--toggle-lang-background);
+}
+
+.statusBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 28px;
+  transition: all 0.3s ease;
+}
+
+.activeBtn {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.statusBtn:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
+.linkContainer {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--button);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.linkIcon {
+  display: flex;
+  align-items: center;
+  width: 20px;
+  height: 20px;
+  fill: var(--button);
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+    margin-top: 0;
+  }
+
+  .formContainer {
+    flex-direction: row;
+  }
+
+  .searchContainer {
+    flex-direction: row;
+    gap: 12px;
+    width: 100%;
+  }
+}

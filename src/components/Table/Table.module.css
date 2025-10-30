@@ -113,39 +113,85 @@ td:last-child {
   border-right: none;
 }
 
-.status-0 {
-  background-color: #fae8e6;
-}
-
 .status-1 {
-  background-color: #f2fae6;
+  background-color: #f0f0f0;
 }
 
 .status-2 {
   background-color: #fbf3de;
 }
 
-.sent {
-  background-color: #f2fae6;
-}
-
-.assessor_assigned {
-  background-color: #e9f9f8;
-}
-
-.appealed {
-  background-color: #faf5e6;
-}
-
-.unsent {
+.status-3 {
   background-color: #fae8e6;
 }
 
-.appeal_reviewed {
-  background-color: #e4f8c0;
+.status-4 {
+  background-color: #e9f9f8;
 }
 
-.appeal_invalid {
+.status-5 {
+  background-color: #f2fae6;
+}
+
+.status-6 {
+  background-color: #f2fae6;
+}
+
+.status-21 {
+  background-color: #f2fae6;
+}
+
+.status-22 {
+  background-color: #f2fae6;
+}
+
+.status-14 {
+  background-color: #f8bbb5;
+}
+
+.status-20 {
+  background-color: #f8bbb5;
+}
+
+
+
+.statusBudgeting-1 {
+  background-color: #f0f0f0;
+}
+
+.statusBudgeting-2 {
+  background-color: #fbf3de;
+}
+
+.statusBudgeting-3 {
+  background-color: #f8bbb5;
+}
+
+.statusBudgeting-4 {
+  background-color: #fae8e6;
+}
+
+.statusBudgeting-5 {
+  background-color: #fbf3de;
+}
+
+.statusBudgeting-6 {
+  background-color: #f8bbb5;
+}
+
+.statusBudgeting-7 {
+  background-color: #f2fae6;
+}
+
+.statusBudgeting-8 {
+  background-color: #fbf3de;
+}
+
+.statusBudgeting-9 {
+  background-color: #f2fae6;
+}
+
+.statusBudgeting-10 {
   background-color: #f8bbb5;
 }
 

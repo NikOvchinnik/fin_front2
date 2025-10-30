@@ -139,8 +139,17 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Історія',
-        link: `/history`,
         icon: 'history',
+        children: [
+          {
+            page: 'Заявки історія',
+            link: '/history_requests',
+          },
+          {
+            page: 'Бюджетування історія',
+            link: '/history_budgeting',
+          },
+        ],
       },
     ],
   },

@@ -150,9 +150,3 @@ export const getActiveStatus = statusName => {
 
   return statusName;
 };
-
-
-export const searchType = [
-  { value: 'request', label: 'Заявка' },
-  { value: 'budgeting', label: 'Бюджет' },
-];

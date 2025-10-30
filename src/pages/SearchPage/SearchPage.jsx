@@ -4,7 +4,7 @@ import style from './SearchPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
 import { getRequestById } from '../../helpers/axios/requests';
-import { searchType } from '../../helpers/status';
+import { searchType } from '../../helpers/history';
 import Form from '../../components/Form/Form';
 import { getBudgetingById } from '../../helpers/axios/budgeting';
 import RequestSearch from '../../components/RequestSearch/RequestSearch';

@@ -37,9 +37,14 @@ const routesConfig = [
     element: lazy(() => import('../pages/ExchangeRatePage/ExchangeRatePage')),
   },
   {
-    path: 'history',
+    path: 'history_requests',
     roles: [1, 2, 4, 5],
-    element: lazy(() => import('../pages/HistoryPage/HistoryPage')),
+    element: lazy(() => import('../pages/HistoryPage/RequestHistoryPage/RequestHistoryPage')),
+  },
+  {
+    path: 'history_budgeting',
+    roles: [1, 2, 4, 5],
+    element: lazy(() => import('../pages/HistoryPage/BudgetingHistoryPage/BudgetingHistoryPage')),
   },
   {
     path: 'search',
