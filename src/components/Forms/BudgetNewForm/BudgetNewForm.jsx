@@ -122,7 +122,9 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
 
         const expenseCategories = await getExpenseCategories();
         setExpenseCategoryOptions(
-          expenseCategories.map(e => ({ value: e.id, label: e.name }))
+          expenseCategories
+            .filter(e => e.is_active)
+            .map(e => ({ value: e.id, label: e.name }))
         );
 
         setWeeksOptions(defaultWeeks);

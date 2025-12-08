@@ -67,23 +67,35 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
         const expenseCategories = await getExpenseCategories();
         let filteredExpenseCategories;
         if (formType === 'refund') {
-          filteredExpenseCategories = expenseCategories.filter(e =>
-            refundIds.includes(e.id)
+          filteredExpenseCategories = expenseCategories.filter(
+            e => e.is_active && refundIds.includes(e.id)
           );
         } else if (formType === 'request') {
           filteredExpenseCategories = expenseCategories.filter(
-            e => !refundIds.includes(e.id)
+            e => e.is_active && !refundIds.includes(e.id)
           );
-          filteredExpenseCategories = expenseCategories;
         } else {
-          filteredExpenseCategories = expenseCategories;
+          filteredExpenseCategories = expenseCategories.filter(
+            e => e.is_active
+          );
         }
 
-        const expenseCategorySelector = filteredExpenseCategories.map(e => ({
+        let options = filteredExpenseCategories.map(e => ({
           value: e.id,
           label: e.name,
         }));
-        setExpenseCategoryOptions(expenseCategorySelector);
+
+        if (
+          request.expense_category &&
+          !request.expense_category_active
+        ) {
+          options.push({
+            value: request.expense_category_id,
+            label: request.expense_category,
+          });
+        }
+
+        setExpenseCategoryOptions(options);
 
         const contractors = await getContractors();
         const contractorSelector = contractors.map(e => ({

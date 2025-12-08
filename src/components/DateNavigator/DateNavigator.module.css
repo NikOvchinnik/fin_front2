@@ -11,10 +11,7 @@
   color: var(--button);
   text-align: center;
   transition: all 0.3s ease;
-}
-
-.dateInputDay {
-  max-width: 100px;
+  min-width: 185px;
 }
 
 .dateInput:hover,
@@ -54,8 +51,8 @@
     margin: 0;
   }
 
-  .dateInputDay {
-    max-width: 150px;
+  .dateInput {
+    min-width: 250px;
   }
 
   .dateBtn {

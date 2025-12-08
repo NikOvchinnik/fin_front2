@@ -136,10 +136,12 @@ const MyRefundsPage = () => {
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
         { value: 'Всі', label: 'Всі' },
-        ...(expenseCategories || []).map(c => ({
-          value: c.id,
-          label: c.name,
-        })),
+        ...(expenseCategories || [])
+          .filter(c => c.is_active)
+          .map(c => ({
+            value: c.id,
+            label: c.name,
+          })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
     } catch (err) {

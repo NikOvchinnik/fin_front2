@@ -55,8 +55,12 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
         const expenseCategories = await getExpenseCategories();
         const filteredExpenseCategories =
           formType === 'refund'
-            ? expenseCategories.filter(e => refundIds.includes(e.id))
-            : expenseCategories.filter(e => !refundIds.includes(e.id));
+            ? expenseCategories.filter(
+                e => e.is_active && refundIds.includes(e.id)
+              )
+            : expenseCategories.filter(
+                e => e.is_active && !refundIds.includes(e.id)
+              );
         const expenseCategorySelector = filteredExpenseCategories.map(e => ({
           value: e.id,
           label: e.name,

@@ -21,6 +21,17 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
 
   const defaultPeriod = dayjs().format('MM.YYYY');
 
+  const savedPeriod = request?.plan_period || null;
+
+  const periods = generateDefaultPeriods(12);
+
+  if (savedPeriod && !periods.some(p => p.value === savedPeriod)) {
+    periods.unshift({
+      value: savedPeriod,
+      label: savedPeriod,
+    });
+  }
+
   const getWeeksOfMonth = period => {
     if (!period) return [];
 
@@ -112,9 +123,19 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
         );
 
         const expenseCategories = await getExpenseCategories();
-        setExpenseCategoryOptions(
-          expenseCategories.map(e => ({ value: e.id, label: e.name }))
-        );
+        const currentCategory = request.expense_category;
+        let options = expenseCategories
+          .filter(e => e.is_active)
+          .map(e => ({ value: e.id, label: e.name }));
+
+        if (currentCategory && !currentCategory.is_active) {
+          options.push({
+            value: currentCategory.id,
+            label: currentCategory.name,
+          });
+        }
+
+        setExpenseCategoryOptions(options);
 
         setWeeksOptions(defaultWeeks);
       } catch (err) {
@@ -154,7 +175,7 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
       type: 'select',
       name: 'period',
       label: 'Плановий період',
-      options: generateDefaultPeriods(12),
+      options: periods,
       validation: { required: 'This field is required' },
       onChange: value => setWeeksOptions(getWeeksOfMonth(value)),
       readOnly: true,
