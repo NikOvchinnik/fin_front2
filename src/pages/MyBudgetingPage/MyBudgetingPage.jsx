@@ -18,6 +18,7 @@ import {
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
   statusSelectorBudgetingFin,
+  statusSelectorBudgetingUser,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
 import { useParams } from 'react-router-dom';
@@ -904,10 +905,10 @@ const MyBudgetingPage = () => {
             <ul
               className={style.statuscontainer}
               style={{
-                maxWidth: '680px',
+                maxWidth: '780px',
               }}
             >
-              {statusSelectorBudgetingFin.map(status => (
+              {statusSelectorBudgetingUser.map(status => (
                 <li key={status.value}>
                   <button
                     className={`${style.statusBtn} ${

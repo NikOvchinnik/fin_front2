@@ -14,7 +14,7 @@ import {
   getActiveStatus,
   getShortStatus,
   getStatusStyle,
-  statusSelectorFin,
+  statusSelectorUser,
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
@@ -1068,7 +1068,7 @@ const MyRefundsPage = () => {
               </>
             )}
             <ul className={style.statuscontainer}>
-              {statusSelectorFin.map(status => (
+              {statusSelectorUser.map(status => (
                 <li key={status.value}>
                   <button
                     className={`${style.statusBtn} ${

@@ -46,6 +46,20 @@ export const statusSelectorBuh = [
   { value: 'Скасовано', label: 'Скасовано' },
 ];
 
+export const statusSelectorUser = [
+  { value: 'Всі', label: 'Всі' },
+  { value: 'Чернетка', label: 'Чернетка' },
+  { value: 'Очікує затвердження', label: 'Очікує затвердження' },
+  { value: 'Передано на оплату', label: 'Передано на оплату' },
+  { value: 'Сплачено', label: 'Сплачено' },
+  { value: 'Очікуються документи', label: 'Очікуються документи' },
+  {
+    value: 'Потребує виправлень',
+    label: 'Потребує виправлень',
+  },
+  { value: 'Скасовано', label: 'Скасовано' },
+];
+
 export const approveStatus = [
   {
     value: '1',

@@ -42,6 +42,14 @@ export const statusSelectorBudgetingFin = [
   { value: 'Скасовано', label: 'Скасовано' },
 ];
 
+export const statusSelectorBudgetingUser = [
+  { value: 'Всі', label: 'Всі' },
+  { value: 'Чернетка', label: 'Чернетка' },
+  { value: 'Очікує затвердження', label: 'Очікує затвердження' },
+  { value: 'Затверджено', label: 'Затверджено' },
+  { value: 'Скасовано', label: 'Скасовано' },
+];
+
 export const getActiveBudgetingStatus = statusName => {
   if (!statusName) return '';
   if (
