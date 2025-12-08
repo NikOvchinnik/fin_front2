@@ -82,6 +82,22 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
     fetchData();
   }, []);
 
+  const getNextTuesdayOrThursday = () => {
+    let date = dayjs();
+    const day = date.day(); // 0=Нд, 1=Пн, 2=Вт, ...
+
+    if (day <= 2) {
+      // Пн (1) або Вт (2)
+      return date.day(2);
+    } else if (day <= 4) {
+      // Ср (3) або Чт (4)
+      return date.day(4);
+    } else {
+      // Пт (5), Сб (6), Нд (0) → наступний Вівторок
+      return date.add(1, 'week').day(2);
+    }
+  };
+
   const fields = [
     {
       type: 'autocomplete-select',
@@ -255,7 +271,8 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
               amount: '',
               currency_id: '',
               payment_period: '',
-              payment_date_await: dayjs().format('YYYY-MM-DD'),
+              payment_date_await:
+                getNextTuesdayOrThursday().format('YYYY-MM-DD'),
               expense_category_id: '',
               comment: '',
               files: '',

@@ -44,26 +44,31 @@ export const statusSelectorBudgetingFin = [
 
 export const getActiveBudgetingStatus = statusName => {
   if (!statusName) return '';
-  if (statusName === 'Фінанси: Скасовано' || statusName === 'СЕО: Скасовано')
+  if (
+    statusName === 'Фінанси: Скасовано' ||
+    statusName === 'CEO/COO/CFO: Скасовано' ||
+    statusName === 'Керівник відділу: Скасовано'
+  )
     return 'Скасовано';
   if (
     statusName === 'Очікує затвердження Фінанси' ||
-    statusName === 'Очікує затвердження СЕО'
+    statusName === 'Очікує затвердження CEO/COO/CFO' ||
+    statusName === 'Очікує затвердження Керівник відділу'
   )
     return 'Очікує затвердження';
   if (
     statusName === 'Фінанси: Затверджено' ||
-    statusName === 'СЕО: Затверджено'
+    statusName === 'CEO/COO/CFO: Затверджено'
   )
     return 'Затверджено';
   return statusName;
 };
 
 export const approveBudgetingStatus = [
-  { value: 9, label: 'СЕО: Затверджено' },
-  { value: 10, label: 'СЕО: Скасовано' },
+  { value: 9, label: 'CEO/COO/CFO: Затверджено' },
+  { value: 10, label: 'CEO/COO/CFO: Скасовано' },
   { value: 7, label: 'Фінанси: Затверджено' },
-  { value: 8, label: 'На затвердження СЕО' },
+  { value: 8, label: 'На затвердження CEO/COO/CFO' },
   { value: 6, label: 'Фінанси: Скасовано' },
   { value: 4, label: 'Потребує виправлень' },
   { value: 3, label: 'Керівник відділу: Скасовано' },
@@ -71,14 +76,14 @@ export const approveBudgetingStatus = [
 
 export const approveBudgetingStatusFin = [
   { value: 7, label: 'Фінанси: Затверджено' },
-  { value: 8, label: 'На затвердження СЕО' },
+  { value: 8, label: 'На затвердження CEO/COO/CFO' },
   { value: 6, label: 'Фінанси: Скасовано' },
   { value: 4, label: 'Потребує виправлень' },
 ];
 
 export const approveBudgetingStatusCEO = [
-  { value: 9, label: 'СЕО: Затверджено' },
-  { value: 10, label: 'СЕО: Скасовано' },
+  { value: 9, label: 'CEO/COO/CFO: Затверджено' },
+  { value: 10, label: 'CEO/COO/CFO: Скасовано' },
   { value: 4, label: 'Потребує виправлень' },
 ];
 

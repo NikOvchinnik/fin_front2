@@ -24,7 +24,7 @@ const App = () => {
   const renderRootComponent = role => {
     switch (role) {
       case 1:
-        return <Navigate to={`requests`} />;  //CEO/COO
+        return <Navigate to={`requests`} />;  //CEO/COO/CFO
       case 2:
         return <Navigate to={`my_requests/${userId}`} />; //Керівник відділу
       case 3:

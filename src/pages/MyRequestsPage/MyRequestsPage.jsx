@@ -229,7 +229,7 @@ const MyRequestsPage = () => {
 
     if (activeStatus && activeStatus !== 'Всі') {
       filteredRows = filteredRows.filter(
-        row => getActiveStatus(row.status?.name) === activeStatus
+        row => getActiveStatus(row.status) === activeStatus
       );
     }
 

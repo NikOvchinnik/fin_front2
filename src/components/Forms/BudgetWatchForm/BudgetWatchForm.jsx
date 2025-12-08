@@ -253,7 +253,7 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
             )}
             {request.ceo_comment && (
               <li className={style.commentCeo}>
-                Коментар CEO: {request.ceo_comment}
+                Коментар CEO/COO/CFO: {request.ceo_comment}
               </li>
             )}
           </ul>
