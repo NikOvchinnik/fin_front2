@@ -154,7 +154,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'paid_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Кількість</p>
+          <p>Заявки кількість</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_count')}
@@ -168,7 +168,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'paid_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума</p>
+          <p>Заявки сума</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_sum')}
