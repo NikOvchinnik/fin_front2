@@ -39,17 +39,57 @@ const routesConfig = [
   {
     path: 'history_requests',
     roles: [1, 2, 4, 5],
-    element: lazy(() => import('../pages/HistoryPage/RequestHistoryPage/RequestHistoryPage')),
+    element: lazy(() =>
+      import('../pages/HistoryPage/RequestHistoryPage/RequestHistoryPage')
+    ),
   },
   {
     path: 'history_budgeting',
     roles: [1, 2, 4, 5],
-    element: lazy(() => import('../pages/HistoryPage/BudgetingHistoryPage/BudgetingHistoryPage')),
+    element: lazy(() =>
+      import('../pages/HistoryPage/BudgetingHistoryPage/BudgetingHistoryPage')
+    ),
   },
   {
     path: 'search',
     roles: [1, 4, 5],
     element: lazy(() => import('../pages/SearchPage/SearchPage')),
+  },
+  {
+    path: 'analytics-payment-forms',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/PaymentFormsAnalyticPage/PaymentFormsAnalyticPage')),
+  },
+
+  {
+    path: 'analytics-expense-categories',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/ExpenseCategoriesAnalyticPage/ExpenseCategoriesAnalyticPage')),
+  },
+  {
+    path: 'analytics-departments',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/DepartmetsAnalyticPage/DepartmetsAnalyticPage')),
+  },
+  {
+    path: 'analytics-currencies',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/CurrenciesAnalyticPage/CurrenciesAnalyticPage')),
+  },
+  {
+    path: 'analytics-contractors',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/ContractorsAnalyticPage/ContractorsAnalyticPage')),
+  },
+  {
+    path: 'analytics-total',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/RequestsAnalyticPage/RequestsAnalyticPage')),
+  },
+  {
+    path: 'analytics-users',
+    roles: [1, 4, 5],
+    element: lazy(() => import('../pages/Analytics/UsersAnalyticPage/UsersAnalyticPage')),
   },
 ];
 

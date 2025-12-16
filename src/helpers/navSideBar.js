@@ -38,16 +38,36 @@ export const getNavSideBar = (userId, userName) => [
         icon: 'search-crm',
       },
       {
-        page: 'Історія',
-        icon: 'history',
+        page: 'Аналітика',
+        icon: 'analytics',
         children: [
           {
-            page: 'Заявки історія',
-            link: '/history_requests',
+            page: 'Загальна аналітика',
+            link: '/analytics-total',
           },
           {
-            page: 'Бюджетування історія',
-            link: '/history_budgeting',
+            page: 'Департаменти',
+            link: '/analytics-departments',
+          },
+          {
+            page: 'Користувачі',
+            link: '/analytics-users',
+          },
+          {
+            page: 'Контрагенти',
+            link: '/analytics-contractors',
+          },
+          {
+            page: 'Форми оплати',
+            link: '/analytics-payment-forms',
+          },
+          {
+            page: 'Статті витрат',
+            link: '/analytics-expense-categories',
+          },
+          {
+            page: 'Валюти',
+            link: '/analytics-currencies',
           },
         ],
       },
@@ -169,6 +189,40 @@ export const getNavSideBar = (userId, userName) => [
           },
         ],
       },
+      {
+        page: 'Аналітика',
+        icon: 'analytics',
+        children: [
+          {
+            page: 'Загальна аналітика',
+            link: '/analytics-total',
+          },
+          {
+            page: 'Департаменти',
+            link: '/analytics-departments',
+          },
+          {
+            page: 'Користувачі',
+            link: '/analytics-users',
+          },
+          {
+            page: 'Контрагенти',
+            link: '/analytics-contractors',
+          },
+          {
+            page: 'Форми оплати',
+            link: '/analytics-payment-forms',
+          },
+          {
+            page: 'Статті витрат',
+            link: '/analytics-expense-categories',
+          },
+          {
+            page: 'Валюти',
+            link: '/analytics-currencies',
+          },
+        ],
+      },
     ],
   },
   {
@@ -210,6 +264,40 @@ export const getNavSideBar = (userId, userName) => [
           {
             page: 'Бюджетування історія',
             link: '/history_budgeting',
+          },
+        ],
+      },
+      {
+        page: 'Аналітика',
+        icon: 'analytics',
+        children: [
+          {
+            page: 'Загальна аналітика',
+            link: '/analytics-total',
+          },
+          {
+            page: 'Департаменти',
+            link: '/analytics-departments',
+          },
+          {
+            page: 'Користувачі',
+            link: '/analytics-users',
+          },
+          {
+            page: 'Контрагенти',
+            link: '/analytics-contractors',
+          },
+          {
+            page: 'Форми оплати',
+            link: '/analytics-payment-forms',
+          },
+          {
+            page: 'Статті витрат',
+            link: '/analytics-expense-categories',
+          },
+          {
+            page: 'Валюти',
+            link: '/analytics-currencies',
           },
         ],
       },

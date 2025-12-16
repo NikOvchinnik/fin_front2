@@ -1,0 +1,86 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 70px;
+}
+
+.titleRow {
+  font-weight: 600;
+}
+
+.textRow {
+  display: flex;
+  justify-content: center;
+}
+
+.totalTextRow {
+  display: flex;
+  justify-content: center;
+  font-weight: 600;
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.formSelectorContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 200px;
+}
+
+.sortContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btnContainer {
+  display: flex;
+  align-items: center;
+}
+
+.sortIcon {
+  width: 12px;
+  height: 24px;
+}
+
+.csvBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px;
+  width: 175px;
+  color: var(--white);
+  transition: all 0.3s ease;
+  margin: 4px 0;
+}
+
+.csvBtn:hover,
+.csvBtn:focus {
+  background-color: var(--button-hover);
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+    margin-top: 0;
+  }
+
+  .titleContainer {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .formSelectorContainer {
+    flex-direction: row;
+    gap: 12px;
+  }
+}
