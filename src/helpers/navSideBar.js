@@ -69,6 +69,10 @@ export const getNavSideBar = (userId, userName) => [
             page: 'Валюти',
             link: '/analytics-currencies',
           },
+          {
+            page: 'Google Sheets',
+            link: '/analytics-google-sheets',
+          },
         ],
       },
     ],
@@ -221,6 +225,10 @@ export const getNavSideBar = (userId, userName) => [
             page: 'Валюти',
             link: '/analytics-currencies',
           },
+          {
+            page: 'Google Sheets',
+            link: '/analytics-google-sheets',
+          },
         ],
       },
     ],
@@ -298,6 +306,10 @@ export const getNavSideBar = (userId, userName) => [
           {
             page: 'Валюти',
             link: '/analytics-currencies',
+          },
+          {
+            page: 'Google Sheets',
+            link: '/analytics-google-sheets',
           },
         ],
       },

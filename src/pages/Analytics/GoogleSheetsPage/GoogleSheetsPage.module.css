@@ -1,0 +1,27 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  margin-top: 70px;
+}
+
+.formsSelectorContainer {
+  display: flex;
+  flex-direction: column;
+  max-width: 380px;
+  gap: 30px;
+}
+
+.formContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 40px;
+    margin-top: 0;
+  }
+}

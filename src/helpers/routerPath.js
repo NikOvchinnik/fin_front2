@@ -58,38 +58,65 @@ const routesConfig = [
   {
     path: 'analytics-payment-forms',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/PaymentFormsAnalyticPage/PaymentFormsAnalyticPage')),
+    element: lazy(() =>
+      import(
+        '../pages/Analytics/PaymentFormsAnalyticPage/PaymentFormsAnalyticPage'
+      )
+    ),
   },
 
   {
     path: 'analytics-expense-categories',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/ExpenseCategoriesAnalyticPage/ExpenseCategoriesAnalyticPage')),
+    element: lazy(() =>
+      import(
+        '../pages/Analytics/ExpenseCategoriesAnalyticPage/ExpenseCategoriesAnalyticPage'
+      )
+    ),
   },
   {
     path: 'analytics-departments',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/DepartmetsAnalyticPage/DepartmetsAnalyticPage')),
+    element: lazy(() =>
+      import('../pages/Analytics/DepartmetsAnalyticPage/DepartmetsAnalyticPage')
+    ),
   },
   {
     path: 'analytics-currencies',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/CurrenciesAnalyticPage/CurrenciesAnalyticPage')),
+    element: lazy(() =>
+      import('../pages/Analytics/CurrenciesAnalyticPage/CurrenciesAnalyticPage')
+    ),
   },
   {
     path: 'analytics-contractors',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/ContractorsAnalyticPage/ContractorsAnalyticPage')),
+    element: lazy(() =>
+      import(
+        '../pages/Analytics/ContractorsAnalyticPage/ContractorsAnalyticPage'
+      )
+    ),
   },
   {
     path: 'analytics-total',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/RequestsAnalyticPage/RequestsAnalyticPage')),
+    element: lazy(() =>
+      import('../pages/Analytics/RequestsAnalyticPage/RequestsAnalyticPage')
+    ),
   },
   {
     path: 'analytics-users',
     roles: [1, 4, 5],
-    element: lazy(() => import('../pages/Analytics/UsersAnalyticPage/UsersAnalyticPage')),
+    element: lazy(() =>
+      import('../pages/Analytics/UsersAnalyticPage/UsersAnalyticPage')
+    ),
+  },
+  {
+    path: 'analytics-google-sheets',
+    roles: [1, 4, 5],
+    element: lazy(() =>
+      import('../pages/Analytics/GoogleSheetsPage/GoogleSheetsPage')
+    ),
   },
 ];
 
