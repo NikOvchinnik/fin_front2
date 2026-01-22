@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo} from 'react';
 import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './BudgetingPage.module.css';
 import { Notify } from 'notiflix';
@@ -18,6 +18,7 @@ import { getProjects } from '../../helpers/axios/projects';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
+import { Checkbox } from '@mui/material';
 import {
   getBudgetingCEO,
   getBudgetingFinancial,
@@ -69,6 +70,47 @@ const BudgetingPage = () => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [pageRowIds, setPageRowIds] = useState([]); // IDs поточної сторінки
+  const [pageIndex, setPageIndex] = useState(0);
+
+  const resetSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  useEffect(() => {
+    resetSelection();
+  }, [pageIndex, resetSelection]);
+
+  const toggleRow = useCallback((id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const isAllSelectedOnPage = useMemo(() => {
+    return pageRowIds.length > 0 && pageRowIds.every(id => selectedIds.has(id));
+  }, [pageRowIds, selectedIds]);
+
+  const isSomeSelectedOnPage = useMemo(() => {
+    return pageRowIds.some(id => selectedIds.has(id)) && !isAllSelectedOnPage;
+  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+
+  const toggleAllOnPage = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected = pageRowIds.length > 0 && pageRowIds.every(id => next.has(id));
+
+      pageRowIds.forEach(id => {
+        if (allSelected) next.delete(id);
+        else next.add(id);
+      });
+
+      return next;
+    });
+  }, [pageRowIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -480,6 +522,13 @@ const BudgetingPage = () => {
           </button>
         </div>
       ),
+      select: (
+        <Checkbox
+          checked={selectedIds.has(request.id)}
+          onChange={() => toggleRow(request.id)}
+          onClick={(e) => e.stopPropagation()} // опціонально
+        />
+      ),
     }));
   }, [
     dataRequests,
@@ -489,6 +538,8 @@ const BudgetingPage = () => {
     filters,
     sortConfig,
     selectedExpenseCategorie,
+    selectedIds,
+    toggleRow,
   ]);
 
   const totals = useMemo(() => {
@@ -537,6 +588,17 @@ const BudgetingPage = () => {
   }, [requestsRows]);
 
   const columns = [
+    {
+      accessorKey: 'select',
+      header: (
+        <Checkbox
+          checked={isAllSelectedOnPage}
+          indeterminate={isSomeSelectedOnPage}
+          onChange={toggleAllOnPage}
+          onClick={(e) => e.stopPropagation()} // опціонально
+        />
+      ),
+    },
     {
       accessorKey: 'request_id',
       header: (
@@ -948,6 +1010,8 @@ const BudgetingPage = () => {
                 visibleColumnsMobile={2}
                 rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
+                onPageChange={(idx) => setPageIndex(idx)}
+                onPageRowIdsChange={(ids) => setPageRowIds(ids)}
               />
               {totals && (
                 <div className={style.totalsContainer}>

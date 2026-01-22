@@ -251,6 +251,18 @@
   margin-top: 3px;
 }
 
+.checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  border: 1px solid #c4c4c4;
+}
+
+.checkbox input[type="checkbox"]:checked {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
 @media screen and (min-width: 1024px) {
   .mainContainer {
     gap: 24px;
@@ -273,4 +285,5 @@
     flex-direction: row;
     gap: 50px;
   }
+  
 }

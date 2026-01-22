@@ -18,6 +18,8 @@ const Table = ({
   fixedFirstColumn = false,
   rowsPerPage = 0,
   enableHorizontalScroll = false,
+  onPageRowIdsChange,
+  onPageChange,
 }) => {
   const [visibleColumnIndex, setVisibleColumnIndex] = useState(0);
   const [needsHorizontalScroll, setNeedsHorizontalScroll] = useState(false);
@@ -38,6 +40,49 @@ const Table = ({
       }),
     },
   });
+
+  const pageIndex = rowsPerPage > 0 ? table.getState().pagination.pageIndex : 0;
+
+  const prevIdsKeyRef = useRef('');
+  const prevPageIndexRef = useRef(pageIndex);
+
+  useEffect(() => {
+    // 1) page change callback (тільки якщо реально змінився індекс)
+    if (rowsPerPage > 0 && onPageChange && prevPageIndexRef.current !== pageIndex) {
+      prevPageIndexRef.current = pageIndex;
+      onPageChange(pageIndex);
+    }
+
+    // 2) ids for current page (тільки якщо реально змінились)
+    if (!onPageRowIdsChange) return;
+
+    const rows = rowsPerPage > 0
+      ? table.getPaginationRowModel().rows
+      : table.getRowModel().rows;
+
+    const ids = rows
+      .map(r => r.original?.request_id_plain)
+      .filter(Boolean);
+
+    const idsKey = ids.join('|'); // швидка "deep equals" перевірка
+
+    if (prevIdsKeyRef.current !== idsKey) {
+      prevIdsKeyRef.current = idsKey;
+      onPageRowIdsChange(ids);
+    }
+  }, [
+    pageIndex,
+    rowsPerPage,
+    onPageChange,
+    onPageRowIdsChange,
+    table,
+    data, // можна лишити, тепер не зациклить, бо є idsKey guard
+  ]);
+
+  useEffect(() => {
+    if (rowsPerPage <= 0) return;
+    onPageChange?.(table.getState().pagination.pageIndex);
+  }, [rowsPerPage, onPageChange, table, table.getState().pagination.pageIndex]);
 
   const isMobile = useMediaQuery('(max-width:1023px)');
   const visibleColumnsCount = isMobile ? visibleColumnsMobile : visibleColumns;
@@ -64,6 +109,7 @@ const Table = ({
         const { scrollWidth, clientWidth } = scrollContainerRef.current;
         setNeedsHorizontalScroll(scrollWidth > clientWidth);
       }
+    
     };
 
     checkScroll();
@@ -173,7 +219,7 @@ const Table = ({
       {rowsPerPage > 0 && table.getPageCount() > 1 && (
         <div className={style.paginationContainer}>
           <button
-            onClick={() => table.previousPage()}
+            onClick={() => {table.previousPage();}}
             className={style.paginationBtn}
             disabled={!table.getCanPreviousPage()}
           >
@@ -183,7 +229,7 @@ const Table = ({
             {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
           </span>
           <button
-            onClick={() => table.nextPage()}
+            onClick={() => {table.nextPage();}}
             className={style.paginationBtn}
             disabled={!table.getCanNextPage()}
           >
