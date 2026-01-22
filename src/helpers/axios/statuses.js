@@ -31,3 +31,11 @@ export const changeBuhStatus = async payload => {
     throw error;
   }
 };
+
+export const changeStatusBulk = async payload => {
+  try {
+    return await axios.post('/api/change-status-bulk', payload);
+  } catch (error) {
+    throw error;
+  }
+};

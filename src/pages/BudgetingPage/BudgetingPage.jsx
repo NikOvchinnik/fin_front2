@@ -24,6 +24,7 @@ import {
   getBudgetingFinancial,
   getBudgetingHd,
 } from '../../helpers/axios/budgeting';
+import { changeStatusBulk } from '../../helpers/axios/statuses';
 import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
@@ -858,17 +859,23 @@ const BudgetingPage = () => {
     setModalBulkIsOpen(false);
   };
 
-  const handleBulkSubmit = data => {
+  const handleBulkSubmit = async data => {
     const payload = {
       ids: Array.from(selectedIds),
       status_id: data.status,
       comment: data.comment?.trim() || '',
     };
 
-    console.info('Bulk budgeting approve payload:', payload);
-    Notify.info('Логіка відправки буде додана окремим кроком.');
-    closeModalBulk();
-    resetSelection();
+    try {
+      await changeStatusBulk(payload);
+      await fetchData();
+      Notify.success('Статус бюджетів змінено!');
+      closeModalBulk();
+      resetSelection();
+    } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
   };
 
   const bulkStatusOptions =

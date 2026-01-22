@@ -36,6 +36,7 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getContractors } from '../../helpers/axios/contractors';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
+import { changeStatusBulk } from '../../helpers/axios/statuses';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -1044,17 +1045,23 @@ const RequestsPage = () => {
     setModalBulkIsOpen(false);
   };
 
-  const handleBulkSubmit = data => {
+  const handleBulkSubmit = async data => {
     const payload = {
       ids: Array.from(selectedIds),
       status_id: data.status,
       comment: data.comment?.trim() || '',
     };
 
-    console.info('Bulk requests approve payload:', payload);
-    Notify.info('Логіка відправки буде додана окремим кроком.');
-    closeModalBulk();
-    resetSelection();
+    try {
+      await changeStatusBulk(payload);
+      await fetchData();
+      Notify.success('Статус заявок змінено!');
+      closeModalBulk();
+      resetSelection();
+    } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
   };
 
   const bulkStatusOptions =
