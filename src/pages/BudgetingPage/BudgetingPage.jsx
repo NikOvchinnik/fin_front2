@@ -29,11 +29,15 @@ import {
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
   statusSelectorBudgetingFin,
+  approveBudgetingStatusFin,
+  approveBudgetingStatusCEO,
+  approveBudgetingStatusHd,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
 import ApproveBudgetingForm from '../../components/Forms/ApproveBudgetingForm/ApproveBudgetingForm';
 import ApproveBudgetingWatchForm from '../../components/Forms/ApproveBudgetingWatchForm/ApproveBudgetingWatchForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
+import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
 
 const BudgetingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -61,6 +65,7 @@ const BudgetingPage = () => {
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
+  const [isModalBulkOpen, setModalBulkIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -81,6 +86,21 @@ const BudgetingPage = () => {
   useEffect(() => {
     resetSelection();
   }, [pageIndex, resetSelection]);
+
+  useEffect(() => {
+    resetSelection();
+  }, [
+    selectedProject,
+    selectedCurrency,
+    selectedExpenseCategorie,
+    filters,
+    activeStatus,
+    sortConfig,
+    startDate,
+    endDate,
+    dataRequests,
+    resetSelection,
+  ]);
 
   const toggleRow = useCallback((id) => {
     setSelectedIds(prev => {
@@ -522,13 +542,6 @@ const BudgetingPage = () => {
           </button>
         </div>
       ),
-      select: (
-        <Checkbox
-          checked={selectedIds.has(request.id)}
-          onChange={() => toggleRow(request.id)}
-          onClick={(e) => e.stopPropagation()} // опціонально
-        />
-      ),
     }));
   }, [
     dataRequests,
@@ -538,8 +551,6 @@ const BudgetingPage = () => {
     filters,
     sortConfig,
     selectedExpenseCategorie,
-    selectedIds,
-    toggleRow,
   ]);
 
   const totals = useMemo(() => {
@@ -595,6 +606,13 @@ const BudgetingPage = () => {
           checked={isAllSelectedOnPage}
           indeterminate={isSomeSelectedOnPage}
           onChange={toggleAllOnPage}
+          onClick={(e) => e.stopPropagation()} // опціонально
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedIds.has(row.original.request_id_plain)}
+          onChange={() => toggleRow(row.original.request_id_plain)}
           onClick={(e) => e.stopPropagation()} // опціонально
         />
       ),
@@ -832,6 +850,36 @@ const BudgetingPage = () => {
     setModalWatchIsOpen(false);
   };
 
+  const openModalBulk = () => {
+    setModalBulkIsOpen(true);
+  };
+
+  const closeModalBulk = () => {
+    setModalBulkIsOpen(false);
+  };
+
+  const handleBulkSubmit = data => {
+    const payload = {
+      ids: Array.from(selectedIds),
+      status_id: data.status,
+      comment: data.comment?.trim() || '',
+    };
+
+    console.info('Bulk budgeting approve payload:', payload);
+    Notify.info('Логіка відправки буде додана окремим кроком.');
+    closeModalBulk();
+    resetSelection();
+  };
+
+  const bulkStatusOptions =
+    userRole === 4
+      ? approveBudgetingStatusFin
+      : userRole === 1
+      ? approveBudgetingStatusCEO
+      : userRole === 2
+      ? approveBudgetingStatusHd
+      : [];
+
   return (
     <>
       {loading ? (
@@ -964,25 +1012,37 @@ const BudgetingPage = () => {
                 </form>
               </div>
             )}
-            <ul
-              className={style.statuscontainer}
-              style={{
-                maxWidth: '680px',
-              }}
-            >
-              {statusSelectorBudgetingFin.map(status => (
-                <li key={status.value}>
+            <div className={style.statusRow}>
+              <ul
+                className={style.statuscontainer}
+                style={{
+                  maxWidth: '680px',
+                }}
+              >
+                {statusSelectorBudgetingFin.map(status => (
+                  <li key={status.value}>
+                    <button
+                      className={`${style.statusBtn} ${
+                        activeStatus === status.value ? style.activeBtn : ''
+                      }`}
+                      onClick={() => setActiveStatus(status.value)}
+                    >
+                      {status.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {selectedIds.size > 0 && (
+                <div className={style.bulkActionsInline}>
                   <button
-                    className={`${style.statusBtn} ${
-                      activeStatus === status.value ? style.activeBtn : ''
-                    }`}
-                    onClick={() => setActiveStatus(status.value)}
+                    className={style.bulkEditButton}
+                    onClick={openModalBulk}
                   >
-                    {status.label}
+                    Редагувати обрані
                   </button>
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+            </div>
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
@@ -1111,6 +1171,17 @@ const BudgetingPage = () => {
               closeModal={closeModalWatch}
               onRefresh={fetchData}
               userRole={userRole}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalBulkOpen}
+            onCloseModal={closeModalBulk}
+          >
+            <BulkApproveForm
+              title="Погодження бюджету"
+              selectedCount={selectedIds.size}
+              statusOptions={bulkStatusOptions}
+              onSubmit={handleBulkSubmit}
             />
           </ModalWindow>
         </section>

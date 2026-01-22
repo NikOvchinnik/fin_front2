@@ -9,7 +9,7 @@ import {
   getExpenseCategories,
   getPaymentForms,
 } from '../../helpers/axios/payments';
-import { useMediaQuery } from '@mui/material';
+import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
@@ -21,6 +21,8 @@ import {
   getStatusStyle,
   statusSelectorBuh,
   statusSelectorFin,
+  approveStatusFin,
+  approveStatusBuh,
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import Form from '../../components/Form/Form';
@@ -33,6 +35,7 @@ import ApproveWatchForm from '../../components/Forms/ApproveWatchForm/ApproveWat
 import { exportToCSV } from '../../helpers/exportToCSV';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getContractors } from '../../helpers/axios/contractors';
+import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -66,6 +69,7 @@ const RequestsPage = () => {
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
+  const [isModalBulkOpen, setModalBulkIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -75,6 +79,65 @@ const RequestsPage = () => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [pageRowIds, setPageRowIds] = useState([]);
+  const [pageIndex, setPageIndex] = useState(0);
+
+  const resetSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  useEffect(() => {
+    resetSelection();
+  }, [pageIndex, resetSelection]);
+
+  useEffect(() => {
+    resetSelection();
+  }, [
+    selectedProject,
+    selectedCurrency,
+    selectedContractor,
+    selectedPaymentForm,
+    selectedExpenseCategorie,
+    filters,
+    activeStatus,
+    sortConfig,
+    startDate,
+    endDate,
+    dataRequests,
+    resetSelection,
+  ]);
+
+  const toggleRow = useCallback(id => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }, []);
+
+  const isAllSelectedOnPage = useMemo(() => {
+    return pageRowIds.length > 0 && pageRowIds.every(id => selectedIds.has(id));
+  }, [pageRowIds, selectedIds]);
+
+  const isSomeSelectedOnPage = useMemo(() => {
+    return pageRowIds.some(id => selectedIds.has(id)) && !isAllSelectedOnPage;
+  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+
+  const toggleAllOnPage = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected =
+        pageRowIds.length > 0 && pageRowIds.every(id => next.has(id));
+
+      pageRowIds.forEach(id => {
+        if (allSelected) next.delete(id);
+        else next.add(id);
+      });
+
+      return next;
+    });
+  }, [pageRowIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -635,6 +698,24 @@ const RequestsPage = () => {
 
   const columns = [
     {
+      accessorKey: 'select',
+      header: (
+        <Checkbox
+          checked={isAllSelectedOnPage}
+          indeterminate={isSomeSelectedOnPage}
+          onChange={toggleAllOnPage}
+          onClick={e => e.stopPropagation()}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedIds.has(row.original.request_id_plain)}
+          onChange={() => toggleRow(row.original.request_id_plain)}
+          onClick={e => e.stopPropagation()}
+        />
+      ),
+    },
+    {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
@@ -955,6 +1036,30 @@ const RequestsPage = () => {
     setModalWatchIsOpen(false);
   };
 
+  const openModalBulk = () => {
+    setModalBulkIsOpen(true);
+  };
+
+  const closeModalBulk = () => {
+    setModalBulkIsOpen(false);
+  };
+
+  const handleBulkSubmit = data => {
+    const payload = {
+      ids: Array.from(selectedIds),
+      status_id: data.status,
+      comment: data.comment?.trim() || '',
+    };
+
+    console.info('Bulk requests approve payload:', payload);
+    Notify.info('Логіка відправки буде додана окремим кроком.');
+    closeModalBulk();
+    resetSelection();
+  };
+
+  const bulkStatusOptions =
+    userRole === 4 ? approveStatusFin : userRole === 5 ? approveStatusBuh : [];
+
   const closeModalSendFiles = () => {
     setModalSendFilesIsOpen(false);
   };
@@ -1147,27 +1252,39 @@ const RequestsPage = () => {
                 </div>
               </>
             )}
-            <ul
-              className={style.statuscontainer}
-              style={{
-                maxWidth: userRole === 5 ? '860px' : '1300px',
-              }}
-            >
-              {(userRole === 5 ? statusSelectorBuh : statusSelectorFin).map(
-                status => (
-                  <li key={status.value}>
-                    <button
-                      className={`${style.statusBtn} ${
-                        activeStatus === status.value ? style.activeBtn : ''
-                      }`}
-                      onClick={() => setActiveStatus(status.value)}
-                    >
-                      {status.label}
-                    </button>
-                  </li>
-                )
+            <div className={style.statusRow}>
+              <ul
+                className={style.statuscontainer}
+                style={{
+                  maxWidth: userRole === 5 ? '860px' : '1300px',
+                }}
+              >
+                {(userRole === 5 ? statusSelectorBuh : statusSelectorFin).map(
+                  status => (
+                    <li key={status.value}>
+                      <button
+                        className={`${style.statusBtn} ${
+                          activeStatus === status.value ? style.activeBtn : ''
+                        }`}
+                        onClick={() => setActiveStatus(status.value)}
+                      >
+                        {status.label}
+                      </button>
+                    </li>
+                  )
+                )}
+              </ul>
+              {selectedIds.size > 0 && (
+                <div className={style.bulkActionsInline}>
+                  <button
+                    className={style.bulkEditButton}
+                    onClick={openModalBulk}
+                  >
+                    Редагувати обрані
+                  </button>
+                </div>
               )}
-            </ul>
+            </div>
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
@@ -1195,6 +1312,8 @@ const RequestsPage = () => {
                 visibleColumnsMobile={2}
                 rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
+                onPageChange={idx => setPageIndex(idx)}
+                onPageRowIdsChange={ids => setPageRowIds(ids)}
               />
               {totals && (
                 <div className={style.totalsContainer}>
@@ -1267,6 +1386,17 @@ const RequestsPage = () => {
               onRefresh={fetchData}
               formType="requests"
               userRole={userRole}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalBulkOpen}
+            onCloseModal={closeModalBulk}
+          >
+            <BulkApproveForm
+              title="Погодження заявок"
+              selectedCount={selectedIds.size}
+              statusOptions={bulkStatusOptions}
+              onSubmit={handleBulkSubmit}
             />
           </ModalWindow>
         </section>

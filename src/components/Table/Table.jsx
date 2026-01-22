@@ -3,6 +3,7 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   getPaginationRowModel,
+  flexRender,
 } from '@tanstack/react-table';
 import style from './Table.module.css';
 import { useState, useRef, useEffect } from 'react';
@@ -30,6 +31,10 @@ const Table = ({
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    autoResetPageIndex: false,
+    defaultColumn: {
+      cell: info => info.getValue(),
+    },
     ...(rowsPerPage > 0 && { getPaginationRowModel: getPaginationRowModel() }),
     initialState: {
       ...(rowsPerPage > 0 && {
@@ -203,11 +208,21 @@ const Table = ({
                 >
                   {fixedFirstColumn && (
                     <td className={style.stickyColumn}>
-                      {row.getVisibleCells()[0]?.renderValue()}
+                      {row.getVisibleCells()[0]
+                        ? flexRender(
+                            row.getVisibleCells()[0].column.columnDef.cell,
+                            row.getVisibleCells()[0].getContext()
+                          )
+                        : null}
                     </td>
                   )}
                   {visibleCells.map(cell => (
-                    <td key={cell.id}>{cell.renderValue()}</td>
+                    <td key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
                   ))}
                 </tr>
               );
