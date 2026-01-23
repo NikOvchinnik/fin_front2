@@ -36,7 +36,7 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getContractors } from '../../helpers/axios/contractors';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
-import { changeStatusBulk } from '../../helpers/axios/statuses';
+import { changeFinStatusBulk } from '../../helpers/axios/statuses';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -1053,7 +1053,7 @@ const RequestsPage = () => {
     };
 
     try {
-      await changeStatusBulk(payload);
+      await changeFinStatusBulk(payload);
       await fetchData();
       Notify.success('Статус заявок змінено!');
       closeModalBulk();

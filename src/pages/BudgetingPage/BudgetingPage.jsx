@@ -24,7 +24,7 @@ import {
   getBudgetingFinancial,
   getBudgetingHd,
 } from '../../helpers/axios/budgeting';
-import { changeStatusBulk } from '../../helpers/axios/statuses';
+import { changeBudgetingStatusBulk } from '../../helpers/axios/statuses';
 import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
@@ -867,7 +867,7 @@ const BudgetingPage = () => {
     };
 
     try {
-      await changeStatusBulk(payload);
+      await changeBudgetingStatusBulk(payload);
       await fetchData();
       Notify.success('Статус бюджетів змінено!');
       closeModalBulk();

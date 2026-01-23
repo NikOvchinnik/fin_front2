@@ -32,9 +32,17 @@ export const changeBuhStatus = async payload => {
   }
 };
 
-export const changeStatusBulk = async payload => {
+export const changeFinStatusBulk = async payload => {
   try {
-    return await axios.post('/api/change-status-bulk', payload);
+    return await axios.post('/api/bulk-update-fin-status', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeBudgetingStatusBulk = async payload => {
+  try {
+    return await axios.post('/api/bulk-update-budgeting-status', payload);
   } catch (error) {
     throw error;
   }
