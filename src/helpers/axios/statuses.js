@@ -32,30 +32,30 @@ export const changeBuhStatus = async payload => {
   }
 };
 
-const buildBulkStatusFormData = payload => {
-  const formData = new FormData();
+const buildBulkStatusParams = payload => {
+  const params = new URLSearchParams();
   const ids = payload?.ids || [];
 
-  ids.forEach(id => {
-    formData.append('ids', id);
-  });
+  if (ids.length) {
+    params.append('ids', ids.join(','));
+  }
 
   if (payload?.status_id != null) {
-    formData.append('status_id', payload.status_id);
+    params.append('status_id', payload.status_id);
   }
 
   if (payload?.comment != null) {
-    formData.append('comment', payload.comment);
+    params.append('comment', payload.comment);
   }
 
-  return formData;
+  return params;
 };
 
 export const changeFinStatusBulk = async payload => {
   try {
     return await axios.post(
       '/api/bulk-update-fin-status',
-      buildBulkStatusFormData(payload)
+      buildBulkStatusParams(payload)
     );
   } catch (error) {
     throw error;
@@ -66,7 +66,7 @@ export const changeBudgetingStatusBulk = async payload => {
   try {
     return await axios.post(
       '/api/bulk-update-budgeting-status',
-      buildBulkStatusFormData(payload)
+      buildBulkStatusParams(payload)
     );
   } catch (error) {
     throw error;
