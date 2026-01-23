@@ -32,9 +32,31 @@ export const changeBuhStatus = async payload => {
   }
 };
 
+const buildBulkStatusFormData = payload => {
+  const formData = new FormData();
+  const ids = payload?.ids || [];
+
+  ids.forEach(id => {
+    formData.append('ids', id);
+  });
+
+  if (payload?.status_id != null) {
+    formData.append('status_id', payload.status_id);
+  }
+
+  if (payload?.comment != null) {
+    formData.append('comment', payload.comment);
+  }
+
+  return formData;
+};
+
 export const changeFinStatusBulk = async payload => {
   try {
-    return await axios.post('/api/bulk-update-fin-status', payload);
+    return await axios.post(
+      '/api/bulk-update-fin-status',
+      buildBulkStatusFormData(payload)
+    );
   } catch (error) {
     throw error;
   }
@@ -42,7 +64,10 @@ export const changeFinStatusBulk = async payload => {
 
 export const changeBudgetingStatusBulk = async payload => {
   try {
-    return await axios.post('/api/bulk-update-budgeting-status', payload);
+    return await axios.post(
+      '/api/bulk-update-budgeting-status',
+      buildBulkStatusFormData(payload)
+    );
   } catch (error) {
     throw error;
   }

@@ -866,8 +866,8 @@ const BudgetingPage = () => {
       return;
     }
     const payload = {
-      ids,
-      status_id: data.status,
+      ids: ids.map(id => Number(id)),
+      status_id: Number(data.status),
       comment: data.comment?.trim() || '',
     };
 
