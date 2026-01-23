@@ -860,8 +860,13 @@ const BudgetingPage = () => {
   };
 
   const handleBulkSubmit = async data => {
+    const ids = Array.from(selectedIds);
+    if (!ids.length) {
+      Notify.failure('Оберіть хоча б один рядок для зміни статусу');
+      return;
+    }
     const payload = {
-      ids: Array.from(selectedIds),
+      ids,
       status_id: data.status,
       comment: data.comment?.trim() || '',
     };
