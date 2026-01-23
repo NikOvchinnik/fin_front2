@@ -7,7 +7,8 @@ const isLocalhost = window.location.hostname === 'localhost';
 const axiosConfig = axios.create({
   baseURL: isLocalhost
     ? 'http://127.0.0.1:5000'
-    : 'https://fin-app-back-4jfdy.ondigitalocean.app',
+    // : 'https://fin-app-back-4jfdy.ondigitalocean.app',
+    : 'https://fin-app-back-dev-qt475.ondigitalocean.app',
   headers: {
     Accept: 'application/json',
   },
