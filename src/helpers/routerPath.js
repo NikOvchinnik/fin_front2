@@ -24,7 +24,7 @@ const routesConfig = [
   {
     path: 'budgeting',
     roles: [1, 2, 4],
-    element: lazy(() => import('../pages/BudgetingPage/BudgetingPage')),
+    element: lazy(() => import('../pages/BudgetingsPage/BudgetingsPage')),
   },
   {
     path: 'my_budgeting/:userId',

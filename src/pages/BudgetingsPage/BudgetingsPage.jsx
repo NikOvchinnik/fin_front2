@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo} from 'react';
 import DocTitle from '../../components/DocTitle/DocTitle';
-import style from './BudgetingPage.module.css';
+import style from './BudgetingsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
 import {
@@ -40,7 +40,7 @@ import ApproveBudgetingWatchForm from '../../components/Forms/ApproveBudgetingWa
 import { exportToCSV } from '../../helpers/exportToCSV';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
 
-const BudgetingPage = () => {
+const BudgetingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
@@ -538,13 +538,7 @@ const BudgetingPage = () => {
             <button
               className={style.editBtn}
               onClick={() => {
-                if (request.status?.id === 5 && userRole === 4) {
-                  setSelectedRequest(request);
-                  openModal();
-                } else if (request.status?.id === 8 && userRole === 1) {
-                  setSelectedRequest(request);
-                  openModal();
-                } else if (request.status?.id === 2 && userRole === 2) {
+                if (canEditBudgetingStatus(request.status?.id, userRole)) {
                   setSelectedRequest(request);
                   openModal();
                 } else {
@@ -1235,4 +1229,4 @@ const BudgetingPage = () => {
   );
 };
 
-export default BudgetingPage;
+export default BudgetingsPage;
