@@ -3,8 +3,12 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './MyRequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getMyRequests, sendRequest } from '../../helpers/axios/requests';
-import { useMediaQuery } from '@mui/material';
+import {
+  getMyRequests,
+  sendRequest,
+  sendRequestBulk,
+} from '../../helpers/axios/requests';
+import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
@@ -64,6 +68,7 @@ const MyRequestsPage = () => {
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalSendBulkOpen, setModalSendBulkIsOpen] = useState(false);
   const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
@@ -74,10 +79,99 @@ const MyRequestsPage = () => {
     const saved = localStorage.getItem('visibleMyRequestsColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
+  const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [pageRowIds, setPageRowIds] = useState([]);
+  const [pageIndex, setPageIndex] = useState(0);
   const { userId } = useParams();
   const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
   const navigate = useNavigate();
+  const requestById = useMemo(
+    () =>
+      new Map(
+        (dataRequests || []).map(request => [String(request.id), request])
+      ),
+    [dataRequests]
+  );
+
+  const canSendRequestStatus = statusId => statusId === 1 || statusId === 3;
+  const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+
+  const hasBulkSendRestrictedSelection = useMemo(() => {
+    if (!selectedIds.size) return false;
+
+    for (const id of selectedIds) {
+      const request = requestById.get(String(id));
+      const statusId = request?.status_id ?? request?.status?.id;
+      if (!canSendRequestStatus(statusId)) return true;
+    }
+
+    return false;
+  }, [selectedIds, requestById]);
+
+  const resetSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  useEffect(() => {
+    resetSelection();
+  }, [pageIndex, resetSelection]);
+
+  useEffect(() => {
+    resetSelection();
+  }, [
+    selectedProject,
+    selectedCurrency,
+    selectedContractor,
+    selectedPaymentForm,
+    selectedExpenseCategorie,
+    filters,
+    activeStatus,
+    sortConfig,
+    startDate,
+    endDate,
+    dataRequests,
+    resetSelection,
+  ]);
+
+  const toggleRow = useCallback(id => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const key = String(id);
+      next.has(key) ? next.delete(key) : next.add(key);
+      return next;
+    });
+  }, []);
+
+  const isAllSelectedOnPage = useMemo(() => {
+    return (
+      pageRowIds.length > 0 &&
+      pageRowIds.every(id => selectedIds.has(String(id)))
+    );
+  }, [pageRowIds, selectedIds]);
+
+  const isSomeSelectedOnPage = useMemo(() => {
+    return (
+      pageRowIds.some(id => selectedIds.has(String(id))) && !isAllSelectedOnPage
+    );
+  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+
+  const toggleAllOnPage = useCallback(() => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      const allSelected =
+        pageRowIds.length > 0 &&
+        pageRowIds.every(id => next.has(String(id)));
+
+      pageRowIds.forEach(id => {
+        const key = String(id);
+        if (allSelected) next.delete(key);
+        else next.add(key);
+      });
+
+      return next;
+    });
+  }, [pageRowIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -376,7 +470,10 @@ const MyRequestsPage = () => {
       });
     }
 
-    return sortedRows.map(request => ({
+    return sortedRows.map(request => {
+      const statusId = request.status_id ?? request.status?.id;
+
+      return {
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -503,10 +600,7 @@ const MyRequestsPage = () => {
           <button
             className={style.editBtn}
             onClick={() => {
-              if (
-                request.status === 'Чернетка' ||
-                request.status === 'Потребує виправлень'
-              ) {
+              if (canSendRequestStatus(statusId)) {
                 setSelectedRequest(request);
                 openModalEdit();
               } else {
@@ -527,15 +621,11 @@ const MyRequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status === 'Чернетка' ||
-            request.status === 'Потребує виправлень') && (
+          {canSendRequestStatus(statusId) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status === 'Чернетка' ||
-                  request.status === 'Потребує виправлень'
-                ) {
+                if (canSendRequestStatus(statusId)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -544,16 +634,11 @@ const MyRequestsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
-            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+          {canSendFilesForStatus(statusId) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status ===
-                    'Фінанси: Сплачено, очікуються документи' ||
-                  request.status === 'Бухгалтер: Сплачено, очікуються документи'
-                ) {
+                if (canSendFilesForStatus(statusId)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -564,7 +649,8 @@ const MyRequestsPage = () => {
           )}
         </div>
       ),
-    }));
+      };
+    });
   }, [
     dataRequests,
     activeStatus,
@@ -601,6 +687,24 @@ const MyRequestsPage = () => {
   }, [requestsRows]);
 
   const columns = [
+    {
+      accessorKey: 'select',
+      header: (
+        <Checkbox
+          checked={isAllSelectedOnPage}
+          indeterminate={isSomeSelectedOnPage}
+          onChange={toggleAllOnPage}
+          onClick={e => e.stopPropagation()}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={selectedIds.has(String(row.original.request_id_plain))}
+          onChange={() => toggleRow(row.original.request_id_plain)}
+          onClick={e => e.stopPropagation()}
+        />
+      ),
+    },
     {
       accessorKey: 'request_id',
       header: (
@@ -870,6 +974,18 @@ const MyRequestsPage = () => {
     setModalSendIsOpen(false);
   };
 
+  const openModalSendBulk = () => {
+    if (hasBulkSendRestrictedSelection) {
+      Notify.warning('Ви обрали заявки які не можете відправити');
+      return;
+    }
+    setModalSendBulkIsOpen(true);
+  };
+
+  const closeModalSendBulk = () => {
+    setModalSendBulkIsOpen(false);
+  };
+
   const closeModalSendFiles = () => {
     setModalSendFilesIsOpen(false);
   };
@@ -888,6 +1004,24 @@ const MyRequestsPage = () => {
       fetchData();
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
+    } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
+  const handleSendBulk = async () => {
+    if (hasBulkSendRestrictedSelection) {
+      Notify.warning('Ви обрали заявки які не можете відправити');
+      return;
+    }
+    const ids = Array.from(selectedIds);
+    try {
+      await sendRequestBulk({ ids: ids.map(id => Number(id)) });
+      await fetchData();
+      closeModalSendBulk();
+      resetSelection();
+      Notify.success('Заявки відправлено!');
     } catch (error) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
       console.error('Error: ', error);
@@ -1065,20 +1199,32 @@ const MyRequestsPage = () => {
                 </div>
               </>
             )}
-            <ul className={style.statuscontainer}>
-              {statusSelectorUser.map(status => (
-                <li key={status.value}>
+            <div className={style.statusRow}>
+              <ul className={style.statuscontainer}>
+                {statusSelectorUser.map(status => (
+                  <li key={status.value}>
+                    <button
+                      className={`${style.statusBtn} ${
+                        activeStatus === status.value ? style.activeBtn : ''
+                      }`}
+                      onClick={() => setActiveStatus(status.value)}
+                    >
+                      {status.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              {selectedIds.size > 0 && (
+                <div className={style.bulkActionsInline}>
                   <button
-                    className={`${style.statusBtn} ${
-                      activeStatus === status.value ? style.activeBtn : ''
-                    }`}
-                    onClick={() => setActiveStatus(status.value)}
+                    className={style.bulkEditButton}
+                    onClick={openModalSendBulk}
                   >
-                    {status.label}
+                    Відправити всі
                   </button>
-                </li>
-              ))}
-            </ul>
+                </div>
+              )}
+            </div>
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
@@ -1106,6 +1252,8 @@ const MyRequestsPage = () => {
                 visibleColumnsMobile={2}
                 rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
+                onPageChange={idx => setPageIndex(idx)}
+                onPageRowIdsChange={ids => setPageRowIds(ids)}
               />
               {totals && (
                 <div className={style.totalsContainer}>
@@ -1176,6 +1324,17 @@ const MyRequestsPage = () => {
               message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalSendBulkOpen}
+            onCloseModal={closeModalSendBulk}
+          >
+            <ConfirmModal
+              title="Відправити заявки"
+              message={`Ви впевнені, що хочете відправити заявки на оплату (${selectedIds.size})?`}
+              onConfirm={handleSendBulk}
+              onClose={closeModalSendBulk}
             />
           </ModalWindow>
           <ModalWindow

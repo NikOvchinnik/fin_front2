@@ -188,6 +188,36 @@
   gap: 8px;
 }
 
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: stretch;
+}
+
+.bulkActionsInline {
+  display: flex;
+  align-items: stretch;
+}
+
+.bulkEditButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px 12px;
+  height: 100%;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.bulkEditButton:hover,
+.bulkEditButton:focus {
+  background-color: var(--button-hover);
+}
+
 .btnsContainer {
   display: flex;
   gap: 12px;
