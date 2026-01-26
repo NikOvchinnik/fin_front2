@@ -79,6 +79,31 @@ const BudgetingPage = () => {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]); // IDs поточної сторінки
   const [pageIndex, setPageIndex] = useState(0);
+  const requestById = useMemo(
+    () =>
+      new Map(
+        (dataRequests || []).map(request => [String(request.id), request])
+      ),
+    [dataRequests]
+  );
+
+  const canEditBudgetingStatus = (statusId, role) => {
+    if (role === 4) return statusId === 5;
+    if (role === 1) return statusId === 8;
+    if (role === 2) return statusId === 2;
+    return false;
+  };
+
+  const hasBulkRestrictedSelection = useMemo(() => {
+    if (!selectedIds.size) return false;
+
+    for (const id of selectedIds) {
+      const request = requestById.get(String(id));
+      if (!canEditBudgetingStatus(request?.status?.id, userRole)) return true;
+    }
+
+    return false;
+  }, [selectedIds, requestById, userRole]);
 
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -852,6 +877,10 @@ const BudgetingPage = () => {
   };
 
   const openModalBulk = () => {
+    if (hasBulkRestrictedSelection) {
+      Notify.warning('Ви обрали бюджетування які не можете змінити');
+      return;
+    }
     setModalBulkIsOpen(true);
   };
 
@@ -863,6 +892,10 @@ const BudgetingPage = () => {
     const ids = Array.from(selectedIds);
     if (!ids.length) {
       Notify.failure('Оберіть хоча б один рядок для зміни статусу');
+      return;
+    }
+    if (hasBulkRestrictedSelection) {
+      Notify.warning('Ви обрали бюджетування які не можете змінити');
       return;
     }
     const payload = {

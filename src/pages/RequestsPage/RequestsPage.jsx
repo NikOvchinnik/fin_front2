@@ -83,6 +83,32 @@ const RequestsPage = () => {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
+  const requestById = useMemo(
+    () =>
+      new Map(
+        (dataRequests || []).map(request => [String(request.id), request])
+      ),
+    [dataRequests]
+  );
+
+  const canEditRequestStatus = (statusId, role) => {
+    if (role === 4) return statusId === 2;
+    if (role === 5) return statusId === 4;
+    return false;
+  };
+
+  const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+
+  const hasBulkRestrictedSelection = useMemo(() => {
+    if (!selectedIds.size) return false;
+
+    for (const id of selectedIds) {
+      const request = requestById.get(String(id));
+      if (!canEditRequestStatus(request?.status?.id, userRole)) return true;
+    }
+
+    return false;
+  }, [selectedIds, requestById, userRole]);
 
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -607,16 +633,7 @@ const RequestsPage = () => {
             <button
               className={style.editBtn}
               onClick={() => {
-                if (
-                  request.status?.name === 'Очікує затвердження' &&
-                  userRole === 4
-                ) {
-                  setSelectedRequest(request);
-                  openModal();
-                } else if (
-                  request.status?.name === 'Передано на оплату' &&
-                  userRole === 5
-                ) {
+                if (canEditRequestStatus(request.status?.id, userRole)) {
                   setSelectedRequest(request);
                   openModal();
                 } else {
@@ -638,19 +655,11 @@ const RequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status?.name ===
-            'Фінанси: Сплачено, очікуються документи' ||
-            request.status?.name ===
-              'Бухгалтер: Сплачено, очікуються документи') && (
+          {canSendFilesForStatus(request.status?.id) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status?.name ===
-                    'Фінанси: Сплачено, очікуються документи' ||
-                  request.status?.name ===
-                    'Бухгалтер: Сплачено, очікуються документи'
-                ) {
+                if (canSendFilesForStatus(request.status?.id)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -1038,6 +1047,10 @@ const RequestsPage = () => {
   };
 
   const openModalBulk = () => {
+    if (hasBulkRestrictedSelection) {
+      Notify.warning('Ви обрали заявки які не можете змінити');
+      return;
+    }
     setModalBulkIsOpen(true);
   };
 
@@ -1049,6 +1062,10 @@ const RequestsPage = () => {
     const ids = Array.from(selectedIds);
     if (!ids.length) {
       Notify.failure('Оберіть хоча б один рядок для зміни статусу');
+      return;
+    }
+    if (hasBulkRestrictedSelection) {
+      Notify.warning('Ви обрали заявки які не можете змінити');
       return;
     }
     const payload = {
