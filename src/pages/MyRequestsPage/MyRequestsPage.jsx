@@ -6,8 +6,8 @@ import Loader from '../../components/Loader/Loader';
 import {
   getMyRequests,
   sendRequest,
-  sendRequestBulk,
 } from '../../helpers/axios/requests';
+import { changeFinStatusBulk } from '../../helpers/axios/statuses';
 import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -1015,9 +1015,17 @@ const MyRequestsPage = () => {
       Notify.warning('Ви обрали заявки які не можете відправити');
       return;
     }
+
     const ids = Array.from(selectedIds);
+    const payload = {
+      ids: ids.map(id => Number(id)),
+      status_id: Number(data.status),
+      comment: '',
+    };
+
     try {
-      await sendRequestBulk({ ids: ids.map(id => Number(id)) });
+      
+      await changeFinStatusBulk(payload);
       await fetchData();
       closeModalSendBulk();
       resetSelection();
