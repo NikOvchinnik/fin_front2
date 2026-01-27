@@ -507,6 +507,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
           closeModal={closeModalEdit}
           onRefresh={() => onRefresh(selectedRequest.id, 'request')}
           formType="all"
+          userRole={userRole}
         />
       </ModalWindow>
       <ModalWindow

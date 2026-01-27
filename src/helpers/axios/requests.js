@@ -70,6 +70,15 @@ export const deleteRequest = async id => {
   }
 };
 
+// Delete request for CEO (Finance and Buh). 
+export const deleteRequestCEO = async id => {
+  try {
+    return await axios.delete(`/api/delete-fin-request/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const sendRequest = async id => {
   try {
     return await axios.post(`/api/send-draft/${id}`);

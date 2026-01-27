@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import {
   deleteLink,
   deleteRequest,
+  deleteRequestCEO,
   postRequest,
 } from '../../../helpers/axios/requests';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
@@ -26,7 +27,7 @@ import Loader from '../../Loader/Loader';
 
 const refundIds = [15, 16, 17, 18, 19];
 
-const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
+const EditRequestForm = ({ request, closeModal, onRefresh, formType, userRole }) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -122,7 +123,12 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
 
   const handleDelete = async () => {
     try {
-      await deleteRequest(request.id);
+      if(userRole === 1 || userRole === 4 || userRole === 5) {
+        deleteRequestCEO(request.id);
+      }
+      else { 
+        await deleteRequest(request.id);
+      }
       setModalConfirmOpen(false);
       onRefresh();
       closeModal();
