@@ -15,8 +15,8 @@ import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColum
 import {
   getMyBudgeting,
   sendBudgeting,
-  sendBudgetingBulk,
 } from '../../helpers/axios/budgeting';
+import { changeBudgetingStatusBulk } from '../../helpers/axios/statuses';
 import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
@@ -90,6 +90,9 @@ const MyBudgetingPage = () => {
   );
 
   const canSendBudgetingStatus = statusId => statusId === 1 || statusId === 4;
+  const getSendBudgetingStatusId = request => {
+    return Number(userRole) === 3 ? 2 : 5;
+  };
 
   const hasBulkSendRestrictedSelection = useMemo(() => {
     if (!selectedIds.size) return false;
@@ -902,8 +905,12 @@ const MyBudgetingPage = () => {
       return;
     }
     const ids = Array.from(selectedIds);
+    const payload = {
+      ids: ids.map(id => Number(id)),
+      status_id: getSendBudgetingStatusId(),
+    };
     try {
-      await sendBudgetingBulk({ ids: ids.map(id => Number(id)) });
+      await changeBudgetingStatusBulk(payload);
       await fetchData();
       closeModalSendBulk();
       resetSelection();

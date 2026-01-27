@@ -3,10 +3,7 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './MyRequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import {
-  getMyRequests,
-  sendRequest,
-} from '../../helpers/axios/requests';
+import { getMyRequests, sendRequest } from '../../helpers/axios/requests';
 import { changeFinStatusBulk } from '../../helpers/axios/statuses';
 import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
@@ -393,8 +390,6 @@ const MyRequestsPage = () => {
             return req.expense_category || '';
           case 'payment_details':
             return req.payment_details || '';
-          case 'currency':
-            return req.currency?.name || '';
           case 'payment_form':
             return req.payment_form || '';
           case 'planned_balance_optimistic':
@@ -1019,12 +1014,10 @@ const MyRequestsPage = () => {
     const ids = Array.from(selectedIds);
     const payload = {
       ids: ids.map(id => Number(id)),
-      status_id: Number(data.status),
-      comment: '',
+      status_id: 2,
     };
 
     try {
-      
       await changeFinStatusBulk(payload);
       await fetchData();
       closeModalSendBulk();

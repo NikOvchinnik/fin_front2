@@ -84,25 +84,6 @@ export const sendBudgeting = async id => {
   }
 };
 
-const buildBulkSendParams = payload => {
-  const params = new URLSearchParams();
-  const ids = payload?.ids || [];
-
-  if (ids.length) {
-    params.append('ids', ids.join(','));
-  }
-
-  return params;
-};
-
-export const sendBudgetingBulk = async payload => {
-  try {
-    return await axios.post('/api/send-budgeting-bulk', buildBulkSendParams(payload));
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const updateBudgetingStatus = async (id, payload) => {
   try {
     return await axios.post(`/api/update-budgeting-status/${id}`, payload);

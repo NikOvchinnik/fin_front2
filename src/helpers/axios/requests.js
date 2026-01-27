@@ -78,25 +78,6 @@ export const sendRequest = async id => {
   }
 };
 
-const buildBulkSendParams = payload => {
-  const params = new URLSearchParams();
-  const ids = payload?.ids || [];
-
-  if (ids.length) {
-    params.append('ids', ids.join(','));
-  }
-
-  return params;
-};
-
-export const sendRequestBulk = async payload => {
-  try {
-    return await axios.post('/api/send-draft-bulk', buildBulkSendParams(payload));
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const deleteLink = async id => {
   try {
     return await axios.delete(`/api/request-files/${id}`);
