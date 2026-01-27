@@ -7,6 +7,12 @@ const ModalColumnsForm = ({
   visibleColumns,
   handleColumnToggle,
 }) => {
+  const getHeaderLabel = col => {
+    if (typeof col.header === 'string') return col.header;
+    const children = col.header?.props?.children;
+    if (Array.isArray(children)) return children[0];
+    return children ?? col.accessorKey;
+  };
   return (
     <div className={style.newContainer}>
       <h3 className={style.title}>Вибір колонок</h3>
@@ -21,7 +27,7 @@ const ModalColumnsForm = ({
               }
               onChange={() => handleColumnToggle(col.accessorKey)}
             />
-            {col.header.props?.children[0] || col.header}
+            {getHeaderLabel(col)}
           </label>
         ))}
       </div>
