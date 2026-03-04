@@ -37,6 +37,7 @@ import {
   getExpenseCategories,
 } from '../../helpers/axios/payments';
 import Form from '../../components/Form/Form';
+import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 
 const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -345,15 +346,9 @@ const MyBudgetingPage = () => {
           case 'currency':
             return req.currency ?? '';
           case 'amount_uah_optimistic':
-            return (
-              (req.amount_optimistic ?? 0) *
-              (req.currency_rate_at_approval ?? req.currency_rate ?? 0)
-            );
+            return getBudgetingAmountUah(req, 'optimistic') ?? 0;
           case 'amount_uah_pessimistic':
-            return (
-              (req.amount_pessimistic ?? 0) *
-              (req.currency_rate_at_approval ?? req.currency_rate ?? 0)
-            );
+            return getBudgetingAmountUah(req, 'pessimistic') ?? 0;
           case 'expense_category':
             return req.expense_category?.name ?? '';
           case 'tech':
@@ -474,41 +469,16 @@ const MyBudgetingPage = () => {
       amount_pessimistic_plain: request.amount_pessimistic ?? 0,
       currency: request.currency || '',
       currency_plain: request.currency || '',
-      amount_uah_optimistic:
-        request.amount_optimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? (
-              request.amount_optimistic *
-              (request.currency_rate_at_approval ?? request.currency_rate)
-            ).toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : '',
+      amount_uah_optimistic: formatMoney(
+        getBudgetingAmountUah(request, 'optimistic')
+      ),
       amount_uah_optimistic_plain:
-        request.amount_optimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? request.amount_optimistic *
-            (request.currency_rate_at_approval ?? request.currency_rate)
-          : 0,
-
-      amount_uah_pessimistic:
-        request.amount_pessimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? (
-              request.amount_pessimistic *
-              (request.currency_rate_at_approval ?? request.currency_rate)
-            ).toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : '',
+        getBudgetingAmountUah(request, 'optimistic') ?? 0,
+      amount_uah_pessimistic: formatMoney(
+        getBudgetingAmountUah(request, 'pessimistic')
+      ),
       amount_uah_pessimistic_plain:
-        request.amount_pessimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? request.amount_pessimistic *
-            (request.currency_rate_at_approval ?? request.currency_rate)
-          : 0,
+        getBudgetingAmountUah(request, 'pessimistic') ?? 0,
       expense_category: request.expense_category?.name || '',
       expense_category_plain: request.expense_category?.name || '',
       tech: request.plan_period ? request.plan_period : '',

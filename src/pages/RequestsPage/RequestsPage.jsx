@@ -37,6 +37,7 @@ import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getContractors } from '../../helpers/axios/contractors';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
 import { changeFinStatusBulk } from '../../helpers/axios/statuses';
+import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -393,12 +394,7 @@ const RequestsPage = () => {
           case 'currency':
             return req.currency?.name || '';
           case 'amount_uah':
-            return (
-              req.paid_in_uah ??
-              (req.amount != null && req.currency?.rate != null
-                ? req.amount * req.currency.rate
-                : 0)
-            );
+            return getRequestAmountUah(req) ?? 0;
           case 'expense_category':
             return req.expense_category?.name || '';
           case 'payment_details':
@@ -526,24 +522,8 @@ const RequestsPage = () => {
       amount_plain: request.amount ? request.amount : 0,
       currency: request.currency?.name || '',
       currency_plain: request.currency?.name || '',
-      amount_uah:
-        request.paid_in_uah != null
-          ? request.paid_in_uah.toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : request.amount != null && request.currency?.rate != null
-          ? (request.amount * request.currency.rate).toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : '',
-      amount_uah_plain:
-        request.paid_in_uah != null
-          ? request.paid_in_uah
-          : request.amount != null && request.currency?.rate != null
-          ? request.amount * request.currency.rate
-          : 0,
+      amount_uah: formatMoney(getRequestAmountUah(request)),
+      amount_uah_plain: getRequestAmountUah(request) ?? 0,
       expense_category: request.expense_category?.name || '',
       expense_category_plain: request.expense_category?.name || '',
       payment_details: (

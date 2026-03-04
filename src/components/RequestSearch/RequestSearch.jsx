@@ -17,6 +17,7 @@ import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchReque
 import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
+import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 
 const RequestSearch = ({ dataRequests, onRefresh }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -94,24 +95,8 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
             })
           : '',
       amount_plain: request.amount ?? 0,
-      amount_uah:
-        request.paid_in_uah != null
-          ? request.paid_in_uah.toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : request.amount != null && request.currency?.rate != null
-          ? (request.amount * request.currency.rate).toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : '',
-      amount_uah_plain:
-        request.paid_in_uah != null
-          ? request.paid_in_uah
-          : request.amount != null && request.currency?.rate != null
-          ? request.amount * request.currency.rate
-          : 0,
+      amount_uah: formatMoney(getRequestAmountUah(request)),
+      amount_uah_plain: getRequestAmountUah(request) ?? 0,
       currency: request.currency?.name || '',
       currency_plain: request.currency?.name || '',
       expense_category: request.expense_category || '',

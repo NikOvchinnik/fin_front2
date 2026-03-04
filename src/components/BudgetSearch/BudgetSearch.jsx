@@ -18,6 +18,7 @@ import {
 import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
 import { sendBudgeting } from '../../helpers/axios/budgeting';
+import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 
 const BudgetSearch = ({ dataRequests, onRefresh }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -103,41 +104,16 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       amount_pessimistic_plain: request.amount_pessimistic ?? 0,
       currency: request.currency || '',
       currency_plain: request.currency || '',
-      amount_uah_optimistic:
-        request.amount_optimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? (
-              request.amount_optimistic *
-              (request.currency_rate_at_approval ?? request.currency_rate)
-            ).toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : '',
+      amount_uah_optimistic: formatMoney(
+        getBudgetingAmountUah(request, 'optimistic')
+      ),
       amount_uah_optimistic_plain:
-        request.amount_optimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? request.amount_optimistic *
-            (request.currency_rate_at_approval ?? request.currency_rate)
-          : 0,
-
-      amount_uah_pessimistic:
-        request.amount_pessimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? (
-              request.amount_pessimistic *
-              (request.currency_rate_at_approval ?? request.currency_rate)
-            ).toLocaleString('uk-UA', {
-              minimumFractionDigits: 0,
-              maximumFractionDigits: 2,
-            })
-          : '',
+        getBudgetingAmountUah(request, 'optimistic') ?? 0,
+      amount_uah_pessimistic: formatMoney(
+        getBudgetingAmountUah(request, 'pessimistic')
+      ),
       amount_uah_pessimistic_plain:
-        request.amount_pessimistic != null &&
-        (request.currency_rate_at_approval ?? request.currency_rate) != null
-          ? request.amount_pessimistic *
-            (request.currency_rate_at_approval ?? request.currency_rate)
-          : 0,
+        getBudgetingAmountUah(request, 'pessimistic') ?? 0,
       expense_category: request.expense_category?.name || '',
       expense_category_plain: request.expense_category?.name || '',
       applicant: request.applicant || '',
