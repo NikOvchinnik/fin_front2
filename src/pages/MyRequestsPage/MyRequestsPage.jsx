@@ -33,6 +33,7 @@ import { getCurrencies, getExpenseCategories, getPaymentForms } from '../../help
 import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -69,6 +70,7 @@ const MyRequestsPage = () => {
   const [isModalSendBulkOpen, setModalSendBulkIsOpen] = useState(false);
   const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
+  const [isModalImportOpen, setModalImportIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -973,6 +975,14 @@ const MyRequestsPage = () => {
     setModalColumnsIsOpen(false);
   };
 
+  const openModalImport = () => {
+    setModalImportIsOpen(true);
+  };
+
+  const closeModalImport = () => {
+    setModalImportIsOpen(false);
+  };
+
   const handleSend = async () => {
     try {
       await sendRequest(selectedRequest.id);
@@ -1040,6 +1050,9 @@ const MyRequestsPage = () => {
                   }
                 >
                   Експорт у CSV
+                </button>
+                <button className={style.csvBtn} onClick={openModalImport}>
+                  Імпорт з Google Sheets
                 </button>
               </div>
             </div>
@@ -1339,6 +1352,17 @@ const MyRequestsPage = () => {
               onRefresh={fetchData}
               formType="myRequest"
               userRole={userRole}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalImportOpen}
+            onCloseModal={closeModalImport}
+          >
+            <GoogleSheetImportForm
+              title={'Імпорт "Мої заявки" з Google Sheets'}
+              importType="financial_requests"
+              closeModal={closeModalImport}
+              onImported={fetchData}
             />
           </ModalWindow>
         </section>

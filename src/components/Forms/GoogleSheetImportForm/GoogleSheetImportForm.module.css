@@ -1,0 +1,187 @@
+.container {
+  padding: 24px;
+  width: min(840px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--heading-text);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.label {
+  font-weight: 600;
+}
+
+.input {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  width: 100%;
+  color: var(--main-text);
+}
+
+.input:disabled {
+  background-color: #f6f6f6;
+  cursor: not-allowed;
+}
+
+.validationError {
+  color: #b3261e;
+  font-size: 14px;
+}
+
+.requestError {
+  color: #b3261e;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.buttonsRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.submitBtn {
+  background-color: var(--button);
+  color: var(--white);
+  border-radius: 8px;
+  padding: 8px 18px;
+  transition: background-color 0.3s ease;
+}
+
+.submitBtn:hover,
+.submitBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.submitBtn:disabled,
+.cancelBtn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 18px;
+  color: var(--main-text);
+  transition: border-color 0.3s ease;
+}
+
+.cancelBtn:hover,
+.cancelBtn:focus {
+  border-color: var(--border-hover);
+}
+
+.resultContainer {
+  border-top: 1px solid var(--border);
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.statusRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.statusBadge {
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--white);
+}
+
+.statusSuccess {
+  background-color: #2e7d32;
+}
+
+.statusPartial {
+  background-color: #e68400;
+}
+
+.statusFailed {
+  background-color: #c62828;
+}
+
+.jobId {
+  color: var(--main-text);
+  font-weight: 600;
+}
+
+.summaryGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+}
+
+.summaryItem {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.summaryLabel {
+  color: var(--main-text);
+  font-size: 13px;
+}
+
+.summaryValue {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--heading-text);
+}
+
+.errorsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.errorsTitle {
+  font-weight: 700;
+}
+
+.errorsTableWrapper {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+.errorsTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.errorsTable th,
+.errorsTable td {
+  border-bottom: 1px solid var(--border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.errorsTable th {
+  font-weight: 700;
+  background-color: #f8f9fb;
+}
+
+.errorsTable tbody tr:last-child td {
+  border-bottom: none;
+}

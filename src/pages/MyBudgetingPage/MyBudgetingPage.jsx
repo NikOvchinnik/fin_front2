@@ -38,6 +38,7 @@ import {
 } from '../../helpers/axios/payments';
 import Form from '../../components/Form/Form';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
+import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 
 const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -68,6 +69,7 @@ const MyBudgetingPage = () => {
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
   const [isModalSendBulkOpen, setModalSendBulkIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
+  const [isModalImportOpen, setModalImportIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState('Всі');
@@ -825,6 +827,14 @@ const MyBudgetingPage = () => {
     setModalIsOpen(false);
   };
 
+  const openModalImport = () => {
+    setModalImportIsOpen(true);
+  };
+
+  const closeModalImport = () => {
+    setModalImportIsOpen(false);
+  };
+
   const openModalEdit = () => {
     setModalEditIsOpen(true);
   };
@@ -922,6 +932,9 @@ const MyBudgetingPage = () => {
                   }
                 >
                   Експорт у CSV
+                </button>
+                <button className={style.csvBtn} onClick={openModalImport}>
+                  Імпорт з Google Sheets
                 </button>
               </div>
             </div>
@@ -1203,6 +1216,17 @@ const MyBudgetingPage = () => {
               message={`Ви впевнені, що хочете відправити бюджети на затвердження (${selectedIds.size})?`}
               onConfirm={handleSendBulk}
               onClose={closeModalSendBulk}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalImportOpen}
+            onCloseModal={closeModalImport}
+          >
+            <GoogleSheetImportForm
+              title={'Імпорт "Мій бюджет" з Google Sheets'}
+              importType="budgetings"
+              closeModal={closeModalImport}
+              onImported={fetchData}
             />
           </ModalWindow>
         </section>
