@@ -259,8 +259,8 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
               period: defaultPeriod,
               week: defaultWeek,
               purpose: '',
-              amount_opt: '',
-              amount_pes: '',
+              amount_opt: 0,
+              amount_pes: 0,
               currency: '',
               comment: '',
             }}
