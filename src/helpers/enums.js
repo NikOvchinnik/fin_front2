@@ -1,0 +1,20 @@
+export const UserRole = Object.freeze({
+  CEO: 1,
+  HEAD_OF_DEPARTMENT: 2,
+  APPLICANT: 3,
+  FINANCE: 4,
+  ACCOUNTANT: 5,
+});
+
+export const BudgetingStatus = Object.freeze({
+  DRAFT: 1,
+  PENDING_LEAD_APPROVAL: 2,
+  LEAD_DECLINED: 3,
+  NEEDS_REVISION: 4,
+  PENDING_FINANCE_APPROVAL: 5,
+  FINANCE_DECLINED: 6,
+  FINANCE_APPROVED: 7,
+  PENDING_CEO_APPROVAL: 8,
+  CEO_APPROVED: 9,
+  CEO_DECLINED: 10,
+});

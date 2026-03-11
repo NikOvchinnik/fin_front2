@@ -91,3 +91,14 @@ export const updateBudgetingStatus = async (id, payload) => {
     throw error;
   }
 };
+
+export const returnBudgetingToRevision = async (id, payload) => {
+  try {
+    if (payload) {
+      return await axios.post(`/api/return-budgeting-to-revision/${id}`, payload);
+    }
+    return await axios.post(`/api/return-budgeting-to-revision/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};

@@ -14,6 +14,7 @@ import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import {
   getMyBudgeting,
+  returnBudgetingToRevision,
   sendBudgeting,
 } from '../../helpers/axios/budgeting';
 import { changeBudgetingStatusBulk } from '../../helpers/axios/statuses';
@@ -21,11 +22,10 @@ import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
-  statusSelectorBudgetingFin,
   statusSelectorBudgetingUser,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import BudgetNewForm from '../../components/Forms/BudgetNewForm/BudgetNewForm';
 import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
@@ -39,6 +39,7 @@ import {
 import Form from '../../components/Form/Form';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
+import { BudgetingStatus, UserRole } from '../../helpers/enums';
 
 const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -83,6 +84,7 @@ const MyBudgetingPage = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
+  const navigate = useNavigate();
   const { userId } = useParams();
   const requestById = useMemo(
     () =>
@@ -92,9 +94,32 @@ const MyBudgetingPage = () => {
     [dataRequests]
   );
 
-  const canSendBudgetingStatus = statusId => statusId === 1 || statusId === 4;
-  const getSendBudgetingStatusId = request => {
-    return Number(userRole) === 3 ? 2 : 5;
+  const canSendBudgetingStatus = statusId => {
+    const normalizedStatusId = Number(statusId);
+    return (
+      normalizedStatusId === BudgetingStatus.DRAFT ||
+      normalizedStatusId === BudgetingStatus.NEEDS_REVISION
+    );
+  };
+
+  const canReturnBudgetingToRevision = statusId => {
+    const normalizedStatusId = Number(statusId);
+    return (
+      Number.isFinite(normalizedStatusId) &&
+      normalizedStatusId !== BudgetingStatus.DRAFT
+    );
+  };
+
+  const getSendBudgetingStatusId = () => {
+    return Number(userRole) === UserRole.APPLICANT
+      ? BudgetingStatus.PENDING_LEAD_APPROVAL
+      : BudgetingStatus.PENDING_FINANCE_APPROVAL;
+  };
+
+  const getApiErrorMessage = error => {
+    const data = error?.response?.data;
+    if (typeof data === 'string') return data;
+    return data?.message || data?.error || '';
   };
 
   const hasBulkSendRestrictedSelection = useMemo(() => {
@@ -221,12 +246,15 @@ const MyBudgetingPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+    if (
+      Number(userRole) !== UserRole.CEO &&
+      String(userSelectorId) !== String(userId)
+    ) {
       navigate('/');
     } else {
       fetchData();
     }
-  }, [fetchData]);
+  }, [fetchData, navigate, userId, userRole, userSelectorId]);
 
   const handleSort = key => {
     setSortConfig(prev => {
@@ -321,9 +349,12 @@ const MyBudgetingPage = () => {
     }
 
     if (activeStatus && activeStatus !== 'Всі') {
-      filteredRows = filteredRows.filter(
-        row => getActiveBudgetingStatus(row.status?.name) === activeStatus
-      );
+      filteredRows = filteredRows.filter(row => {
+        if (activeStatus === BudgetingStatus.NEEDS_REVISION) {
+          return Number(row.status?.id) === BudgetingStatus.NEEDS_REVISION;
+        }
+        return getActiveBudgetingStatus(row.status?.name) === activeStatus;
+      });
     }
 
     let sortedRows = [...filteredRows];
@@ -526,6 +557,16 @@ const MyBudgetingPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
+          {canReturnBudgetingToRevision(request.status?.id) && (
+            <button
+              className={style.returnBtn}
+              title="Повернути на доопрацювання"
+              aria-label="Повернути на доопрацювання"
+              onClick={() => handleReturnToRevision(request)}
+            >
+              <Icon id="arrow-left-switch" className={style.editIcon} />
+            </button>
+          )}
           {canSendBudgetingStatus(request.status?.id) && (
             <button
               className={style.sendBtn}
@@ -874,6 +915,29 @@ const MyBudgetingPage = () => {
       closeModalConfirm();
       Notify.success('Бюджет відправлено!');
     } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
+  const handleReturnToRevision = async request => {
+    const comment = request?.comment?.trim();
+    const payload = comment ? { comment } : undefined;
+
+    try {
+      const response = await returnBudgetingToRevision(request.id, payload);
+      await fetchData();
+      Notify.success(
+        response?.message || 'Бюджет повернуто в статус "Потребує виправлень"'
+      );
+    } catch (error) {
+      if (error?.response?.status === 400) {
+        Notify.failure(
+          getApiErrorMessage(error) ||
+            'Повернення доступне тільки для майбутніх місяців'
+        );
+        return;
+      }
       Notify.failure('Сталася помилка, спробуйте ще раз');
       console.error('Error: ', error);
     }

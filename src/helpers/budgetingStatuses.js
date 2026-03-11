@@ -1,24 +1,26 @@
+import { BudgetingStatus } from './enums';
+
 export const getBudgetingStatusStyle = staatusId => {
   switch (staatusId) {
-    case 1:
+    case BudgetingStatus.DRAFT:
       return { color: '#c74736' }; //Чернетка
-    case 2:
+    case BudgetingStatus.PENDING_LEAD_APPROVAL:
       return { color: '#c79a1b' }; //Очікує затвердження Керівник відділу
-    case 3:
+    case BudgetingStatus.LEAD_DECLINED:
       return { color: '#c74736' }; //Керівник відділу: Скасовано
-    case 4:
+    case BudgetingStatus.NEEDS_REVISION:
       return { color: '#c74736' }; //Потребує виправлень
-    case 5:
+    case BudgetingStatus.PENDING_FINANCE_APPROVAL:
       return { color: '#c79a1b' }; //Очікує затвердження Фінанси
-    case 6:
+    case BudgetingStatus.FINANCE_DECLINED:
       return { color: '#c74736' }; //Фінанси: Скасовано
-    case 7:
+    case BudgetingStatus.FINANCE_APPROVED:
       return { color: '#6b9429' }; //Фінанси: Затверджено
-    case 8:
+    case BudgetingStatus.PENDING_CEO_APPROVAL:
       return { color: '#c79a1b' }; //Очікує затвердження СЕО
-    case 9:
+    case BudgetingStatus.CEO_APPROVED:
       return { color: '#6b9429' }; //СЕО: Затверджено
-    case 10:
+    case BudgetingStatus.CEO_DECLINED:
       return { color: '#c74736' }; //СЕО: Скасовано
     default:
       return { color: '#6c757d' };
@@ -45,6 +47,10 @@ export const statusSelectorBudgetingFin = [
 export const statusSelectorBudgetingUser = [
   { value: 'Всі', label: 'Всі' },
   { value: 'Чернетка', label: 'Чернетка' },
+  {
+    value: BudgetingStatus.NEEDS_REVISION,
+    label: 'Потребує виправлень',
+  },
   { value: 'Очікує затвердження', label: 'Очікує затвердження' },
   { value: 'Затверджено', label: 'Затверджено' },
   { value: 'Скасовано', label: 'Скасовано' },
@@ -73,30 +79,36 @@ export const getActiveBudgetingStatus = statusName => {
 };
 
 export const approveBudgetingStatus = [
-  { value: 9, label: 'CEO/COO/CFO: Затверджено' },
-  { value: 10, label: 'CEO/COO/CFO: Скасовано' },
-  { value: 7, label: 'Фінанси: Затверджено' },
-  { value: 8, label: 'На затвердження CEO/COO/CFO' },
-  { value: 6, label: 'Фінанси: Скасовано' },
-  { value: 4, label: 'Потребує виправлень' },
-  { value: 3, label: 'Керівник відділу: Скасовано' },
+  { value: BudgetingStatus.CEO_APPROVED, label: 'CEO/COO/CFO: Затверджено' },
+  { value: BudgetingStatus.CEO_DECLINED, label: 'CEO/COO/CFO: Скасовано' },
+  { value: BudgetingStatus.FINANCE_APPROVED, label: 'Фінанси: Затверджено' },
+  {
+    value: BudgetingStatus.PENDING_CEO_APPROVAL,
+    label: 'На затвердження CEO/COO/CFO',
+  },
+  { value: BudgetingStatus.FINANCE_DECLINED, label: 'Фінанси: Скасовано' },
+  { value: BudgetingStatus.NEEDS_REVISION, label: 'Потребує виправлень' },
+  { value: BudgetingStatus.LEAD_DECLINED, label: 'Керівник відділу: Скасовано' },
 ];
 
 export const approveBudgetingStatusFin = [
-  { value: 7, label: 'Фінанси: Затверджено' },
-  { value: 8, label: 'На затвердження CEO/COO/CFO' },
-  { value: 6, label: 'Фінанси: Скасовано' },
-  { value: 4, label: 'Потребує виправлень' },
+  { value: BudgetingStatus.FINANCE_APPROVED, label: 'Фінанси: Затверджено' },
+  {
+    value: BudgetingStatus.PENDING_CEO_APPROVAL,
+    label: 'На затвердження CEO/COO/CFO',
+  },
+  { value: BudgetingStatus.FINANCE_DECLINED, label: 'Фінанси: Скасовано' },
+  { value: BudgetingStatus.NEEDS_REVISION, label: 'Потребує виправлень' },
 ];
 
 export const approveBudgetingStatusCEO = [
-  { value: 9, label: 'CEO/COO/CFO: Затверджено' },
-  { value: 10, label: 'CEO/COO/CFO: Скасовано' },
-  { value: 4, label: 'Потребує виправлень' },
+  { value: BudgetingStatus.CEO_APPROVED, label: 'CEO/COO/CFO: Затверджено' },
+  { value: BudgetingStatus.CEO_DECLINED, label: 'CEO/COO/CFO: Скасовано' },
+  { value: BudgetingStatus.NEEDS_REVISION, label: 'Потребує виправлень' },
 ];
 
 export const approveBudgetingStatusHd = [
-  { value: 5, label: 'На затвердження Фінанси' },
-  { value: 3, label: 'Керівник відділу: Скасовано' },
-  { value: 4, label: 'Потребує виправлень' },
+  { value: BudgetingStatus.PENDING_FINANCE_APPROVAL, label: 'На затвердження Фінанси' },
+  { value: BudgetingStatus.LEAD_DECLINED, label: 'Керівник відділу: Скасовано' },
+  { value: BudgetingStatus.NEEDS_REVISION, label: 'Потребує виправлень' },
 ];
