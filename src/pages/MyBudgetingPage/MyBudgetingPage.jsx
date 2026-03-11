@@ -112,7 +112,8 @@ const MyBudgetingPage = () => {
     const normalizedStatusId = Number(statusId);
     return (
       Number.isFinite(normalizedStatusId) &&
-      normalizedStatusId !== BudgetingStatus.DRAFT
+      normalizedStatusId !== BudgetingStatus.DRAFT &&
+      normalizedStatusId !== BudgetingStatus.NEEDS_REVISION
     );
   };
 
@@ -1122,7 +1123,7 @@ const MyBudgetingPage = () => {
               <ul
                 className={style.statuscontainer}
                 style={{
-                  maxWidth: '780px',
+                  maxWidth: '100%',
                 }}
               >
                 {statusTabs.map(status => (
