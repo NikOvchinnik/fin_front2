@@ -1129,12 +1129,7 @@ const MyBudgetingPage = () => {
               </div>
             )}
             <div className={style.statusRow}>
-              <ul
-                className={style.statuscontainer}
-                style={{
-                  maxWidth: '100%',
-                }}
-              >
+              <ul className={style.statuscontainer}>
                 {statusTabs.map(status => (
                   <li key={status.value}>
                     <button
