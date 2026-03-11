@@ -67,6 +67,7 @@ const MyBudgetingPage = () => {
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalReturnOpen, setModalReturnIsOpen] = useState(false);
   const [isModalSendBulkOpen, setModalSendBulkIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalImportOpen, setModalImportIsOpen] = useState(false);
@@ -584,7 +585,10 @@ const MyBudgetingPage = () => {
               className={style.returnBtn}
               title="Повернути на доопрацювання"
               aria-label="Повернути на доопрацювання"
-              onClick={() => handleReturnToRevision(request)}
+              onClick={() => {
+                setSelectedRequest(request);
+                setModalReturnIsOpen(true);
+              }}
             >
               <Icon id="arrow-left-switch" className={style.editIcon} />
             </button>
@@ -921,6 +925,10 @@ const MyBudgetingPage = () => {
     setModalSendIsOpen(false);
   };
 
+  const closeModalReturnConfirm = () => {
+    setModalReturnIsOpen(false);
+  };
+
   const openModalSendBulk = () => {
     if (hasBulkSendRestrictedSelection) {
       Notify.warning('Ви обрали бюджетування які не можете відправити');
@@ -945,13 +953,14 @@ const MyBudgetingPage = () => {
     }
   };
 
-  const handleReturnToRevision = async request => {
-    const comment = request?.comment?.trim();
+  const handleReturnToRevision = async () => {
+    const comment = selectedRequest?.comment?.trim();
     const payload = comment ? { comment } : undefined;
 
     try {
-      const response = await returnBudgetingToRevision(request.id, payload);
+      const response = await returnBudgetingToRevision(selectedRequest.id, payload);
       await fetchData();
+      closeModalReturnConfirm();
       Notify.success(
         response?.message || 'Бюджет повернуто в статус "Потребує виправлень"'
       );
@@ -1294,6 +1303,17 @@ const MyBudgetingPage = () => {
               message={`Ви впевнені, що хочете відправити бюджет на затвердження ${selectedRequest?.purpose}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalReturnOpen}
+            onCloseModal={closeModalReturnConfirm}
+          >
+            <ConfirmModal
+              title="Повернення бюджету"
+              message="Ви впевнені, що хочите повернути бюджет на доопрацювання?"
+              onConfirm={handleReturnToRevision}
+              onClose={closeModalReturnConfirm}
             />
           </ModalWindow>
           <ModalWindow
