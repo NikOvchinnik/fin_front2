@@ -668,16 +668,35 @@ const Form = ({
             rules={field.validation}
             render={({ field: input }) => (
               <InputWrapper field={field}>
-                <input
-                  type="file"
-                  multiple
-                  disabled={field.readOnly || false}
-                  onChange={e => {
-                    const files = Array.from(e.target.files);
-                    input.onChange(files);
-                    field.onChange && field.onChange(files);
-                  }}
-                />
+                <div className={style.fileInputWrapper}>
+                  <input
+                    id={`${field.name}-file-input`}
+                    type="file"
+                    multiple
+                    className={style.fileInputHidden}
+                    disabled={field.readOnly || false}
+                    onChange={e => {
+                      const files = Array.from(e.target.files);
+                      input.onChange(files);
+                      field.onChange && field.onChange(files);
+                    }}
+                  />
+                  <label
+                    htmlFor={`${field.name}-file-input`}
+                    className={`${style.fileUploadButton} ${
+                      field.readOnly ? style.fileUploadButtonDisabled : ''
+                    }`}
+                  >
+                    Обрати файл
+                  </label>
+                  <span className={style.fileUploadName}>
+                    {Array.isArray(input.value) && input.value.length > 0
+                      ? input.value.length === 1
+                        ? input.value[0]?.name
+                        : `Обрано файлів: ${input.value.length}`
+                      : 'Файл не обрано'}
+                  </span>
+                </div>
                 {errors[field.name] && (
                   <p className={style.errorText}>
                     {errors[field.name]?.message}

@@ -12,6 +12,7 @@ import ModalWindow from '../../ModalWindow/ModalWindow';
 import Icon from '../../Icon/Icon';
 import Loader from '../../Loader/Loader';
 import { approveFilesBuh, approveFilesFin } from '../../../helpers/status';
+import { UserRole } from '../../../helpers/enums';
 
 const SendFilesForm = ({
   request,
@@ -24,12 +25,14 @@ const SendFilesForm = ({
   const [selectedLink, setSelectedLink] = useState(null);
   const [loading, setLoading] = useState(true);
   const [requestData, setRequestData] = useState(request);
+  const [documentLinks, setDocumentLinks] = useState(['']);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setRequestData(request);
+        setDocumentLinks(['']);
       } catch (err) {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       } finally {
@@ -41,6 +44,35 @@ const SendFilesForm = ({
 
   const closeModalLink = () => {
     setModalLinkOpen(false);
+  };
+
+  const handleAddDocumentLink = () => {
+    setDocumentLinks(prev => [...prev, '']);
+  };
+
+  const handleDocumentLinkChange = (index, value) => {
+    setDocumentLinks(prev =>
+      prev.map((link, linkIndex) => (linkIndex === index ? value : link))
+    );
+  };
+
+  const handleRemoveDocumentLink = index => {
+    setDocumentLinks(prev => {
+      if (prev.length === 1) {
+        return [''];
+      }
+
+      return prev.filter((_, linkIndex) => linkIndex !== index);
+    });
+  };
+
+  const isValidHttpUrl = value => {
+    try {
+      const url = new URL(value);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
   };
 
   const handleDeleteLink = async () => {
@@ -68,9 +100,9 @@ const SendFilesForm = ({
             name: 'status_id',
             label: 'Статус',
             options:
-              userRole === 4
+              userRole === UserRole.FINANCE
                 ? approveFilesFin
-                : userRole === 5
+                : userRole === UserRole.ACCOUNTANT
                 ? approveFilesBuh
                 : [],
             validation: { required: 'This field is required' },
@@ -98,56 +130,113 @@ const SendFilesForm = ({
         <Loader />
       ) : (
         <div className={style.editContainer}>
+          <h2 className={style.modalTitle}>Додати документи</h2>
           {requestData.files?.length > 0 && (
-            <ul className={style.linkContainer}>
+            <div className={style.addedLinksBlock}>
+              <p className={style.linksTitle}>Додані файли</p>
               {requestData.files.map((file, index) => (
-                <li key={file.id}>
-                  <a href={file.file_url} target="_blank" rel="noreferrer">
-                    Link {index + 1}
+                <div key={file.id} className={style.addedLinkRow}>
+                  <a
+                    href={file.file_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className={style.addedLink}
+                    title={file.file_url}
+                  >
+                    {`Посилання: ${file.file_url}`}
                   </a>
                   <button
-                    className={style.deleteBtn}
+                    type="button"
+                    className={style.removeLinkBtn}
                     onClick={() => {
                       setSelectedLink(file);
                       setModalLinkOpen(true);
                     }}
+                    aria-label={`Видалити Link ${index + 1}`}
                   >
-                    <Icon id="trash" className={style.deleteIcon} />
+                    <Icon id="trash" className={style.removeLinkIcon} />
                   </button>
-                </li>
+                </div>
               ))}
-            </ul>
+            </div>
           )}
+          <div className={style.linksBlock}>
+            <p className={style.linksTitle}>Додати новий файл</p>
+            {documentLinks.map((link, index) => (
+              <div key={index} className={style.linkInputRow}>
+                <input
+                  type="url"
+                  className={style.linkInput}
+                  placeholder="Додати посилання на файл"
+                  value={link}
+                  onChange={e =>
+                    handleDocumentLinkChange(index, e.target.value)
+                  }
+                />
+                <button
+                  type="button"
+                  className={style.removeLinkBtn}
+                  onClick={() => handleRemoveDocumentLink(index)}
+                  aria-label="Видалити поле лінка"
+                >
+                  <Icon id="trash" className={style.removeLinkIcon} />
+                </button>
+                {index === documentLinks.length - 1 ? (
+                  <button
+                    type="button"
+                    className={style.addLinkBtn}
+                    onClick={handleAddDocumentLink}
+                  >
+                    +
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
           <Form
-            title="Додати документи"
             fields={fields}
             buttons={buttons}
             onSubmit={async data => {
               try {
                 setLoading(true);
                 const formData = new FormData();
+                const files = data.files ? Array.from(data.files) : [];
+                const links = documentLinks
+                  .map(link => link.trim())
+                  .filter(Boolean);
+                const statusId = Number(
+                  data.status_id ??
+                    requestData?.status_id ??
+                    requestData?.status?.id
+                );
 
-                Object.entries(data).forEach(([key, value]) => {
-                  if (key === 'files' && value) {
-                    if (value instanceof FileList || Array.isArray(value)) {
-                      Array.from(value).forEach(file =>
-                        formData.append('files', file)
-                      );
-                    }
-                  } else {
-                    if (typeof value === 'string') value = value.trim();
-                    formData.append(key, value ?? '');
-                  }
-                });
+                const invalidLink = links.find(link => !isValidHttpUrl(link));
+                if (invalidLink) {
+                  Notify.failure(`Invalid document link: ${invalidLink}`);
+                  return;
+                }
 
                 formData.append('id', request.id);
+                if (!Number.isNaN(statusId) && statusId > 0) {
+                  formData.append('status_id', statusId);
+                }
+                files.forEach(file => formData.append('files[]', file));
+                links.forEach(link => formData.append('document_links[]', link));
 
                 await sendFilesRequest(formData);
                 onRefresh();
                 closeModal();
                 Notify.success('Інформацію змінено!');
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                if (error?.response?.status === 400) {
+                  const message =
+                    error?.response?.data?.message ||
+                    error?.response?.data?.error ||
+                    'Некоректні дані для додавання документів';
+                  Notify.failure(message);
+                } else {
+                  Notify.failure('Сталася помилка, спробуйте ще раз');
+                }
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);

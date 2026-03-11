@@ -38,7 +38,7 @@ import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
-import { UserRole } from '../../helpers/enums';
+import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -107,11 +107,20 @@ const MyRequestsPage = () => {
     [dataRequests]
   );
 
-  const canSendRequestStatus = statusId => statusId === 1 || statusId === 3;
-  const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+  const canSendRequestStatus = statusId =>
+    statusId === FinancialRequestStatus.DRAFT ||
+    statusId === FinancialRequestStatus.NEEDS_REVISION;
+  const canSendFilesForStatus = statusId =>
+    statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
+    statusId ===
+      FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS;
   const canReturnRequestToRevision = request => {
-    const statusId = Number(request?.status_id ?? request?.status?.id);
-    return request?.status === 'Очікує затвердження' || statusId === 2;
+    const statusId = request?.status_id ?? request?.status?.id;
+    const statusName = request?.status?.name ?? request?.status;
+    return (
+      statusId === FinancialRequestStatus.PENDING_APPROVAL ||
+      statusName === 'Очікує затвердження'
+    );
   };
 
   const getApiErrorMessage = error => {
@@ -1074,7 +1083,7 @@ const MyRequestsPage = () => {
     const ids = Array.from(selectedIds);
     const payload = {
       ids: ids.map(id => Number(id)),
-      status_id: 2,
+      status_id: FinancialRequestStatus.PENDING_APPROVAL,
     };
 
     try {

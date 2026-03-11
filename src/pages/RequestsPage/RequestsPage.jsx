@@ -38,6 +38,7 @@ import { getContractors } from '../../helpers/axios/contractors';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
 import { changeFinStatusBulk } from '../../helpers/axios/statuses';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -93,12 +94,19 @@ const RequestsPage = () => {
   );
 
   const canEditRequestStatus = (statusId, role) => {
-    if (role === 4) return statusId === 2;
-    if (role === 5) return statusId === 4;
+    if (role === UserRole.FINANCE) {
+      return statusId === FinancialRequestStatus.PENDING_APPROVAL;
+    }
+    if (role === UserRole.ACCOUNTANT) {
+      return statusId === FinancialRequestStatus.SENT_TO_PAYMENT;
+    }
     return false;
   };
 
-  const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+  const canSendFilesForStatus = statusId =>
+    statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
+    statusId ===
+      FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS;
 
   const hasBulkRestrictedSelection = useMemo(() => {
     if (!selectedIds.size) return false;
@@ -171,7 +179,7 @@ const RequestsPage = () => {
     try {
       setLoadingTable(true);
       let requests;
-      if (userRole === 5) {
+      if (userRole === UserRole.ACCOUNTANT) {
         requests = await getBuhRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
@@ -242,7 +250,7 @@ const RequestsPage = () => {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [userRole, startDate, endDate]);
 
   useEffect(() => {
     fetchData();
@@ -609,7 +617,8 @@ const RequestsPage = () => {
       status_plain: request.status?.name || '',
       action: (
         <div className={style.actionContainer}>
-          {(userRole === 4 || userRole === 5) && (
+          {(userRole === UserRole.FINANCE ||
+            userRole === UserRole.ACCOUNTANT) && (
             <button
               className={style.editBtn}
               onClick={() => {
@@ -1067,7 +1076,11 @@ const RequestsPage = () => {
   };
 
   const bulkStatusOptions =
-    userRole === 4 ? approveStatusFin : userRole === 5 ? approveStatusBuh : [];
+    userRole === UserRole.FINANCE
+      ? approveStatusFin
+      : userRole === UserRole.ACCOUNTANT
+      ? approveStatusBuh
+      : [];
 
   const closeModalSendFiles = () => {
     setModalSendFilesIsOpen(false);
@@ -1265,23 +1278,28 @@ const RequestsPage = () => {
               <ul
                 className={style.statuscontainer}
                 style={{
-                  maxWidth: userRole === 5 ? '860px' : '1300px',
+                  maxWidth:
+                    userRole === UserRole.ACCOUNTANT
+                      ? '860px'
+                      : '1300px',
                 }}
               >
-                {(userRole === 5 ? statusSelectorBuh : statusSelectorFin).map(
-                  status => (
-                    <li key={status.value}>
-                      <button
-                        className={`${style.statusBtn} ${
-                          activeStatus === status.value ? style.activeBtn : ''
-                        }`}
-                        onClick={() => setActiveStatus(status.value)}
-                      >
-                        {status.label}
-                      </button>
-                    </li>
-                  )
-                )}
+                {(
+                  userRole === UserRole.ACCOUNTANT
+                    ? statusSelectorBuh
+                    : statusSelectorFin
+                ).map(status => (
+                  <li key={status.value}>
+                    <button
+                      className={`${style.statusBtn} ${
+                        activeStatus === status.value ? style.activeBtn : ''
+                      }`}
+                      onClick={() => setActiveStatus(status.value)}
+                    >
+                      {status.label}
+                    </button>
+                  </li>
+                ))}
               </ul>
               {selectedIds.size > 0 && (
                 <div className={style.bulkActionsInline}>

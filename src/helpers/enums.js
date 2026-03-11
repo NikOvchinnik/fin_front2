@@ -18,3 +18,16 @@ export const BudgetingStatus = Object.freeze({
   CEO_APPROVED: 9,
   CEO_DECLINED: 10,
 });
+
+export const FinancialRequestStatus = Object.freeze({
+  DRAFT: 1,
+  PENDING_APPROVAL: 2,
+  NEEDS_REVISION: 3,
+  SENT_TO_PAYMENT: 4,
+  ACCOUNTANT_PAID: 5,
+  ACCOUNTANT_PAID_AWAITING_DOCUMENTS: 6,
+  FINANCE_CANCELED: 14,
+  ACCOUNTANT_CANCELED: 20,
+  FINANCE_PAID: 21,
+  FINANCE_PAID_AWAITING_DOCUMENTS: 22,
+});

@@ -4,6 +4,7 @@ import {
   changeFinStatus,
 } from '../../../helpers/axios/statuses';
 import { approveStatusBuh, approveStatusFin } from '../../../helpers/status';
+import { FinancialRequestStatus, UserRole } from '../../../helpers/enums';
 import Form from '../../Form/Form';
 import style from './ApproveRequestForm.module.css';
 import { Notify } from 'notiflix';
@@ -15,9 +16,9 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
       name: 'status',
       label: 'Статус',
       options:
-        userRole === 4
+        userRole === UserRole.FINANCE
           ? approveStatusFin
-          : userRole === 5
+          : userRole === UserRole.ACCOUNTANT
           ? approveStatusBuh
           : [],
       validation: { required: 'This field is required' },
@@ -71,9 +72,9 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
           try {
             const formData = new FormData();
             const backendFieldName =
-              userRole === 4
+              userRole === UserRole.FINANCE
                 ? 'finance_status'
-                : userRole === 5
+                : userRole === UserRole.ACCOUNTANT
                 ? 'buh_status'
                 : 'status';
 
@@ -82,8 +83,10 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
             formData.append('comment', data.comment?.trim() || '');
             formData.append('payment_date_await', data.payment_date_await);
 
-            if (userRole === 4) await changeFinStatus(formData);
-            if (userRole === 5) await changeBuhStatus(formData);
+            if (userRole === UserRole.FINANCE)
+              await changeFinStatus(formData);
+            if (userRole === UserRole.ACCOUNTANT)
+              await changeBuhStatus(formData);
             onRefresh();
             closeModal();
             Notify.success('Статус заявки змінено!');
@@ -93,7 +96,12 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
           }
         }}
         defaultValues={{
-          status: userRole === 4 ? '4' : userRole === 5 ? '5' : '',
+          status:
+            userRole === UserRole.FINANCE
+              ? FinancialRequestStatus.SENT_TO_PAYMENT
+              : userRole === UserRole.ACCOUNTANT
+              ? FinancialRequestStatus.ACCOUNTANT_PAID
+              : '',
           comment: '',
           payment_date_await:
             request.payment_date_await || dayjs().format('YYYY-MM-DD'),

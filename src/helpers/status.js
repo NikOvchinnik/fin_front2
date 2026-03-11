@@ -1,3 +1,5 @@
+import { FinancialRequestStatus } from './enums';
+
 export const getStatusStyle = status => {
   switch (status) {
     case 'Чернетка':
@@ -62,70 +64,76 @@ export const statusSelectorUser = [
 
 export const approveStatus = [
   {
-    value: '1',
+    value: FinancialRequestStatus.DRAFT,
     label: 'Чернетка',
   },
   {
-    value: '2',
+    value: FinancialRequestStatus.PENDING_APPROVAL,
     label: 'Очікує затвердження',
   },
   {
-    value: '3',
+    value: FinancialRequestStatus.NEEDS_REVISION,
     label: 'Потребує виправлень',
   },
-  { value: '4', label: 'Передано на оплату' },
-  { value: '5', label: 'Бухгалтер: Сплачено' },
+  { value: FinancialRequestStatus.SENT_TO_PAYMENT, label: 'Передано на оплату' },
+  { value: FinancialRequestStatus.ACCOUNTANT_PAID, label: 'Бухгалтер: Сплачено' },
   {
-    value: '6',
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
     label: 'Бухгалтер: Сплачено, очікуються документи',
   },
-  { value: '14', label: 'Фінанси: Скасовано' },
-  { value: '20', label: 'Бухгалтер: Скасовано' },
-  { value: '21', label: 'Фінанси: Сплачено' },
-  { value: '22', label: 'Фінанси: Сплачено, очікуються документи' },
+  { value: FinancialRequestStatus.FINANCE_CANCELED, label: 'Фінанси: Скасовано' },
+  { value: FinancialRequestStatus.ACCOUNTANT_CANCELED, label: 'Бухгалтер: Скасовано' },
+  { value: FinancialRequestStatus.FINANCE_PAID, label: 'Фінанси: Сплачено' },
+  {
+    value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
+    label: 'Фінанси: Сплачено, очікуються документи',
+  },
 ];
 
 export const approveFilesFin = [
-  { value: '21', label: 'Всі документи додано' }, //Фінанси: Сплачено
-  { value: '22', label: 'Очікуються ще документи' }, //Фінанси: Сплачено, очікуються документи
+  { value: FinancialRequestStatus.FINANCE_PAID, label: 'Всі документи додано' }, //Фінанси: Сплачено
+  {
+    value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
+    label: 'Очікуються ще документи',
+  }, //Фінанси: Сплачено, очікуються документи
 ];
 
 export const approveFilesBuh = [
-  { value: '5', label: 'Всі документи додано' }, //Бухгалтер: Сплачено
+  { value: FinancialRequestStatus.ACCOUNTANT_PAID, label: 'Всі документи додано' }, //Бухгалтер: Сплачено
   {
-    value: '6',
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
     label: 'Очікуються ще документи',
   }, //Бухгалтер: Сплачено, очікуються документи
 ];
 
 export const approveStatusFin = [
-  { value: '4', label: 'Передано на оплату' },
+  { value: FinancialRequestStatus.SENT_TO_PAYMENT, label: 'Передано на оплату' },
   {
-    value: '3',
+    value: FinancialRequestStatus.NEEDS_REVISION,
     label: 'Потребує виправлень',
   },
   {
-    value: '21',
+    value: FinancialRequestStatus.FINANCE_PAID,
     label: 'Фінанси: Сплачено',
   },
   {
-    value: '22',
+    value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
     label: 'Фінанси: Сплачено, очікуються документи',
   },
-  { value: '14', label: 'Фінанси: Скасовано' },
+  { value: FinancialRequestStatus.FINANCE_CANCELED, label: 'Фінанси: Скасовано' },
 ];
 
 export const approveStatusBuh = [
-  { value: '5', label: 'Бухгалтер: Сплачено' },
+  { value: FinancialRequestStatus.ACCOUNTANT_PAID, label: 'Бухгалтер: Сплачено' },
   {
-    value: '6',
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
     label: 'Бухгалтер: Сплачено, очікуються документи',
   },
   {
-    value: '3',
+    value: FinancialRequestStatus.NEEDS_REVISION,
     label: 'Потребує виправлень',
   },
-  { value: '20', label: 'Бухгалтер: Скасовано' },
+  { value: FinancialRequestStatus.ACCOUNTANT_CANCELED, label: 'Бухгалтер: Скасовано' },
 ];
 
 export const getShortStatus = statusName => {
