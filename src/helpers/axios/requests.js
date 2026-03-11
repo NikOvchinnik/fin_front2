@@ -64,7 +64,7 @@ export const postRequest = async payload => {
 
 export const deleteRequest = async id => {
   try {
-    return await axios.delete(`/api/delete-draft/${id}`);
+    return await axios.delete(`/api/delete-request/${id}`);
   } catch (error) {
     throw error;
   }
