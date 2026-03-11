@@ -3,7 +3,11 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './MyRequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getMyRequests, sendRequest } from '../../helpers/axios/requests';
+import {
+  getMyRequests,
+  returnRequestToRevision,
+  sendRequest,
+} from '../../helpers/axios/requests';
 import { changeFinStatusBulk } from '../../helpers/axios/statuses';
 import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
@@ -34,6 +38,7 @@ import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
+import { UserRole } from '../../helpers/enums';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -67,6 +72,7 @@ const MyRequestsPage = () => {
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalReturnOpen, setModalReturnIsOpen] = useState(false);
   const [isModalSendBulkOpen, setModalSendBulkIsOpen] = useState(false);
   const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
@@ -77,7 +83,14 @@ const MyRequestsPage = () => {
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyRequestsColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('action')) {
+      return [...parsed, 'action'];
+    }
+
+    return parsed;
   });
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
@@ -96,6 +109,16 @@ const MyRequestsPage = () => {
 
   const canSendRequestStatus = statusId => statusId === 1 || statusId === 3;
   const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+  const canReturnRequestToRevision = request => {
+    const statusId = Number(request?.status_id ?? request?.status?.id);
+    return request?.status === 'Очікує затвердження' || statusId === 2;
+  };
+
+  const getApiErrorMessage = error => {
+    const data = error?.response?.data;
+    if (typeof data === 'string') return data;
+    return data?.message || data?.error || '';
+  };
 
   const hasBulkSendRestrictedSelection = useMemo(() => {
     if (!selectedIds.size) return false;
@@ -244,12 +267,15 @@ const MyRequestsPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+    if (
+      Number(userRole) !== UserRole.CEO &&
+      String(userSelectorId) !== String(userId)
+    ) {
       navigate('/');
     } else {
       fetchData();
     }
-  }, [fetchData]);
+  }, [fetchData, navigate, userId, userRole, userSelectorId]);
 
   const handleSort = key => {
     setSortConfig(prev => {
@@ -598,6 +624,19 @@ const MyRequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
+          {canReturnRequestToRevision(request) && (
+            <button
+              className={style.returnBtn}
+              title="Повернути на доопрацювання"
+              aria-label="Повернути на доопрацювання"
+              onClick={() => {
+                setSelectedRequest(request);
+                setModalReturnIsOpen(true);
+              }}
+            >
+              <Icon id="arrow-left-switch" className={style.editIcon} />
+            </button>
+          )}
           {canSendRequestStatus(statusId) && (
             <button
               className={style.sendBtn}
@@ -918,7 +957,10 @@ const MyRequestsPage = () => {
 
   const filteredColumns = useMemo(() => {
     if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
+    return columns.filter(
+      col =>
+        col.accessorKey === 'action' || visibleColumns.includes(col.accessorKey)
+    );
   }, [columns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
@@ -949,6 +991,10 @@ const MyRequestsPage = () => {
 
   const closeModalConfirm = () => {
     setModalSendIsOpen(false);
+  };
+
+  const closeModalReturnConfirm = () => {
+    setModalReturnIsOpen(false);
   };
 
   const openModalSendBulk = () => {
@@ -990,6 +1036,30 @@ const MyRequestsPage = () => {
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
+  const handleReturnToRevision = async () => {
+    const comment = selectedRequest?.comment?.trim();
+    const payload = comment ? { comment } : undefined;
+
+    try {
+      const response = await returnRequestToRevision(selectedRequest.id, payload);
+      await fetchData();
+      closeModalReturnConfirm();
+      Notify.success(
+        response?.message || 'Заявку повернуто в статус "Потребує виправлень"'
+      );
+    } catch (error) {
+      if (error?.response?.status === 400) {
+        Notify.failure(
+          getApiErrorMessage(error) ||
+            'Повернення доступне тільки для статусу "Очікує затвердження"'
+        );
+        return;
+      }
       Notify.failure('Сталася помилка, спробуйте ще раз');
       console.error('Error: ', error);
     }
@@ -1318,6 +1388,17 @@ const MyRequestsPage = () => {
               message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalReturnOpen}
+            onCloseModal={closeModalReturnConfirm}
+          >
+            <ConfirmModal
+              title="Повернення заявки"
+              message="Ви впевнені, що хочете повернути заявку на доопрацювання?"
+              onConfirm={handleReturnToRevision}
+              onClose={closeModalReturnConfirm}
             />
           </ModalWindow>
           <ModalWindow

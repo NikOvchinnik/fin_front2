@@ -102,3 +102,14 @@ export const sendFilesRequest = async payload => {
     throw error;
   }
 };
+
+export const returnRequestToRevision = async (id, payload) => {
+  try {
+    if (payload) {
+      return await axios.post(`/api/return-request-to-revision/${id}`, payload);
+    }
+    return await axios.post(`/api/return-request-to-revision/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
