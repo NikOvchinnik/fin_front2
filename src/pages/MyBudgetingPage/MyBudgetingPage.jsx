@@ -22,7 +22,6 @@ import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
-  statusSelectorBudgetingUser,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -77,7 +76,14 @@ const MyBudgetingPage = () => {
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyBudgetColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('action')) {
+      return [...parsed, 'action'];
+    }
+
+    return parsed;
   });
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
@@ -132,6 +138,21 @@ const MyBudgetingPage = () => {
 
     return false;
   }, [selectedIds, requestById]);
+
+  const statusTabs = useMemo(
+    () => [
+      { value: 'Всі', label: 'Всі' },
+      { value: 'Чернетка', label: 'Чернетка' },
+      {
+        value: BudgetingStatus.NEEDS_REVISION,
+        label: 'Потребує виправлень',
+      },
+      { value: 'Очікує затвердження', label: 'Очікує затвердження' },
+      { value: 'Затверджено', label: 'Затверджено' },
+      { value: 'Скасовано', label: 'Скасовано' },
+    ],
+    []
+  );
 
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -847,7 +868,10 @@ const MyBudgetingPage = () => {
 
   const filteredColumns = useMemo(() => {
     if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
+    return columns.filter(
+      col =>
+        col.accessorKey === 'action' || visibleColumns.includes(col.accessorKey)
+    );
   }, [columns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
@@ -1101,7 +1125,7 @@ const MyBudgetingPage = () => {
                   maxWidth: '780px',
                 }}
               >
-                {statusSelectorBudgetingUser.map(status => (
+                {statusTabs.map(status => (
                   <li key={status.value}>
                     <button
                       className={`${style.statusBtn} ${
