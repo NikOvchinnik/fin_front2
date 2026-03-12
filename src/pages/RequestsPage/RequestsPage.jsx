@@ -36,7 +36,7 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getContractors } from '../../helpers/axios/contractors';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
-import { changeFinStatusBulk } from '../../helpers/axios/statuses';
+import { changeFinStatusBulk } from '../../helpers/axios/requests';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
 

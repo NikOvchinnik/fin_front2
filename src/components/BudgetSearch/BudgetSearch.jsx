@@ -68,18 +68,8 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
-      week: request.week
-        ? request.week
-            .split('_')
-            .map(d => dayjs(d).format('DD.MM.YYYY'))
-            .join(' - ')
-        : '',
-      week_plain: request.week
-        ? request.week
-            .split('_')
-            .map(d => dayjs(d).format('DD.MM.YYYY'))
-            .join(' - ')
-        : '',
+      week: request.week || '',
+      week_plain: request.week || '',
       purpose: (
         <p className={style.breakText}>
           <ExpandableText text={request.purpose || ''} limit={20} />
@@ -381,6 +371,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       </ModalWindow>
       <ModalWindow isModalOpen={isModalEditOpen} onCloseModal={closeModalEdit}>
         <BudgetEditForm
+          key={`budget-search-edit-${selectedRequest?.id || 'empty'}`}
           request={selectedRequest}
           closeModal={closeModalEdit}
           onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
@@ -391,6 +382,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
         onCloseModal={closeModalWatch}
       >
         <BudgetWatchForm
+          key={`budget-search-watch-${selectedRequest?.id || 'empty'}`}
           request={selectedRequest}
           closeModal={closeModalWatch}
           onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}

@@ -2,7 +2,7 @@ import dayjs from 'dayjs';
 import {
   changeBuhStatus,
   changeFinStatus,
-} from '../../../helpers/axios/statuses';
+} from '../../../helpers/axios/requests';
 import { approveStatusBuh, approveStatusFin } from '../../../helpers/status';
 import { FinancialRequestStatus, UserRole } from '../../../helpers/enums';
 import Form from '../../Form/Form';

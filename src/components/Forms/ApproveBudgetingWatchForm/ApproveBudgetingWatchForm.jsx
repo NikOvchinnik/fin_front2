@@ -3,6 +3,8 @@ import { approveBudgetingStatus } from '../../../helpers/budgetingStatuses';
 import Form from '../../Form/Form';
 import style from './ApproveBudgetingWatchForm.module.css';
 import dayjs from 'dayjs';
+import { Notify } from 'notiflix';
+import { ensureCurrentWeekOption } from '../../../helpers/budgetingWeekOptions';
 
 const ApproveBudgetingWatchForm = ({
   request,
@@ -13,6 +15,8 @@ const ApproveBudgetingWatchForm = ({
   const [weeksOptions, setWeeksOptions] = useState([]);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
+  const requestPeriod = request?.plan_period || '';
+  const requestWeekValue = request?.week || '';
 
   const getWeeksOfMonth = period => {
     if (!period) return [];
@@ -69,15 +73,16 @@ const ApproveBudgetingWatchForm = ({
       }
     }
 
-    return adjusted.map(week => ({
-      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
-        'YYYY-MM-DD'
-      )}`,
-      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
-    }));
+    return adjusted.map((week, index) => {
+      const weekName = `Week ${index + 1}`;
+      return { value: weekName, label: weekName };
+    });
   };
 
-  const defaultWeeks = getWeeksOfMonth(request.plan_period || defaultPeriod);
+  const defaultWeeks = ensureCurrentWeekOption(
+    getWeeksOfMonth(requestPeriod || defaultPeriod),
+    requestWeekValue
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -148,7 +153,7 @@ const ApproveBudgetingWatchForm = ({
               : userRole === 2
               ? request.applicant_comment || ''
               : '',
-          week: request.week || '',
+          week: requestWeekValue || '',
         }}
       />
     </div>

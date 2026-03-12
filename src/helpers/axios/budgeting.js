@@ -1,5 +1,24 @@
 import axios from './axiosConfig';
 
+const buildBulkStatusParams = payload => {
+  const params = new URLSearchParams();
+  const ids = payload?.ids || [];
+
+  if (ids.length) {
+    params.append('ids', ids.join(','));
+  }
+
+  if (payload?.status_id != null) {
+    params.append('status_id', payload.status_id);
+  }
+
+  if (payload?.comment != null) {
+    params.append('comment', payload.comment);
+  }
+
+  return params;
+};
+
 export const getBudgetingStatuses = async () => {
   try {
     return await axios.get('/api/budgeting-statuses/budgeting_statuses');
@@ -99,6 +118,17 @@ export const updateBudgetingStatus = async (id, payload) => {
     return await axios.post(
       `/api/budgeting/update-budgeting-status/${id}`,
       payload
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeBudgetingStatusBulk = async payload => {
+  try {
+    return await axios.post(
+      '/api/budgeting/bulk-update-budgeting-status',
+      buildBulkStatusParams(payload)
     );
   } catch (error) {
     throw error;

@@ -4,11 +4,11 @@ import style from './MyRequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
 import {
+  changeFinStatusBulk,
   getMyRequests,
   returnRequestToRevision,
   sendRequest,
 } from '../../helpers/axios/requests';
-import { changeFinStatusBulk } from '../../helpers/axios/statuses';
 import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';

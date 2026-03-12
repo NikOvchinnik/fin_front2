@@ -85,22 +85,24 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
       }
     }
 
-    return adjusted.map(week => ({
-      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
-        'YYYY-MM-DD'
-      )}`,
-      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
-    }));
+    return adjusted.map((week, index) => {
+      const weekName = `Week ${index + 1}`;
+      return {
+        value: weekName,
+        label: weekName,
+        start: week.start,
+        end: week.end,
+      };
+    });
   };
 
   const defaultWeeks = getWeeksOfMonth(defaultPeriod);
 
   const defaultWeek =
     defaultWeeks.find(week => {
-      const [start, end] = week.value.split('_');
       return (
-        dayjs().isAfter(dayjs(start).subtract(1, 'day')) &&
-        dayjs().isBefore(dayjs(end).add(1, 'day'))
+        dayjs().isAfter(dayjs(week.start).subtract(1, 'day')) &&
+        dayjs().isBefore(dayjs(week.end).add(1, 'day'))
       );
     })?.value || '';
 

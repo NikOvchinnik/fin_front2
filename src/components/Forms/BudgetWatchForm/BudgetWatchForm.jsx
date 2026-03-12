@@ -11,6 +11,7 @@ import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
+import { ensureCurrentWeekOption } from '../../../helpers/budgetingWeekOptions';
 
 const BudgetWatchForm = ({
   request,
@@ -26,8 +27,10 @@ const BudgetWatchForm = ({
   const [weeksOptions, setWeeksOptions] = useState([]);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
+  const requestPeriod = request?.plan_period || '';
+  const requestWeekValue = request?.week || '';
 
-  const savedPeriod = request?.plan_period || null;
+  const savedPeriod = requestPeriod || null;
 
   const periods = generateDefaultPeriods(12);
 
@@ -93,24 +96,16 @@ const BudgetWatchForm = ({
       }
     }
 
-    return adjusted.map(week => ({
-      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
-        'YYYY-MM-DD'
-      )}`,
-      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
-    }));
+    return adjusted.map((week, index) => {
+      const weekName = `Week ${index + 1}`;
+      return { value: weekName, label: weekName };
+    });
   };
 
-  const defaultWeeks = getWeeksOfMonth(request.plan_period || defaultPeriod);
-
-  const defaultWeek =
-    defaultWeeks.find(week => {
-      const [start, end] = week.value.split('_');
-      return (
-        dayjs().isAfter(dayjs(start).subtract(1, 'day')) &&
-        dayjs().isBefore(dayjs(end).add(1, 'day'))
-      );
-    })?.value || '';
+  const defaultWeeks = ensureCurrentWeekOption(
+    getWeeksOfMonth(requestPeriod || defaultPeriod),
+    requestWeekValue
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -312,8 +307,8 @@ const BudgetWatchForm = ({
               applicant: request.applicant || '',
               project: request.project_id || '',
               expense_category_id: request.expense_category?.id || '',
-              period: request.plan_period || '',
-              week: request.week || '',
+              period: requestPeriod || '',
+              week: requestWeekValue || '',
               purpose: request.purpose || '',
               amount_opt: request.amount_optimistic ?? 0,
               amount_pes: request.amount_pessimistic ?? 0,

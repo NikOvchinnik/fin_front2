@@ -20,11 +20,11 @@ import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import { Checkbox } from '@mui/material';
 import {
+  changeBudgetingStatusBulk,
   getBudgetingCEO,
   getBudgetingFinancial,
   getBudgetingHd,
 } from '../../helpers/axios/budgeting';
-import { changeBudgetingStatusBulk } from '../../helpers/axios/statuses';
 import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
@@ -309,11 +309,7 @@ const BudgetingsPage = () => {
 
     if (filters.week) {
       filteredRows = filteredRows.filter(row =>
-        row.week
-          .split('_')
-          .map(d => dayjs(d).format('DD.MM.YYYY'))
-          .join(' - ')
-          .includes(filters.week)
+        row.week?.toLowerCase().includes(filters.week)
       );
     }
 
@@ -434,18 +430,8 @@ const BudgetingsPage = () => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
-      week: request.week
-        ? request.week
-            .split('_')
-            .map(d => dayjs(d).format('DD.MM.YYYY'))
-            .join(' - ')
-        : '',
-      week_plain: request.week
-        ? request.week
-            .split('_')
-            .map(d => dayjs(d).format('DD.MM.YYYY'))
-            .join(' - ')
-        : '',
+      week: request.week || '',
+      week_plain: request.week || '',
       purpose: (
         <p className={style.breakText}>
           <ExpandableText text={request.purpose || ''} limit={20} />
@@ -1154,6 +1140,7 @@ const BudgetingsPage = () => {
           )}
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
             <ApproveBudgetingForm
+              key={`approve-budget-${selectedRequest?.id || 'empty'}`}
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}
@@ -1176,6 +1163,7 @@ const BudgetingsPage = () => {
             onCloseModal={closeModalWatch}
           >
             <ApproveBudgetingWatchForm
+              key={`approve-budget-watch-${selectedRequest?.id || 'empty'}`}
               request={selectedRequest}
               closeModal={closeModalWatch}
               onRefresh={fetchData}

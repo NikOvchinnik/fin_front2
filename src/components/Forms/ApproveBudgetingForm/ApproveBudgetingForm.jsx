@@ -9,11 +9,14 @@ import Form from '../../Form/Form';
 import style from './ApproveBudgetingForm.module.css';
 import { Notify } from 'notiflix';
 import dayjs from 'dayjs';
+import { ensureCurrentWeekOption } from '../../../helpers/budgetingWeekOptions';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   const [weeksOptions, setWeeksOptions] = useState([]);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
+  const requestPeriod = request?.plan_period || '';
+  const requestWeekValue = request?.week || '';
 
   const getWeeksOfMonth = period => {
     if (!period) return [];
@@ -70,15 +73,16 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
       }
     }
 
-    return adjusted.map(week => ({
-      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
-        'YYYY-MM-DD'
-      )}`,
-      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
-    }));
+    return adjusted.map((week, index) => {
+      const weekName = `Week ${index + 1}`;
+      return { value: weekName, label: weekName };
+    });
   };
 
-  const defaultWeeks = getWeeksOfMonth(request.plan_period || defaultPeriod);
+  const defaultWeeks = ensureCurrentWeekOption(
+    getWeeksOfMonth(requestPeriod || defaultPeriod),
+    requestWeekValue
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -172,7 +176,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           status:
             userRole === 4 ? 7 : userRole === 1 ? 9 : userRole === 2 ? 5 : '',
           comment: '',
-          week: request.week || '',
+          week: requestWeekValue || '',
         }}
       />
     </div>

@@ -1,5 +1,24 @@
 import axios from './axiosConfig';
 
+const buildBulkStatusParams = payload => {
+  const params = new URLSearchParams();
+  const ids = payload?.ids || [];
+
+  if (ids.length) {
+    params.append('ids', ids.join(','));
+  }
+
+  if (payload?.status_id != null) {
+    params.append('status_id', payload.status_id);
+  }
+
+  if (payload?.comment != null) {
+    params.append('comment', payload.comment);
+  }
+
+  return params;
+};
+
 export const getFinRequests = async ({ startDate, endDate }) => {
   try {
     const params = {};
@@ -122,6 +141,33 @@ export const sendFilesRequest = async payload => {
     return await axios.post(
       '/api/financial-request/update-status-and-files',
       payload
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeFinStatus = async payload => {
+  try {
+    return await axios.post('/api/financial-request/change-status-by-fin', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeBuhStatus = async payload => {
+  try {
+    return await axios.post('/api/financial-request/change-status-by-buh', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeFinStatusBulk = async payload => {
+  try {
+    return await axios.post(
+      '/api/financial-request/bulk-update-fin-status',
+      buildBulkStatusParams(payload)
     );
   } catch (error) {
     throw error;
