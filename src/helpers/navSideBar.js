@@ -14,12 +14,12 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/my_requests/${userId}`,
+        link: `/my-requests`,
         icon: 'file',
       },
       {
         page: 'Повернення коштів',
-        link: `/my_refunds/${userId}`,
+        link: `/my-refunds`,
         icon: 'refund',
       },
       {
@@ -29,7 +29,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мій бюджет',
-        link: `/my_budgeting/${userId}`,
+        link: `/my-budgeting`,
         icon: 'coins',
       },
       {
@@ -87,12 +87,12 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/my_requests/${userId}`,
+        link: `/my-requests`,
         icon: 'file',
       },
       {
         page: 'Повернення коштів',
-        link: `/my_refunds/${userId}`,
+        link: `/my-refunds`,
         icon: 'refund',
       },
       {
@@ -102,7 +102,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мій бюджет',
-        link: `/my_budgeting/${userId}`,
+        link: `/my-budgeting`,
         icon: 'coins',
       },
       {
@@ -111,11 +111,11 @@ export const getNavSideBar = (userId, userName) => [
         children: [
           {
             page: 'Заявки історія',
-            link: '/history_requests',
+            link: '/history-requests',
           },
           {
             page: 'Бюджетування історія',
-            link: '/history_budgeting',
+            link: '/history-budgeting',
           },
         ],
       },
@@ -126,17 +126,17 @@ export const getNavSideBar = (userId, userName) => [
     pages: [
       {
         page: 'Мої заявки',
-        link: `/my_requests/${userId}`,
+        link: `/my-requests`,
         icon: 'file',
       },
       {
         page: 'Повернення коштів',
-        link: `/my_refunds/${userId}`,
+        link: `/my-refunds`,
         icon: 'refund',
       },
       {
         page: 'Мій бюджет',
-        link: `/my_budgeting/${userId}`,
+        link: `/my-budgeting`,
         icon: 'coins',
       },
     ],
@@ -151,12 +151,12 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/my_requests/${userId}`,
+        link: `/my-requests`,
         icon: 'file',
       },
       {
         page: 'Повернення коштів',
-        link: `/my_refunds/${userId}`,
+        link: `/my-refunds`,
         icon: 'refund',
       },
       {
@@ -166,7 +166,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мій бюджет',
-        link: `/my_budgeting/${userId}`,
+        link: `/my-budgeting`,
         icon: 'coins',
       },
       {
@@ -176,7 +176,7 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Курс валют',
-        link: `/exchange_rate`,
+        link: `/exchange-rate`,
         icon: 'dollar',
       },
       {
@@ -185,11 +185,11 @@ export const getNavSideBar = (userId, userName) => [
         children: [
           {
             page: 'Заявки історія',
-            link: '/history_requests',
+            link: '/history-requests',
           },
           {
             page: 'Бюджетування історія',
-            link: '/history_budgeting',
+            link: '/history-budgeting',
           },
         ],
       },
@@ -243,17 +243,17 @@ export const getNavSideBar = (userId, userName) => [
       },
       {
         page: 'Мої заявки',
-        link: `/my_requests/${userId}`,
+        link: `/my-requests`,
         icon: 'file',
       },
       {
         page: 'Повернення коштів',
-        link: `/my_refunds/${userId}`,
+        link: `/my-refunds`,
         icon: 'refund',
       },
       {
         page: 'Мій бюджет',
-        link: `/my_budgeting/${userId}`,
+        link: `/my-budgeting`,
         icon: 'coins',
       },
       {
@@ -267,11 +267,11 @@ export const getNavSideBar = (userId, userName) => [
         children: [
           {
             page: 'Заявки історія',
-            link: '/history_requests',
+            link: '/history-requests',
           },
           {
             page: 'Бюджетування історія',
-            link: '/history_budgeting',
+            link: '/history-budgeting',
           },
         ],
       },

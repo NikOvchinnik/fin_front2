@@ -17,20 +17,20 @@ const UserCard = ({ user, onRefresh, userRole }) => {
     setModalIsOpen(false);
   };
 
-  const getUserPath = (role, id) => {
+  const getUserPath = role => {
     switch (role) {
       case 1:
-        return `/my_requests/${user.user_id}`;
+        return '/my-requests';
       case 2:
-        return `/my_requests/${user.user_id}`;
+        return '/my-requests';
       case 3:
-        return `/my_requests/${user.user_id}`;
+        return '/my-requests';
       case 4:
-        return `/my_requests/${user.user_id}`;
+        return '/my-requests';
       case 5:
-        return `/my_requests/${user.user_id}`;
+        return '/my-requests';
       default:
-        return `/my_requests/${user.user_id}`;
+        return '/my-requests';
     }
   };
 

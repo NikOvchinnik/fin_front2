@@ -12,12 +12,12 @@ const routesConfig = [
     element: lazy(() => import('../pages/RequestsPage/RequestsPage')),
   },
   {
-    path: 'my_requests/:userId',
+    path: 'my-requests',
     roles: [1, 2, 3, 4, 5],
     element: lazy(() => import('../pages/MyRequestsPage/MyRequestsPage')),
   },
   {
-    path: 'my_refunds/:userId',
+    path: 'my-refunds',
     roles: [1, 2, 3, 4, 5],
     element: lazy(() => import('../pages/MyRefundsPage/MyRefundsPage')),
   },
@@ -27,24 +27,24 @@ const routesConfig = [
     element: lazy(() => import('../pages/BudgetingsPage/BudgetingsPage')),
   },
   {
-    path: 'my_budgeting/:userId',
+    path: 'my-budgeting',
     roles: [1, 2, 3, 4, 5],
     element: lazy(() => import('../pages/MyBudgetingPage/MyBudgetingPage')),
   },
   {
-    path: 'exchange_rate',
+    path: 'exchange-rate',
     roles: [4],
     element: lazy(() => import('../pages/ExchangeRatePage/ExchangeRatePage')),
   },
   {
-    path: 'history_requests',
+    path: 'history-requests',
     roles: [1, 2, 4, 5],
     element: lazy(() =>
       import('../pages/HistoryPage/RequestHistoryPage/RequestHistoryPage')
     ),
   },
   {
-    path: 'history_budgeting',
+    path: 'history-budgeting',
     roles: [1, 2, 4, 5],
     element: lazy(() =>
       import('../pages/HistoryPage/BudgetingHistoryPage/BudgetingHistoryPage')

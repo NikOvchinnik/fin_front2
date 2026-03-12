@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import routesConfig from './helpers/routerPath';
 import {
   selectIsAuthenticated,
-  selectUserId,
   selectUserRole,
 } from './redux/auth/selectors';
 import LayoutSideBar from './components/LayoutSideBar/LayoutSideBar';
@@ -15,7 +14,6 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage/ResetPass
 const App = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const userRole = useSelector(selectUserRole);
-  const userId = useSelector(selectUserId);
 
   const filteredRoutes = routesConfig.filter(route => {
     return route.roles.includes(userRole);
@@ -26,9 +24,9 @@ const App = () => {
       case 1:
         return <Navigate to={`requests`} />;  //CEO/COO/CFO
       case 2:
-        return <Navigate to={`my_requests/${userId}`} />; //Керівник відділу
+        return <Navigate to={`my-requests`} />; //Керівник відділу
       case 3:
-        return <Navigate to={`my_requests/${userId}`} />; //Заявник(Тімлід)
+        return <Navigate to={`my-requests`} />; //Заявник(Тімлід)
       case 4:
         return <Navigate to={`requests`} />; //Фінансист
       case 5:

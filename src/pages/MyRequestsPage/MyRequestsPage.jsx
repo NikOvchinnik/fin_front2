@@ -25,7 +25,7 @@ import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
@@ -95,9 +95,9 @@ const MyRequestsPage = () => {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
-  const { userId } = useParams();
   const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
+  const userId = userSelectorId;
   const navigate = useNavigate();
   const requestById = useMemo(
     () =>
@@ -278,10 +278,7 @@ const MyRequestsPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (
-      Number(userRole) !== UserRole.CEO &&
-      String(userSelectorId) !== String(userId)
-    ) {
+    if (!userSelectorId) {
       navigate('/');
     } else {
       fetchData();

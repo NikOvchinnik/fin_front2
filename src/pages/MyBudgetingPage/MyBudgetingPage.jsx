@@ -24,7 +24,7 @@ import {
   getShortBudgetingStatus,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import BudgetNewForm from '../../components/Forms/BudgetNewForm/BudgetNewForm';
 import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
@@ -91,8 +91,8 @@ const MyBudgetingPage = () => {
   const [pageIndex, setPageIndex] = useState(0);
   const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
+  const userId = userSelectorId;
   const navigate = useNavigate();
-  const { userId } = useParams();
   const requestById = useMemo(
     () =>
       new Map(
@@ -271,10 +271,7 @@ const MyBudgetingPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (
-      Number(userRole) !== UserRole.CEO &&
-      String(userSelectorId) !== String(userId)
-    ) {
+    if (!userSelectorId) {
       navigate('/');
     } else {
       fetchData();

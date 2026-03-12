@@ -20,7 +20,7 @@ import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
@@ -80,8 +80,8 @@ const MyRefundsPage = () => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
-  const { userId } = useParams();
   const userSelectorId = useSelector(selectUserId);
+  const userId = userSelectorId;
   const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
@@ -154,12 +154,12 @@ const MyRefundsPage = () => {
   }, [startDate, endDate]);
 
   useEffect(() => {
-    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+    if (!userSelectorId) {
       navigate('/');
     } else {
       fetchData();
     }
-  }, [fetchData]);
+  }, [fetchData, navigate, userSelectorId]);
 
   const handleSort = key => {
     setSortConfig(prev => {
