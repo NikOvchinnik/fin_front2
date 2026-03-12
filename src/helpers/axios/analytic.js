@@ -75,7 +75,7 @@ export const getAnalyticsUsersRequests = async filters => {
 
 export const exportRequestsToGoogle = async year => {
   try {
-    return await axios.post('/api/export-fin-requests-to-google', {
+    return await axios.post('/api/analytics/export-fin-requests-to-google', {
       year: year,
     });
   } catch (error) {
@@ -85,7 +85,7 @@ export const exportRequestsToGoogle = async year => {
 
 export const exportBudgetingToGoogle = async year => {
   try {
-    return await axios.post('/api/export-budgeting-to-google', {
+    return await axios.post('/api/analytics/export-budgeting-to-google', {
       year: year,
     });
   } catch (error) {

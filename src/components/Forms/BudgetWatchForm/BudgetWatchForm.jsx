@@ -12,7 +12,13 @@ import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
 
-const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
+const BudgetWatchForm = ({
+  request,
+  closeModal,
+  onRefresh,
+  onCopyCreated,
+  formType,
+}) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -277,9 +283,15 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
                   }
                 });
 
-                await postMyBudgeting(formData);
-                onRefresh();
-                closeModal();
+                const response = await postMyBudgeting(formData);
+                const createdBudgetingId = response?.budgeting_id ?? null;
+
+                if (onCopyCreated && createdBudgetingId != null) {
+                  await onCopyCreated(createdBudgetingId);
+                } else {
+                  await onRefresh();
+                  closeModal();
+                }
                 Notify.success('Бюджет створено!');
               } catch (error) {
                 Notify.failure('Сталася помилка, спробуйте ще раз');

@@ -260,8 +260,10 @@ const MyBudgetingPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
+      return requests;
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
+      return [];
     } finally {
       setLoadingTable(false);
       setLoading(false);
@@ -921,6 +923,28 @@ const MyBudgetingPage = () => {
     setModalWatchIsOpen(false);
   };
 
+  const handleCopyCreated = useCallback(
+    async createdBudgetingId => {
+      closeModalWatch();
+
+      const refreshedBudgetings = await fetchData();
+      const createdBudgeting = (refreshedBudgetings || []).find(
+        req => String(req.id) === String(createdBudgetingId)
+      );
+
+      if (!createdBudgeting) {
+        Notify.warning(
+          'Копію створено, але не вдалося одразу відкрити форму редагування.'
+        );
+        return;
+      }
+
+      setSelectedRequest(createdBudgeting);
+      openModalEdit();
+    },
+    [fetchData]
+  );
+
   const closeModalConfirm = () => {
     setModalSendIsOpen(false);
   };
@@ -1286,6 +1310,7 @@ const MyBudgetingPage = () => {
               request={selectedRequest}
               closeModal={closeModalWatch}
               onRefresh={fetchData}
+              onCopyCreated={handleCopyCreated}
               formType={'myBudget'}
             />
           </ModalWindow>

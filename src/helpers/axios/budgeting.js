@@ -2,7 +2,7 @@ import axios from './axiosConfig';
 
 export const getBudgetingStatuses = async () => {
   try {
-    return await axios.get('/api/budgeting_statuses');
+    return await axios.get('/api/budgeting-statuses/budgeting_statuses');
   } catch (error) {
     throw error;
   }
@@ -13,7 +13,7 @@ export const getBudgetingFinancial = async ({ startDate, endDate }) => {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
-    return await axios.get('/api/financial-budgeting', { params });
+    return await axios.get('/api/budgeting/financial-budgeting', { params });
   } catch (error) {
     throw error;
   }
@@ -24,7 +24,7 @@ export const getBudgetingHd = async ({ startDate, endDate }) => {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
-    return await axios.get('/api/hd-budgeting', { params });
+    return await axios.get('/api/budgeting/hd-budgeting', { params });
   } catch (error) {
     throw error;
   }
@@ -35,7 +35,7 @@ export const getBudgetingCEO = async ({ startDate, endDate }) => {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
-    return await axios.get('/api/ceo-budgeting', { params });
+    return await axios.get('/api/budgeting/ceo-budgeting', { params });
   } catch (error) {
     throw error;
   }
@@ -46,7 +46,9 @@ export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
-    return await axios.get(`/api/personal-budgeting/${userId}`, { params });
+    return await axios.get(`/api/budgeting/personal-budgeting/${userId}`, {
+      params,
+    });
   } catch (error) {
     throw error;
   }
@@ -54,7 +56,7 @@ export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
 
 export const getBudgetingById = async ({ id }) => {
   try {
-    return await axios.get(`/api/budgeting-by-id/${id}`);
+    return await axios.get(`/api/budgeting/budgeting-by-id/${id}`);
   } catch (error) {
     throw error;
   }
@@ -62,7 +64,15 @@ export const getBudgetingById = async ({ id }) => {
 
 export const postMyBudgeting = async payload => {
   try {
-    return await axios.post('/api/save-budgeting', payload);
+    return await axios.post('/api/budgeting/create-draft', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateMyBudgeting = async payload => {
+  try {
+    return await axios.post('/api/budgeting/update-budgeting', payload);
   } catch (error) {
     throw error;
   }
@@ -70,7 +80,7 @@ export const postMyBudgeting = async payload => {
 
 export const deleteMyBudgeting = async id => {
   try {
-    return await axios.delete(`/api/delete-budgeting/${id}`);
+    return await axios.delete(`/api/budgeting/delete-budgeting/${id}`);
   } catch (error) {
     throw error;
   }
@@ -78,7 +88,7 @@ export const deleteMyBudgeting = async id => {
 
 export const sendBudgeting = async id => {
   try {
-    return await axios.post(`/api/send-budgeting/${id}`);
+    return await axios.post(`/api/budgeting/send-budgeting/${id}`);
   } catch (error) {
     throw error;
   }
@@ -86,7 +96,10 @@ export const sendBudgeting = async id => {
 
 export const updateBudgetingStatus = async (id, payload) => {
   try {
-    return await axios.post(`/api/update-budgeting-status/${id}`, payload);
+    return await axios.post(
+      `/api/budgeting/update-budgeting-status/${id}`,
+      payload
+    );
   } catch (error) {
     throw error;
   }
@@ -95,9 +108,14 @@ export const updateBudgetingStatus = async (id, payload) => {
 export const returnBudgetingToRevision = async (id, payload) => {
   try {
     if (payload) {
-      return await axios.post(`/api/return-budgeting-to-revision/${id}`, payload);
+      return await axios.post(
+        `/api/budgeting/return-budgeting-to-revision/${id}`,
+        payload
+      );
     }
-    return await axios.post(`/api/return-budgeting-to-revision/${id}`);
+    return await axios.post(
+      `/api/budgeting/return-budgeting-to-revision/${id}`
+    );
   } catch (error) {
     throw error;
   }

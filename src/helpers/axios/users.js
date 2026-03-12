@@ -2,7 +2,7 @@ import axios from './axiosConfig';
 
 export const loginUser = async formData => {
   try {
-    const res = await axios.post('/api/login', formData);
+    const res = await axios.post('/api/auth/login', formData);
     return res;
   } catch (error) {
     throw error;
@@ -11,7 +11,7 @@ export const loginUser = async formData => {
 
 export const forgotPassword = async formData => {
   try {
-    const res = await axios.post('/api/forgot_password', formData);
+    const res = await axios.post('/api/auth/forgot_password', formData);
     return res;
   } catch (error) {
     throw error;
@@ -20,7 +20,7 @@ export const forgotPassword = async formData => {
 
 export const resetPassword = async formData => {
   try {
-    const res = await axios.post('/api/reset_password', formData);
+    const res = await axios.post('/api/auth/reset_password', formData);
     return res;
   } catch (error) {
     throw error;
@@ -29,7 +29,7 @@ export const resetPassword = async formData => {
 
 export const getUsers = async () => {
   try {
-    return await axios.get('/api/get-users');
+    return await axios.get('/api/main/get-users');
   } catch (error) {
     throw error;
   }
@@ -37,7 +37,7 @@ export const getUsers = async () => {
 
 export const postUser = async credentials => {
   try {
-    return await axios.post('/api/add-user', credentials);
+    return await axios.post('/api/main/add-user', credentials);
   } catch (error) {
     throw error;
   }
@@ -45,7 +45,7 @@ export const postUser = async credentials => {
 
 export const patchUser = async (id, credentials) => {
   try {
-    return await axios.put(`/api/update-user/${id}`, credentials);
+    return await axios.put(`/api/main/update-user/${id}`, credentials);
   } catch (error) {
     throw error;
   }
@@ -53,7 +53,7 @@ export const patchUser = async (id, credentials) => {
 
 export const deleteUser = async id => {
   try {
-    return await axios.delete(`/api/delete-user/${id}`);
+    return await axios.delete(`/api/main/delete-user/${id}`);
   } catch (error) {
     throw error;
   }

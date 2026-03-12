@@ -267,8 +267,10 @@ const MyRequestsPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
+      return requests;
     } catch (err) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
+      return [];
     } finally {
       setLoadingTable(false);
       setLoading(false);
@@ -998,6 +1000,28 @@ const MyRequestsPage = () => {
     setModalWatchIsOpen(false);
   };
 
+  const handleCopyCreated = useCallback(
+    async createdRequestId => {
+      closeModalWatch();
+
+      const refreshedRequests = await fetchData();
+      const createdRequest = (refreshedRequests || []).find(
+        req => String(req.id) === String(createdRequestId)
+      );
+
+      if (!createdRequest) {
+        Notify.warning(
+          'Копію створено, але не вдалося одразу відкрити форму редагування.'
+        );
+        return;
+      }
+
+      setSelectedRequest(createdRequest);
+      openModalEdit();
+    },
+    [fetchData]
+  );
+
   const closeModalConfirm = () => {
     setModalSendIsOpen(false);
   };
@@ -1378,6 +1402,7 @@ const MyRequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModalWatch}
               onRefresh={fetchData}
+              onCopyCreated={handleCopyCreated}
               formType="request"
             />
           </ModalWindow>

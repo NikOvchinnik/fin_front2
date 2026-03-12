@@ -10,12 +10,18 @@ import {
 } from '../../../helpers/axios/payments';
 import { periodOptions } from '../../../helpers/paymentPeriods';
 import dayjs from 'dayjs';
-import { postRequest } from '../../../helpers/axios/requests';
+import { createRequest } from '../../../helpers/axios/requests';
 import { getContractors } from '../../../helpers/axios/contractors';
 
 const refundIds = [15, 16, 17, 18, 19];
 
-const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
+const WatchRequestForm = ({
+  request,
+  closeModal,
+  onRefresh,
+  onCopyCreated,
+  formType,
+}) => {
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -231,9 +237,15 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
               }
             });
 
-            await postRequest(formData);
-            onRefresh();
-            closeModal();
+            const response = await createRequest(formData);
+            const createdRequestId = response?.financial_request_id ?? null;
+
+            if (onCopyCreated && createdRequestId != null) {
+              await onCopyCreated(createdRequestId);
+            } else {
+              await onRefresh();
+              closeModal();
+            }
             Notify.success('Нову заявку створено!');
           } catch (error) {
             Notify.failure('Сталася помилка, спробуйте ще раз');

@@ -10,7 +10,7 @@ import {
 } from '../../../helpers/axios/payments';
 import { periodOptions } from '../../../helpers/paymentPeriods';
 import dayjs from 'dayjs';
-import { postRequest } from '../../../helpers/axios/requests';
+import { createRequest } from '../../../helpers/axios/requests';
 import {
   getContractors,
   postContractors,
@@ -251,7 +251,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
                   }
                 });
 
-                await postRequest(formData);
+                await createRequest(formData);
                 onRefresh();
                 closeModal();
                 Notify.success('Нову заявку створено!');

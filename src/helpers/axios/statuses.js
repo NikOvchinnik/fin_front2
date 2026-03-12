@@ -2,7 +2,7 @@ import axios from './axiosConfig';
 
 export const getFinStatuses = async () => {
   try {
-    return await axios.get('/api/statuses-for-fin');
+    return await axios.get('/api/status/statuses-for-fin');
   } catch (error) {
     throw error;
   }
@@ -10,7 +10,7 @@ export const getFinStatuses = async () => {
 
 export const getMainStatuses = async () => {
   try {
-    return await axios.get('/api/main-statuses');
+    return await axios.get('/api/main/main-statuses');
   } catch (error) {
     throw error;
   }
@@ -18,7 +18,7 @@ export const getMainStatuses = async () => {
 
 export const changeFinStatus = async payload => {
   try {
-    return await axios.post('/api/change-status-by-fin', payload);
+    return await axios.post('/api/status/change-status-by-fin', payload);
   } catch (error) {
     throw error;
   }
@@ -26,7 +26,7 @@ export const changeFinStatus = async payload => {
 
 export const changeBuhStatus = async payload => {
   try {
-    return await axios.post('/api/change-status-by-buh', payload);
+    return await axios.post('/api/status/change-status-by-buh', payload);
   } catch (error) {
     throw error;
   }
@@ -54,7 +54,7 @@ const buildBulkStatusParams = payload => {
 export const changeFinStatusBulk = async payload => {
   try {
     return await axios.post(
-      '/api/bulk-update-fin-status',
+      '/api/status/bulk-update-fin-status',
       buildBulkStatusParams(payload)
     );
   } catch (error) {
@@ -65,7 +65,7 @@ export const changeFinStatusBulk = async payload => {
 export const changeBudgetingStatusBulk = async payload => {
   try {
     return await axios.post(
-      '/api/bulk-update-budgeting-status',
+      '/api/status/bulk-update-budgeting-status',
       buildBulkStatusParams(payload)
     );
   } catch (error) {

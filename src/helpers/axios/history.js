@@ -2,7 +2,7 @@ import axios from './axiosConfig';
 
 export const getRequestHistory = async (month, year) => {
   try {
-    return await axios.get('/api/request_history', {
+    return await axios.get('/api/history/request_history', {
       params: { month, year },
     });
   } catch (error) {
@@ -12,7 +12,7 @@ export const getRequestHistory = async (month, year) => {
 
 export const getRequestHistoryById = async id => {
   try {
-    return await axios.get(`/api/request_history/${id}`);
+    return await axios.get(`/api/history/request_history/${id}`);
   } catch (error) {
     throw error;
   }
@@ -20,7 +20,7 @@ export const getRequestHistoryById = async id => {
 
 export const getBudgetingHistory = async (month, year) => {
   try {
-    return await axios.get('/api/budgeting_history', {
+    return await axios.get('/api/history/budgeting_history', {
       params: { month, year },
     });
   } catch (error) {
@@ -30,7 +30,7 @@ export const getBudgetingHistory = async (month, year) => {
 
 export const getBudgetingHistoryById = async id => {
   try {
-    return await axios.get(`/api/budgeting_history/${id}`);
+    return await axios.get(`/api/history/budgeting_history/${id}`);
   } catch (error) {
     throw error;
   }

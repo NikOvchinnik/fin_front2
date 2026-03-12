@@ -14,7 +14,7 @@ import {
   deleteLink,
   deleteRequest,
   deleteRequestCEO,
-  postRequest,
+  updateRequest,
 } from '../../../helpers/axios/requests';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
 import ModalWindow from '../../ModalWindow/ModalWindow';
@@ -357,7 +357,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType, userRole })
 
                 formData.append('id', request.id);
 
-                await postRequest(formData);
+                await updateRequest(formData);
                 onRefresh();
                 closeModal();
                 Notify.success('Інформацію змінено!');

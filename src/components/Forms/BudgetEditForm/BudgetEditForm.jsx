@@ -11,7 +11,7 @@ import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import {
   deleteMyBudgeting,
-  postMyBudgeting,
+  updateMyBudgeting,
 } from '../../../helpers/axios/budgeting';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
 import ModalWindow from '../../ModalWindow/ModalWindow';
@@ -297,7 +297,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
                 });
                 formData.append('id', request.id);
 
-                await postMyBudgeting(formData);
+                await updateMyBudgeting(formData);
                 onRefresh();
                 closeModal();
                 Notify.success('Інформацію змінено!');
