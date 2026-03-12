@@ -4,7 +4,10 @@ import Form from '../../Form/Form';
 import style from './ApproveBudgetingWatchForm.module.css';
 import dayjs from 'dayjs';
 import { Notify } from 'notiflix';
-import { ensureCurrentWeekOption } from '../../../helpers/budgetingWeekOptions';
+import {
+  ensureCurrentWeekOption,
+  resolveWeekValue,
+} from '../../../helpers/budgetingWeekOptions';
 
 const ApproveBudgetingWatchForm = ({
   request,
@@ -75,14 +78,13 @@ const ApproveBudgetingWatchForm = ({
 
     return adjusted.map((week, index) => {
       const weekName = `Week ${index + 1}`;
-      return { value: weekName, label: weekName };
+      return { value: weekName, label: weekName, start: week.start, end: week.end };
     });
   };
 
-  const defaultWeeks = ensureCurrentWeekOption(
-    getWeeksOfMonth(requestPeriod || defaultPeriod),
-    requestWeekValue
-  );
+  const periodWeeks = getWeeksOfMonth(requestPeriod || defaultPeriod);
+  const resolvedRequestWeekValue = resolveWeekValue(periodWeeks, requestWeekValue);
+  const defaultWeeks = ensureCurrentWeekOption(periodWeeks, resolvedRequestWeekValue);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -153,7 +155,7 @@ const ApproveBudgetingWatchForm = ({
               : userRole === 2
               ? request.applicant_comment || ''
               : '',
-          week: requestWeekValue || '',
+          week: resolvedRequestWeekValue || '',
         }}
       />
     </div>

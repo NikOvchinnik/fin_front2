@@ -17,6 +17,7 @@ import {
 } from '../../../redux/auth/selectors';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
+import { resolveWeekRangeValue } from '../../../helpers/budgetingWeekOptions';
 
 const BudgetNewForm = ({ closeModal, onRefresh }) => {
   const [projectOptions, setProjectOptions] = useState([]);
@@ -239,8 +240,12 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
               try {
                 setLoading(true);
                 const formData = new FormData();
+                const submitData = {
+                  ...data,
+                  week: resolveWeekRangeValue(weeksOptions, data.week),
+                };
 
-                Object.entries(data).forEach(([key, value]) => {
+                Object.entries(submitData).forEach(([key, value]) => {
                   if (typeof value === 'string') {
                     value = value.trim();
                   }

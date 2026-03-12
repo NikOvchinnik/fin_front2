@@ -11,7 +11,11 @@ import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
-import { ensureCurrentWeekOption } from '../../../helpers/budgetingWeekOptions';
+import {
+  ensureCurrentWeekOption,
+  resolveWeekRangeValue,
+  resolveWeekValue,
+} from '../../../helpers/budgetingWeekOptions';
 
 const BudgetWatchForm = ({
   request,
@@ -98,14 +102,13 @@ const BudgetWatchForm = ({
 
     return adjusted.map((week, index) => {
       const weekName = `Week ${index + 1}`;
-      return { value: weekName, label: weekName };
+      return { value: weekName, label: weekName, start: week.start, end: week.end };
     });
   };
 
-  const defaultWeeks = ensureCurrentWeekOption(
-    getWeeksOfMonth(requestPeriod || defaultPeriod),
-    requestWeekValue
-  );
+  const periodWeeks = getWeeksOfMonth(requestPeriod || defaultPeriod);
+  const resolvedRequestWeekValue = resolveWeekValue(periodWeeks, requestWeekValue);
+  const defaultWeeks = ensureCurrentWeekOption(periodWeeks, resolvedRequestWeekValue);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -274,8 +277,12 @@ const BudgetWatchForm = ({
               try {
                 setLoading(true);
                 const formData = new FormData();
+                const submitData = {
+                  ...data,
+                  week: resolveWeekRangeValue(weeksOptions, data.week),
+                };
 
-                Object.entries(data).forEach(([key, value]) => {
+                Object.entries(submitData).forEach(([key, value]) => {
                   if (typeof value === 'string') {
                     value = value.trim();
                   }
@@ -308,7 +315,7 @@ const BudgetWatchForm = ({
               project: request.project_id || '',
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',
-              week: requestWeekValue || '',
+              week: resolvedRequestWeekValue || '',
               purpose: request.purpose || '',
               amount_opt: request.amount_optimistic ?? 0,
               amount_pes: request.amount_pessimistic ?? 0,

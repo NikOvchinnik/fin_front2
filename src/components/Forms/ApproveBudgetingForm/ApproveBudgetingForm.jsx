@@ -9,7 +9,11 @@ import Form from '../../Form/Form';
 import style from './ApproveBudgetingForm.module.css';
 import { Notify } from 'notiflix';
 import dayjs from 'dayjs';
-import { ensureCurrentWeekOption } from '../../../helpers/budgetingWeekOptions';
+import {
+  ensureCurrentWeekOption,
+  resolveWeekRangeValue,
+  resolveWeekValue,
+} from '../../../helpers/budgetingWeekOptions';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   const [weeksOptions, setWeeksOptions] = useState([]);
@@ -75,14 +79,13 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
 
     return adjusted.map((week, index) => {
       const weekName = `Week ${index + 1}`;
-      return { value: weekName, label: weekName };
+      return { value: weekName, label: weekName, start: week.start, end: week.end };
     });
   };
 
-  const defaultWeeks = ensureCurrentWeekOption(
-    getWeeksOfMonth(requestPeriod || defaultPeriod),
-    requestWeekValue
-  );
+  const periodWeeks = getWeeksOfMonth(requestPeriod || defaultPeriod);
+  const resolvedRequestWeekValue = resolveWeekValue(periodWeeks, requestWeekValue);
+  const defaultWeeks = ensureCurrentWeekOption(periodWeeks, resolvedRequestWeekValue);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,7 +164,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
             const formData = new FormData();
             formData.append('status_id', data.status);
             formData.append('comment', data.comment?.trim() || '');
-            formData.append('week', data.week);
+            formData.append('week', resolveWeekRangeValue(weeksOptions, data.week));
 
             await updateBudgetingStatus(request.id, formData);
             onRefresh();
@@ -176,7 +179,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           status:
             userRole === 4 ? 7 : userRole === 1 ? 9 : userRole === 2 ? 5 : '',
           comment: '',
-          week: requestWeekValue || '',
+          week: resolvedRequestWeekValue || '',
         }}
       />
     </div>

@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { store } from '../../redux/store';
 
-const isLocalhost = window.location.hostname === 'localhost';
-//const isLocalhost = false;
+//const isLocalhost = window.location.hostname === 'localhost';
+const isLocalhost = false;
 
 const axiosConfig = axios.create({
   baseURL: isLocalhost
