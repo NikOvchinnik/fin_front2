@@ -422,7 +422,8 @@ const Form = ({
                     disabled={field.disabled || field.readOnly || false}
                     onChange={e => {
                       input.onChange(e);
-                      field.onChange && field.onChange(e.target.value);
+                      field.onChange &&
+                        field.onChange(e.target.value, setValue);
                     }}
                   >
                     {field.options.map((option, index) => (

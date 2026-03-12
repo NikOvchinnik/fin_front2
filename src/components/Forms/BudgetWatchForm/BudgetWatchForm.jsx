@@ -183,7 +183,10 @@ const BudgetWatchForm = ({
       label: 'Плановий період',
       options: periods,
       validation: { required: 'This field is required' },
-      onChange: value => setWeeksOptions(getWeeksOfMonth(value)),
+      onChange: (value, setValue) => {
+        setWeeksOptions(getWeeksOfMonth(value));
+        setValue('week', '', { shouldValidate: true });
+      },
       readOnly: true,
     },
     {
@@ -191,7 +194,12 @@ const BudgetWatchForm = ({
       name: 'week',
       label: 'Тиждень',
       options: weeksOptions,
-      validation: { required: 'This field is required' },
+      validation: {
+        required: 'This field is required',
+        validate: value =>
+          weeksOptions.some(option => option.value === value) ||
+          'Оберіть тиждень для обраного періоду',
+      },
       readOnly: true,
     },
     {

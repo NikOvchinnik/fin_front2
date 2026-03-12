@@ -198,14 +198,22 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       label: 'Плановий період',
       options: periods,
       validation: { required: 'This field is required' },
-      onChange: value => setWeeksOptions(getWeeksOfMonth(value)),
+      onChange: (value, setValue) => {
+        setWeeksOptions(getWeeksOfMonth(value));
+        setValue('week', '', { shouldValidate: true });
+      },
     },
     {
       type: 'select',
       name: 'week',
       label: 'Тиждень',
       options: weeksOptions,
-      validation: { required: 'This field is required' },
+      validation: {
+        required: 'This field is required',
+        validate: value =>
+          weeksOptions.some(option => option.value === value) ||
+          'Оберіть тиждень для обраного періоду',
+      },
     },
     {
       type: 'textarea',
