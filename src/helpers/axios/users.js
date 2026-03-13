@@ -29,7 +29,7 @@ export const resetPassword = async formData => {
 
 export const getUsers = async () => {
   try {
-    return await axios.get('/api/main/get-users');
+    return await axios.get('/api/auth/get-users');
   } catch (error) {
     throw error;
   }
@@ -37,7 +37,7 @@ export const getUsers = async () => {
 
 export const postUser = async credentials => {
   try {
-    return await axios.post('/api/main/add-user', credentials);
+    return await axios.post('/api/auth/add-user', credentials);
   } catch (error) {
     throw error;
   }
@@ -45,7 +45,7 @@ export const postUser = async credentials => {
 
 export const patchUser = async (id, credentials) => {
   try {
-    return await axios.put(`/api/main/update-user/${id}`, credentials);
+    return await axios.put(`/api/auth/update-user/${id}`, credentials);
   } catch (error) {
     throw error;
   }
@@ -53,7 +53,7 @@ export const patchUser = async (id, credentials) => {
 
 export const deleteUser = async id => {
   try {
-    return await axios.delete(`/api/main/delete-user/${id}`);
+    return await axios.delete(`/api/auth/delete-user/${id}`);
   } catch (error) {
     throw error;
   }

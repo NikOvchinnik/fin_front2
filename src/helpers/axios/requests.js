@@ -107,17 +107,6 @@ export const deleteRequest = async id => {
   }
 };
 
-// Delete request for CEO (Finance and Buh). 
-export const deleteRequestCEO = async id => {
-  try {
-    return await axios.delete(
-      `/api/financial-request/delete-fin-request/${id}`
-    );
-  } catch (error) {
-    throw error;
-  }
-};
-
 export const sendRequest = async id => {
   try {
     return await axios.post(`/api/financial-request/send-draft/${id}`);
