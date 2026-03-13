@@ -189,3 +189,16 @@ export const returnRequestToRevision = async (id, payload) => {
     throw error;
   }
 };
+
+export const exportRequestsToGoogle = async year => {
+  try {
+    return await axios.post(
+      '/api/financial-request/export-fin-requests-to-google',
+      {
+        year,
+      }
+    );
+  } catch (error) {
+    throw error;
+  }
+};

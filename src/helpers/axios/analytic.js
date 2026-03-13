@@ -73,22 +73,3 @@ export const getAnalyticsUsersRequests = async filters => {
   }
 };
 
-export const exportRequestsToGoogle = async year => {
-  try {
-    return await axios.post('/api/analytics/export-fin-requests-to-google', {
-      year: year,
-    });
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const exportBudgetingToGoogle = async year => {
-  try {
-    return await axios.post('/api/analytics/export-budgeting-to-google', {
-      year: year,
-    });
-  } catch (error) {
-    throw error;
-  }
-};

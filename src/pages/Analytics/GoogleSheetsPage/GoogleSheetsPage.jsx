@@ -5,10 +5,8 @@ import Loader from '../../../components/Loader/Loader';
 import dayjs from 'dayjs';
 import { yearsOptions } from '../../../helpers/years';
 import Form from '../../../components/Form/Form';
-import {
-  exportRequestsToGoogle,
-  exportBudgetingToGoogle,
-} from '../../../helpers/axios/analytic';
+import { exportBudgetingToGoogle } from '../../../helpers/axios/budgeting';
+import { exportRequestsToGoogle } from '../../../helpers/axios/requests';
 import { Notify } from 'notiflix';
 
 const GoogleSheetsPage = () => {
