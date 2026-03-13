@@ -13,6 +13,7 @@ import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
 import {
   ensureCurrentWeekOption,
+  getWeeksOfMonth,
   resolveWeekRangeValue,
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
@@ -44,67 +45,6 @@ const BudgetWatchForm = ({
       label: savedPeriod,
     });
   }
-
-  const getWeeksOfMonth = period => {
-    if (!period) return [];
-
-    const [month, year] = period.split('.');
-    const startOfMonth = dayjs(`${year}-${month}-01`);
-    const endOfMonth = startOfMonth.endOf('month');
-
-    const weeks = [];
-    let currentStart = startOfMonth;
-
-    if (currentStart.day() !== 1) {
-      const offset = currentStart.day() === 0 ? 6 : currentStart.day() - 1;
-      currentStart = currentStart.subtract(offset, 'day');
-      if (currentStart.isBefore(startOfMonth)) currentStart = startOfMonth;
-    }
-
-    while (
-      currentStart.isBefore(endOfMonth) ||
-      currentStart.isSame(endOfMonth, 'day')
-    ) {
-      let weekStart = currentStart;
-      let weekEnd = weekStart.add(6 - weekStart.day() + 1, 'day');
-      if (weekEnd.isAfter(endOfMonth)) weekEnd = endOfMonth;
-
-      weeks.push({ start: weekStart, end: weekEnd });
-
-      currentStart = weekEnd.add(1, 'day');
-    }
-
-    const hasTueOrThu = week => {
-      for (
-        let d = week.start;
-        d.isBefore(week.end) || d.isSame(week.end, 'day');
-        d = d.add(1, 'day')
-      ) {
-        const dow = d.day();
-        if (dow === 2 || dow === 4) return true;
-      }
-      return false;
-    };
-
-    const adjusted = [];
-    for (let i = 0; i < weeks.length; i++) {
-      const week = weeks[i];
-      if (!hasTueOrThu(week)) {
-        if (i > 0) {
-          adjusted[adjusted.length - 1].end = week.end;
-        } else if (weeks[i + 1]) {
-          weeks[i + 1].start = week.start;
-        }
-      } else {
-        adjusted.push(week);
-      }
-    }
-
-    return adjusted.map((week, index) => {
-      const weekName = `Week ${index + 1}`;
-      return { value: weekName, label: weekName, start: week.start, end: week.end };
-    });
-  };
 
   const periodWeeks = getWeeksOfMonth(requestPeriod || defaultPeriod);
   const resolvedRequestWeekValue = resolveWeekValue(periodWeeks, requestWeekValue);
