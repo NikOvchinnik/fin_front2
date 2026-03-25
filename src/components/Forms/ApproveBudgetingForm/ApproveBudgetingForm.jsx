@@ -15,9 +15,11 @@ import {
   resolveWeekRangeValue,
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
+import { isDeletedRecord } from '../../../helpers/softDelete';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   const [weeksOptions, setWeeksOptions] = useState([]);
+  const isDeleted = isDeletedRecord(request);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
   const requestPeriod = request?.plan_period || '';
@@ -52,6 +54,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           ? approveBudgetingStatusHd
           : [],
       validation: { required: 'This field is required' },
+      readOnly: isDeleted,
     },
     {
       type: 'select',
@@ -59,22 +62,26 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
       label: 'Тиждень',
       options: weeksOptions,
       validation: { required: 'This field is required' },
+      readOnly: isDeleted,
     },
     {
       type: 'textarea',
       name: 'comment',
       label: 'Коментар',
       validation: { required: 'This field is required' },
+      readOnly: isDeleted,
     },
   ];
 
-  const buttons = [
-    {
-      label: 'Відправити',
-      className: 'submitBtn',
-      type: 'submit',
-    },
-  ];
+  const buttons = isDeleted
+    ? []
+    : [
+        {
+          label: 'Відправити',
+          className: 'submitBtn',
+          type: 'submit',
+        },
+      ];
 
   return (
     <div className={style.editContainer}>
@@ -100,6 +107,10 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {
+          if (isDeleted) {
+            Notify.warning('Видалений бюджет не можна змінювати');
+            return;
+          }
           try {
             const formData = new FormData();
             formData.append('status_id', data.status);

@@ -19,8 +19,9 @@ import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
 import { sendBudgeting } from '../../helpers/axios/budgeting';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
+import { isDeletedRecord } from '../../helpers/softDelete';
 
-const BudgetSearch = ({ dataRequests, onRefresh }) => {
+const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
@@ -58,6 +59,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
     if (!dataRequests) return [];
 
     return dataRequests.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -145,7 +147,8 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status?.id === 1 || request.status?.id === 4) && (
+          {!isDeletedRecord(request) &&
+            (request.status?.id === 1 || request.status?.id === 4) && (
             <button
               className={style.sendBtn}
               onClick={() => {
@@ -318,9 +321,13 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалений бюджет не можна змінювати');
+      return;
+    }
     try {
       await sendBudgeting(selectedRequest.id);
-      onRefresh(selectedRequest.id, 'budgeting');
+      onRefresh(selectedRequest.id, 'budgeting', deletedFilter);
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
@@ -374,7 +381,9 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
           key={`budget-search-edit-${selectedRequest?.id || 'empty'}`}
           request={selectedRequest}
           closeModal={closeModalEdit}
-          onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'budgeting', deletedFilter)
+          }
         />
       </ModalWindow>
       <ModalWindow
@@ -385,7 +394,9 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
           key={`budget-search-watch-${selectedRequest?.id || 'empty'}`}
           request={selectedRequest}
           closeModal={closeModalWatch}
-          onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'budgeting', deletedFilter)
+          }
           formType={'all'}
         />
       </ModalWindow>

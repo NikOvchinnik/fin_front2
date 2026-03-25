@@ -39,6 +39,7 @@ import Form from '../../components/Form/Form';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 import { BudgetingStatus, UserRole } from '../../helpers/enums';
+import { isDeletedRecord } from '../../helpers/softDelete';
 
 const MyBudgetingPage = () => {
   const [loading, setLoading] = useState(true);
@@ -101,7 +102,8 @@ const MyBudgetingPage = () => {
     [dataRequests]
   );
 
-  const canSendBudgetingStatus = statusId => {
+  const canSendBudgetingStatus = (statusId, request) => {
+    if (isDeletedRecord(request)) return false;
     const normalizedStatusId = Number(statusId);
     return (
       normalizedStatusId === BudgetingStatus.DRAFT ||
@@ -109,7 +111,8 @@ const MyBudgetingPage = () => {
     );
   };
 
-  const canReturnBudgetingToRevision = statusId => {
+  const canReturnBudgetingToRevision = (statusId, request) => {
+    if (isDeletedRecord(request)) return false;
     const normalizedStatusId = Number(statusId);
     return (
       Number.isFinite(normalizedStatusId) &&
@@ -135,7 +138,7 @@ const MyBudgetingPage = () => {
 
     for (const id of selectedIds) {
       const request = requestById.get(String(id));
-      if (!canSendBudgetingStatus(request?.status?.id)) return true;
+      if (!canSendBudgetingStatus(request?.status?.id, request)) return true;
     }
 
     return false;
@@ -152,6 +155,7 @@ const MyBudgetingPage = () => {
       { value: 'Очікує затвердження', label: 'Очікує затвердження' },
       { value: 'Затверджено', label: 'Затверджено' },
       { value: 'Скасовано', label: 'Скасовано' },
+      { value: 'Видалені', label: 'Видалені' },
     ],
     []
   );
@@ -181,34 +185,46 @@ const MyBudgetingPage = () => {
 
   const toggleRow = useCallback(id => {
     setSelectedIds(prev => {
+      const request = requestById.get(String(id));
+      if (isDeletedRecord(request)) return prev;
       const next = new Set(prev);
       const key = String(id);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
-  }, []);
+  }, [requestById]);
+
+  const selectablePageIds = useMemo(
+    () =>
+      pageRowIds.filter(id => {
+        const request = requestById.get(String(id));
+        return !isDeletedRecord(request);
+      }),
+    [pageRowIds, requestById]
+  );
 
   const isAllSelectedOnPage = useMemo(() => {
     return (
-      pageRowIds.length > 0 &&
-      pageRowIds.every(id => selectedIds.has(String(id)))
+      selectablePageIds.length > 0 &&
+      selectablePageIds.every(id => selectedIds.has(String(id)))
     );
-  }, [pageRowIds, selectedIds]);
+  }, [selectablePageIds, selectedIds]);
 
   const isSomeSelectedOnPage = useMemo(() => {
     return (
-      pageRowIds.some(id => selectedIds.has(String(id))) && !isAllSelectedOnPage
+      selectablePageIds.some(id => selectedIds.has(String(id))) &&
+      !isAllSelectedOnPage
     );
-  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+  }, [selectablePageIds, selectedIds, isAllSelectedOnPage]);
 
   const toggleAllOnPage = useCallback(() => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       const allSelected =
-        pageRowIds.length > 0 &&
-        pageRowIds.every(id => next.has(String(id)));
+        selectablePageIds.length > 0 &&
+        selectablePageIds.every(id => next.has(String(id)));
 
-      pageRowIds.forEach(id => {
+      selectablePageIds.forEach(id => {
         const key = String(id);
         if (allSelected) next.delete(key);
         else next.add(key);
@@ -216,7 +232,7 @@ const MyBudgetingPage = () => {
 
       return next;
     });
-  }, [pageRowIds]);
+  }, [selectablePageIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -225,6 +241,7 @@ const MyBudgetingPage = () => {
         userId,
         startDate: startDate ? startDate.format('MM.YYYY') : null,
         endDate: endDate ? endDate.format('MM.YYYY') : null,
+        deleted: activeStatus === 'Видалені' ? 'true' : 'false',
       });
 
       setDataRequests(requests);
@@ -268,7 +285,7 @@ const MyBudgetingPage = () => {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [userId, startDate, endDate, activeStatus]);
 
   useEffect(() => {
     if (!userSelectorId) {
@@ -366,7 +383,11 @@ const MyBudgetingPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== 'Всі' &&
+      activeStatus !== 'Видалені'
+    ) {
       filteredRows = filteredRows.filter(row => {
         if (activeStatus === BudgetingStatus.NEEDS_REVISION) {
           return Number(row.status?.id) === BudgetingStatus.NEEDS_REVISION;
@@ -473,7 +494,16 @@ const MyBudgetingPage = () => {
       });
     }
 
+    if (activeStatus === 'Видалені') {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -544,7 +574,10 @@ const MyBudgetingPage = () => {
           <button
             className={style.editBtn}
             onClick={() => {
-              if (canSendBudgetingStatus(request.status?.id)) {
+              if (
+                isDeletedRecord(request) ||
+                canSendBudgetingStatus(request.status?.id, request)
+              ) {
                 setSelectedRequest(request);
                 openModalEdit();
               } else {
@@ -562,10 +595,10 @@ const MyBudgetingPage = () => {
               setSelectedRequest(request);
               openModalWatch();
             }}
-          >
-            <Icon id="eye" className={style.editIcon} />
-          </button>
-          {canReturnBudgetingToRevision(request.status?.id) && (
+            >
+              <Icon id="eye" className={style.editIcon} />
+            </button>
+          {canReturnBudgetingToRevision(request.status?.id, request) && (
             <button
               className={style.returnBtn}
               title="Повернути на доопрацювання"
@@ -578,11 +611,11 @@ const MyBudgetingPage = () => {
               <Icon id="arrow-left-switch" className={style.editIcon} />
             </button>
           )}
-          {canSendBudgetingStatus(request.status?.id) && (
+          {canSendBudgetingStatus(request.status?.id, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendBudgetingStatus(request.status?.id)) {
+                if (canSendBudgetingStatus(request.status?.id, request)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -663,6 +696,7 @@ const MyBudgetingPage = () => {
       cell: ({ row }) => (
         <Checkbox
           checked={selectedIds.has(String(row.original.request_id_plain))}
+          disabled={row.original.is_deleted_plain}
           onChange={() => toggleRow(row.original.request_id_plain)}
           onClick={e => e.stopPropagation()}
         />
@@ -949,6 +983,10 @@ const MyBudgetingPage = () => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалений бюджет не можна змінювати');
+      return;
+    }
     try {
       await sendBudgeting(selectedRequest.id);
       fetchData();
@@ -961,6 +999,10 @@ const MyBudgetingPage = () => {
   };
 
   const handleReturnToRevision = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалений бюджет не можна змінювати');
+      return;
+    }
     const comment = selectedRequest?.comment?.trim();
     const payload = comment ? { comment } : undefined;
 

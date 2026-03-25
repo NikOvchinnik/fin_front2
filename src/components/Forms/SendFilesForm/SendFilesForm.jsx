@@ -13,6 +13,7 @@ import Icon from '../../Icon/Icon';
 import Loader from '../../Loader/Loader';
 import { approveFilesBuh, approveFilesFin } from '../../../helpers/status';
 import { UserRole } from '../../../helpers/enums';
+import { isDeletedRecord } from '../../../helpers/softDelete';
 
 const SendFilesForm = ({
   request,
@@ -26,6 +27,7 @@ const SendFilesForm = ({
   const [loading, setLoading] = useState(true);
   const [requestData, setRequestData] = useState(request);
   const [documentLinks, setDocumentLinks] = useState(['']);
+  const isDeleted = isDeletedRecord(requestData || request);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,16 +49,19 @@ const SendFilesForm = ({
   };
 
   const handleAddDocumentLink = () => {
+    if (isDeleted) return;
     setDocumentLinks(prev => [...prev, '']);
   };
 
   const handleDocumentLinkChange = (index, value) => {
+    if (isDeleted) return;
     setDocumentLinks(prev =>
       prev.map((link, linkIndex) => (linkIndex === index ? value : link))
     );
   };
 
   const handleRemoveDocumentLink = index => {
+    if (isDeleted) return;
     setDocumentLinks(prev => {
       if (prev.length === 1) {
         return [''];
@@ -76,6 +81,10 @@ const SendFilesForm = ({
   };
 
   const handleDeleteLink = async () => {
+    if (isDeleted) {
+      Notify.warning('Видалений запис не можна змінювати');
+      return;
+    }
     try {
       await deleteLink(selectedLink.id);
       closeModalLink();
@@ -106,6 +115,7 @@ const SendFilesForm = ({
                 ? approveFilesBuh
                 : [],
             validation: { required: 'This field is required' },
+            readOnly: isDeleted,
           },
         ]
       : []),
@@ -113,16 +123,19 @@ const SendFilesForm = ({
       type: 'file',
       name: 'files',
       label: 'Файли',
+      readOnly: isDeleted,
     },
   ];
 
-  const buttons = [
-    {
-      label: 'Зберегти',
-      className: 'submitBtn',
-      type: 'submit',
-    },
-  ];
+  const buttons = isDeleted
+    ? []
+    : [
+        {
+          label: 'Зберегти',
+          className: 'submitBtn',
+          type: 'submit',
+        },
+      ];
 
   return (
     <>
@@ -153,6 +166,7 @@ const SendFilesForm = ({
                       setModalLinkOpen(true);
                     }}
                     aria-label={`Видалити Link ${index + 1}`}
+                    disabled={isDeleted}
                   >
                     <Icon id="trash" className={style.removeLinkIcon} />
                   </button>
@@ -169,6 +183,7 @@ const SendFilesForm = ({
                   className={style.linkInput}
                   placeholder="Додати посилання на файл"
                   value={link}
+                  disabled={isDeleted}
                   onChange={e =>
                     handleDocumentLinkChange(index, e.target.value)
                   }
@@ -178,6 +193,7 @@ const SendFilesForm = ({
                   className={style.removeLinkBtn}
                   onClick={() => handleRemoveDocumentLink(index)}
                   aria-label="Видалити поле лінка"
+                  disabled={isDeleted}
                 >
                   <Icon id="trash" className={style.removeLinkIcon} />
                 </button>
@@ -186,6 +202,7 @@ const SendFilesForm = ({
                     type="button"
                     className={style.addLinkBtn}
                     onClick={handleAddDocumentLink}
+                    disabled={isDeleted}
                   >
                     +
                   </button>
@@ -197,6 +214,10 @@ const SendFilesForm = ({
             fields={fields}
             buttons={buttons}
             onSubmit={async data => {
+              if (isDeleted) {
+                Notify.warning('Видалений запис не можна змінювати');
+                return;
+              }
               try {
                 setLoading(true);
                 const formData = new FormData();

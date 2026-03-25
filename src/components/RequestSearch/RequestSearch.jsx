@@ -18,8 +18,9 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import { isDeletedRecord } from '../../helpers/softDelete';
 
-const RequestSearch = ({ dataRequests, onRefresh }) => {
+const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
@@ -59,6 +60,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
     if (!dataRequests) return [];
 
     return dataRequests.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -195,8 +197,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status === 'Чернетка' ||
-            request.status === 'Потребує виправлень') && (
+          {!isDeletedRecord(request) &&
+            (request.status === 'Чернетка' ||
+              request.status === 'Потребує виправлень') && (
             <button
               className={style.sendBtn}
               onClick={() => {
@@ -212,8 +215,10 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
-            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+          {!isDeletedRecord(request) &&
+            (request.status === 'Фінанси: Сплачено, очікуються документи' ||
+              request.status ===
+                'Бухгалтер: Сплачено, очікуються документи') && (
             <button
               className={style.sendBtn}
               onClick={() => {
@@ -446,9 +451,13 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     try {
       await sendRequest(selectedRequest.id);
-      onRefresh(selectedRequest.id, 'request');
+      onRefresh(selectedRequest.id, 'request', deletedFilter);
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
@@ -490,7 +499,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <EditRequestForm
           request={selectedRequest}
           closeModal={closeModalEdit}
-          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'request', deletedFilter)
+          }
           formType="all"
           userRole={userRole}
         />
@@ -502,7 +513,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <WatchRequestForm
           request={selectedRequest}
           closeModal={closeModalWatch}
-          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'request', deletedFilter)
+          }
           formType="all"
         />
       </ModalWindow>
@@ -535,7 +548,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <SendFilesForm
           request={selectedRequest}
           closeModal={closeModalSendFiles}
-          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'request', deletedFilter)
+          }
           formType="myRequest"
           userRole={userRole}
         />

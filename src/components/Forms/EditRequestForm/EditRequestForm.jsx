@@ -13,6 +13,7 @@ import dayjs from 'dayjs';
 import {
   deleteLink,
   deleteRequest,
+  restoreRequest,
   updateRequest,
 } from '../../../helpers/axios/requests';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
@@ -23,6 +24,7 @@ import {
 } from '../../../helpers/axios/contractors';
 import Icon from '../../Icon/Icon';
 import Loader from '../../Loader/Loader';
+import { isDeletedRecord } from '../../../helpers/softDelete';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -37,6 +39,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const [selectedLink, setSelectedLink] = useState(null);
   const [loading, setLoading] = useState(true);
   const [requestData, setRequestData] = useState(request);
+  const isDeleted = isDeletedRecord(requestData || request);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,7 +136,23 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
     }
   };
 
+  const handleRestore = async () => {
+    try {
+      await restoreRequest(request.id);
+      onRefresh();
+      closeModal();
+      Notify.success('Заявку відновлено!');
+    } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
   const handleDeleteLink = async () => {
+    if (isDeleted) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     try {
       await deleteLink(selectedLink.id);
       closeModalLink();
@@ -247,18 +266,40 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
     },
   ];
 
-  const buttons = [
-    {
-      label: 'Видалити',
-      className: 'deleteBtn',
-      onClick: () => setModalConfirmOpen(true),
-    },
-    {
-      label: 'Зберегти',
-      className: 'submitBtn',
-      type: 'submit',
-    },
-  ];
+  const mappedFields = isDeleted
+    ? fields.map(field => {
+        if (field.type === 'number-select-group') {
+          return {
+            ...field,
+            number: { ...field.number, readOnly: true },
+            select: { ...field.select, readOnly: true },
+          };
+        }
+        return { ...field, readOnly: true };
+      })
+    : fields;
+
+  const buttons = isDeleted
+    ? [
+        {
+          label: 'Відновити',
+          className: 'submitBtn',
+          type: 'button',
+          onClick: handleRestore,
+        },
+      ]
+    : [
+        {
+          label: 'Видалити',
+          className: 'deleteBtn',
+          onClick: () => setModalConfirmOpen(true),
+        },
+        {
+          label: 'Зберегти',
+          className: 'submitBtn',
+          type: 'submit',
+        },
+      ];
 
   return (
     <>
@@ -279,6 +320,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
                       setSelectedLink(file);
                       setModalLinkOpen(true);
                     }}
+                    disabled={isDeleted}
                   >
                     <Icon id="trash" className={style.deleteIcon} />
                   </button>
@@ -305,9 +347,13 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           </ul>
           <Form
             title="Редагувати заявку"
-            fields={fields}
+            fields={mappedFields}
             buttons={buttons}
             onSubmit={async data => {
+              if (isDeleted) {
+                Notify.warning('Видалену заявку не можна редагувати');
+                return;
+              }
               try {
                 setLoading(true);
                 let contractorId = data.contractor_id;

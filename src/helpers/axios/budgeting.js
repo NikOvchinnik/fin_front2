@@ -27,44 +27,48 @@ export const getBudgetingStatuses = async () => {
   }
 };
 
-export const getBudgetingFinancial = async ({ startDate, endDate }) => {
+export const getBudgetingFinancial = async ({ startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get('/api/budgeting/financial-budgeting', { params });
   } catch (error) {
     throw error;
   }
 };
 
-export const getBudgetingHd = async ({ startDate, endDate }) => {
+export const getBudgetingHd = async ({ startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get('/api/budgeting/hd-budgeting', { params });
   } catch (error) {
     throw error;
   }
 };
 
-export const getBudgetingCEO = async ({ startDate, endDate }) => {
+export const getBudgetingCEO = async ({ startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get('/api/budgeting/ceo-budgeting', { params });
   } catch (error) {
     throw error;
   }
 };
 
-export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
+export const getMyBudgeting = async ({ userId, startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get(`/api/budgeting/personal-budgeting/${userId}`, {
       params,
     });
@@ -73,9 +77,11 @@ export const getMyBudgeting = async ({ userId, startDate, endDate }) => {
   }
 };
 
-export const getBudgetingById = async ({ id }) => {
+export const getBudgetingById = async ({ id, deleted }) => {
   try {
-    return await axios.get(`/api/budgeting/budgeting-by-id/${id}`);
+    const params = {};
+    if (deleted != null) params.deleted = deleted;
+    return await axios.get(`/api/budgeting/budgeting-by-id/${id}`, { params });
   } catch (error) {
     throw error;
   }
@@ -100,6 +106,14 @@ export const updateMyBudgeting = async payload => {
 export const deleteMyBudgeting = async id => {
   try {
     return await axios.delete(`/api/budgeting/delete-budgeting/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const restoreBudgeting = async id => {
+  try {
+    return await axios.post(`/api/budgeting/restore-budgeting/${id}`);
   } catch (error) {
     throw error;
   }

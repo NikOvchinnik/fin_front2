@@ -11,6 +11,7 @@ import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import {
   deleteMyBudgeting,
+  restoreBudgeting,
   updateMyBudgeting,
 } from '../../../helpers/axios/budgeting';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
@@ -22,6 +23,7 @@ import {
   resolveWeekRangeValue,
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
+import { isDeletedRecord } from '../../../helpers/softDelete';
 
 const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const [projectOptions, setProjectOptions] = useState([]);
@@ -30,6 +32,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [weeksOptions, setWeeksOptions] = useState([]);
   const [isModalConfirmOpen, setModalConfirmOpen] = useState(false);
+  const isDeleted = isDeletedRecord(request);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
   const requestPeriod = request?.plan_period || '';
@@ -102,6 +105,18 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       onRefresh();
       closeModal();
       Notify.success('Бюджет видалено!');
+    } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
+  const handleRestore = async () => {
+    try {
+      await restoreBudgeting(request.id);
+      onRefresh();
+      closeModal();
+      Notify.success('Бюджет відновлено!');
     } catch (error) {
       Notify.failure('Сталася помилка, спробуйте ще раз');
       console.error('Error: ', error);
@@ -186,18 +201,40 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     },
   ];
 
-  const buttons = [
-    {
-      label: 'Видалити',
-      className: 'deleteBtn',
-      onClick: () => setModalConfirmOpen(true),
-    },
-    {
-      label: 'Зберегти',
-      className: 'submitBtn',
-      type: 'submit',
-    },
-  ];
+  const mappedFields = isDeleted
+    ? fields.map(field => {
+        if (field.type === 'number-number-group') {
+          return {
+            ...field,
+            number1: { ...field.number1, readOnly: true },
+            number2: { ...field.number2, readOnly: true },
+          };
+        }
+        return { ...field, readOnly: true };
+      })
+    : fields;
+
+  const buttons = isDeleted
+    ? [
+        {
+          label: 'Відновити',
+          className: 'submitBtn',
+          type: 'button',
+          onClick: handleRestore,
+        },
+      ]
+    : [
+        {
+          label: 'Видалити',
+          className: 'deleteBtn',
+          onClick: () => setModalConfirmOpen(true),
+        },
+        {
+          label: 'Зберегти',
+          className: 'submitBtn',
+          type: 'submit',
+        },
+      ];
 
   return (
     <>
@@ -224,9 +261,13 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
           </ul>
           <Form
             title="Редагувати бюджет"
-            fields={fields}
+            fields={mappedFields}
             buttons={buttons}
             onSubmit={async data => {
+              if (isDeleted) {
+                Notify.warning('Видалений бюджет не можна редагувати');
+                return;
+              }
               try {
                 setLoading(true);
                 const formData = new FormData();

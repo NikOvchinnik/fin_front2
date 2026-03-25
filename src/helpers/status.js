@@ -38,6 +38,7 @@ export const statusSelectorFin = [
     label: 'Потребує виправлень',
   },
   { value: 'Скасовано', label: 'Скасовано' },
+  { value: 'Видалені', label: 'Видалені' },
 ];
 
 export const statusSelectorBuh = [
@@ -46,6 +47,7 @@ export const statusSelectorBuh = [
   { value: 'Сплачено', label: 'Сплачено' },
   { value: 'Очікуються документи', label: 'Очікуються документи' },
   { value: 'Скасовано', label: 'Скасовано' },
+  { value: 'Видалені', label: 'Видалені' },
 ];
 
 export const statusSelectorUser = [
@@ -60,6 +62,7 @@ export const statusSelectorUser = [
     label: 'Потребує виправлень',
   },
   { value: 'Скасовано', label: 'Скасовано' },
+  { value: 'Видалені', label: 'Видалені' },
 ];
 
 export const approveStatus = [

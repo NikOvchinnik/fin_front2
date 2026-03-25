@@ -39,6 +39,7 @@ import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveF
 import { changeFinStatusBulk } from '../../helpers/axios/requests';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
+import { isDeletedRecord } from '../../helpers/softDelete';
 
 const RequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -93,7 +94,8 @@ const RequestsPage = () => {
     [dataRequests]
   );
 
-  const canEditRequestStatus = (statusId, role) => {
+  const canEditRequestStatus = (statusId, role, request) => {
+    if (isDeletedRecord(request)) return false;
     if (role === UserRole.FINANCE) {
       return statusId === FinancialRequestStatus.PENDING_APPROVAL;
     }
@@ -103,17 +105,18 @@ const RequestsPage = () => {
     return false;
   };
 
-  const canSendFilesForStatus = statusId =>
-    statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
-    statusId ===
-      FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS;
+  const canSendFilesForStatus = (statusId, request) =>
+    !isDeletedRecord(request) &&
+    (statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
+      statusId === FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS);
 
   const hasBulkRestrictedSelection = useMemo(() => {
     if (!selectedIds.size) return false;
 
     for (const id of selectedIds) {
       const request = requestById.get(String(id));
-      if (!canEditRequestStatus(request?.status?.id, userRole)) return true;
+      if (!canEditRequestStatus(request?.status?.id, userRole, request))
+        return true;
     }
 
     return false;
@@ -146,34 +149,51 @@ const RequestsPage = () => {
 
   const toggleRow = useCallback(id => {
     setSelectedIds(prev => {
+      const request = requestById.get(String(id));
+      if (isDeletedRecord(request)) return prev;
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  }, []);
+  }, [requestById]);
+
+  const selectablePageIds = useMemo(
+    () =>
+      pageRowIds.filter(id => {
+        const request = requestById.get(String(id));
+        return !isDeletedRecord(request);
+      }),
+    [pageRowIds, requestById]
+  );
 
   const isAllSelectedOnPage = useMemo(() => {
-    return pageRowIds.length > 0 && pageRowIds.every(id => selectedIds.has(id));
-  }, [pageRowIds, selectedIds]);
+    return (
+      selectablePageIds.length > 0 &&
+      selectablePageIds.every(id => selectedIds.has(id))
+    );
+  }, [selectablePageIds, selectedIds]);
 
   const isSomeSelectedOnPage = useMemo(() => {
-    return pageRowIds.some(id => selectedIds.has(id)) && !isAllSelectedOnPage;
-  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+    return (
+      selectablePageIds.some(id => selectedIds.has(id)) && !isAllSelectedOnPage
+    );
+  }, [selectablePageIds, selectedIds, isAllSelectedOnPage]);
 
   const toggleAllOnPage = useCallback(() => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       const allSelected =
-        pageRowIds.length > 0 && pageRowIds.every(id => next.has(id));
+        selectablePageIds.length > 0 &&
+        selectablePageIds.every(id => next.has(id));
 
-      pageRowIds.forEach(id => {
+      selectablePageIds.forEach(id => {
         if (allSelected) next.delete(id);
         else next.add(id);
       });
 
       return next;
     });
-  }, [pageRowIds]);
+  }, [selectablePageIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -183,11 +203,13 @@ const RequestsPage = () => {
         requests = await getBuhRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
         });
       } else {
         requests = await getFinRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
         });
       }
 
@@ -250,7 +272,7 @@ const RequestsPage = () => {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [userRole, startDate, endDate]);
+  }, [userRole, startDate, endDate, activeStatus]);
 
   useEffect(() => {
     fetchData();
@@ -340,7 +362,11 @@ const RequestsPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== 'Всі' &&
+      activeStatus !== 'Видалені'
+    ) {
       filteredRows = filteredRows.filter(
         row => getActiveStatus(row.status?.name) === activeStatus
       );
@@ -494,7 +520,16 @@ const RequestsPage = () => {
       });
     }
 
+    if (activeStatus === 'Видалені') {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -617,12 +652,13 @@ const RequestsPage = () => {
       status_plain: request.status?.name || '',
       action: (
         <div className={style.actionContainer}>
-          {(userRole === UserRole.FINANCE ||
-            userRole === UserRole.ACCOUNTANT) && (
+          {!isDeletedRecord(request) &&
+            (userRole === UserRole.FINANCE ||
+              userRole === UserRole.ACCOUNTANT) && (
             <button
               className={style.editBtn}
               onClick={() => {
-                if (canEditRequestStatus(request.status?.id, userRole)) {
+                if (canEditRequestStatus(request.status?.id, userRole, request)) {
                   setSelectedRequest(request);
                   openModal();
                 } else {
@@ -644,11 +680,11 @@ const RequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {canSendFilesForStatus(request.status?.id) && (
+          {canSendFilesForStatus(request.status?.id, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendFilesForStatus(request.status?.id)) {
+                if (canSendFilesForStatus(request.status?.id, request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -670,6 +706,7 @@ const RequestsPage = () => {
     filters,
     sortConfig,
     selectedExpenseCategorie,
+    userRole,
   ]);
 
   const totals = useMemo(() => {
@@ -709,6 +746,7 @@ const RequestsPage = () => {
       cell: ({ row }) => (
         <Checkbox
           checked={selectedIds.has(row.original.request_id_plain)}
+          disabled={row.original.is_deleted_plain}
           onChange={() => toggleRow(row.original.request_id_plain)}
           onClick={e => e.stopPropagation()}
         />
@@ -1275,15 +1313,7 @@ const RequestsPage = () => {
               </>
             )}
             <div className={style.statusRow}>
-              <ul
-                className={style.statuscontainer}
-                style={{
-                  maxWidth:
-                    userRole === UserRole.ACCOUNTANT
-                      ? '860px'
-                      : '1300px',
-                }}
-              >
+              <ul className={style.statuscontainer}>
                 {(
                   userRole === UserRole.ACCOUNTANT
                     ? statusSelectorBuh

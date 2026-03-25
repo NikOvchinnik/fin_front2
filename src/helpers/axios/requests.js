@@ -19,11 +19,12 @@ const buildBulkStatusParams = payload => {
   return params;
 };
 
-export const getFinRequests = async ({ startDate, endDate }) => {
+export const getFinRequests = async ({ startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get('/api/financial-request/all-requests-for-fin', {
       params,
     });
@@ -32,11 +33,12 @@ export const getFinRequests = async ({ startDate, endDate }) => {
   }
 };
 
-export const getBuhRequests = async ({ startDate, endDate }) => {
+export const getBuhRequests = async ({ startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get('/api/financial-request/all-requests-for-buh', {
       params,
     });
@@ -45,11 +47,12 @@ export const getBuhRequests = async ({ startDate, endDate }) => {
   }
 };
 
-export const getMyRequests = async ({ userId, startDate, endDate }) => {
+export const getMyRequests = async ({ userId, startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get(
       `/api/financial-request/personal-requests/${userId}`,
       { params }
@@ -59,11 +62,12 @@ export const getMyRequests = async ({ userId, startDate, endDate }) => {
   }
 };
 
-export const getMyRefunds = async ({ userId, startDate, endDate }) => {
+export const getMyRefunds = async ({ userId, startDate, endDate, deleted }) => {
   try {
     const params = {};
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
     return await axios.get(
       `/api/financial-request/personal-refund-requests/${userId}`,
       {
@@ -75,9 +79,13 @@ export const getMyRefunds = async ({ userId, startDate, endDate }) => {
   }
 };
 
-export const getRequestById = async ({ id }) => {
+export const getRequestById = async ({ id, deleted }) => {
   try {
-    return await axios.get(`/api/financial-request/request-by-id/${id}`);
+    const params = {};
+    if (deleted != null) params.deleted = deleted;
+    return await axios.get(`/api/financial-request/request-by-id/${id}`, {
+      params,
+    });
   } catch (error) {
     throw error;
   }
@@ -102,6 +110,14 @@ export const updateRequest = async payload => {
 export const deleteRequest = async id => {
   try {
     return await axios.delete(`/api/financial-request/delete-request/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const restoreRequest = async id => {
+  try {
+    return await axios.post(`/api/financial-request/restore-request/${id}`);
   } catch (error) {
     throw error;
   }

@@ -8,8 +8,11 @@ import { FinancialRequestStatus, UserRole } from '../../../helpers/enums';
 import Form from '../../Form/Form';
 import style from './ApproveRequestForm.module.css';
 import { Notify } from 'notiflix';
+import { isDeletedRecord } from '../../../helpers/softDelete';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
+  const isDeleted = isDeletedRecord(request);
+
   const fields = [
     {
       type: 'select',
@@ -22,28 +25,33 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
           ? approveStatusBuh
           : [],
       validation: { required: 'This field is required' },
+      readOnly: isDeleted,
     },
     {
       type: 'date',
       name: 'payment_date_await',
       label: 'Дата оплати',
       validation: { required: 'This field is required' },
+      readOnly: isDeleted,
     },
     {
       type: 'textarea',
       name: 'comment',
       label: 'Коментар',
       validation: { required: 'This field is required' },
+      readOnly: isDeleted,
     },
   ];
 
-  const buttons = [
-    {
-      label: 'Відправити',
-      className: 'submitBtn',
-      type: 'submit',
-    },
-  ];
+  const buttons = isDeleted
+    ? []
+    : [
+        {
+          label: 'Відправити',
+          className: 'submitBtn',
+          type: 'submit',
+        },
+      ];
 
   return (
     <div className={style.editContainer}>
@@ -69,6 +77,10 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {
+          if (isDeleted) {
+            Notify.warning('Видалену заявку не можна змінювати');
+            return;
+          }
           try {
             const formData = new FormData();
             const backendFieldName =

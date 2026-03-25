@@ -39,6 +39,9 @@ import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
+import {
+  isDeletedRecord,
+} from '../../helpers/softDelete';
 
 const MyRequestsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -107,14 +110,16 @@ const MyRequestsPage = () => {
     [dataRequests]
   );
 
-  const canSendRequestStatus = statusId =>
-    statusId === FinancialRequestStatus.DRAFT ||
-    statusId === FinancialRequestStatus.NEEDS_REVISION;
-  const canSendFilesForStatus = statusId =>
-    statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
-    statusId ===
-      FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS;
+  const canSendRequestStatus = (statusId, request) =>
+    !isDeletedRecord(request) &&
+    (statusId === FinancialRequestStatus.DRAFT ||
+      statusId === FinancialRequestStatus.NEEDS_REVISION);
+  const canSendFilesForStatus = (statusId, request) =>
+    !isDeletedRecord(request) &&
+    (statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
+      statusId === FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS);
   const canReturnRequestToRevision = request => {
+    if (isDeletedRecord(request)) return false;
     const statusId = request?.status_id ?? request?.status?.id;
     const statusName = request?.status?.name ?? request?.status;
     return (
@@ -135,7 +140,7 @@ const MyRequestsPage = () => {
     for (const id of selectedIds) {
       const request = requestById.get(String(id));
       const statusId = request?.status_id ?? request?.status?.id;
-      if (!canSendRequestStatus(statusId)) return true;
+      if (!canSendRequestStatus(statusId, request)) return true;
     }
 
     return false;
@@ -168,34 +173,46 @@ const MyRequestsPage = () => {
 
   const toggleRow = useCallback(id => {
     setSelectedIds(prev => {
+      const request = requestById.get(String(id));
+      if (isDeletedRecord(request)) return prev;
       const next = new Set(prev);
       const key = String(id);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
-  }, []);
+  }, [requestById]);
+
+  const selectablePageIds = useMemo(
+    () =>
+      pageRowIds.filter(id => {
+        const request = requestById.get(String(id));
+        return !isDeletedRecord(request);
+      }),
+    [pageRowIds, requestById]
+  );
 
   const isAllSelectedOnPage = useMemo(() => {
     return (
-      pageRowIds.length > 0 &&
-      pageRowIds.every(id => selectedIds.has(String(id)))
+      selectablePageIds.length > 0 &&
+      selectablePageIds.every(id => selectedIds.has(String(id)))
     );
-  }, [pageRowIds, selectedIds]);
+  }, [selectablePageIds, selectedIds]);
 
   const isSomeSelectedOnPage = useMemo(() => {
     return (
-      pageRowIds.some(id => selectedIds.has(String(id))) && !isAllSelectedOnPage
+      selectablePageIds.some(id => selectedIds.has(String(id))) &&
+      !isAllSelectedOnPage
     );
-  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+  }, [selectablePageIds, selectedIds, isAllSelectedOnPage]);
 
   const toggleAllOnPage = useCallback(() => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       const allSelected =
-        pageRowIds.length > 0 &&
-        pageRowIds.every(id => next.has(String(id)));
+        selectablePageIds.length > 0 &&
+        selectablePageIds.every(id => next.has(String(id)));
 
-      pageRowIds.forEach(id => {
+      selectablePageIds.forEach(id => {
         const key = String(id);
         if (allSelected) next.delete(key);
         else next.add(key);
@@ -203,7 +220,7 @@ const MyRequestsPage = () => {
 
       return next;
     });
-  }, [pageRowIds]);
+  }, [selectablePageIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -212,6 +229,7 @@ const MyRequestsPage = () => {
         userId,
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+        deleted: activeStatus === 'Видалені' ? 'true' : 'false',
       });
 
       setDataRequests(requests);
@@ -275,7 +293,7 @@ const MyRequestsPage = () => {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [userId, startDate, endDate, activeStatus]);
 
   useEffect(() => {
     if (!userSelectorId) {
@@ -355,7 +373,11 @@ const MyRequestsPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== 'Всі' &&
+      activeStatus !== 'Видалені'
+    ) {
       filteredRows = filteredRows.filter(
         row => getActiveStatus(row.status) === activeStatus
       );
@@ -497,8 +519,17 @@ const MyRequestsPage = () => {
       });
     }
 
+    if (activeStatus === 'Видалені') {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => {
       const statusId = request.status_id ?? request.status?.id;
+      const isDeleted = isDeletedRecord(request);
 
       return {
       request_id: request.id,
@@ -606,12 +637,13 @@ const MyRequestsPage = () => {
         </span>
       ),
       status_plain: request.status || '',
+      is_deleted_plain: isDeleted,
       action: (
         <div className={style.actionContainer}>
           <button
             className={style.editBtn}
             onClick={() => {
-              if (canSendRequestStatus(statusId)) {
+              if (isDeleted || canSendRequestStatus(statusId, request)) {
                 setSelectedRequest(request);
                 openModalEdit();
               } else {
@@ -632,7 +664,7 @@ const MyRequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {canReturnRequestToRevision(request) && (
+          {!isDeleted && canReturnRequestToRevision(request) && (
             <button
               className={style.returnBtn}
               title="Повернути на доопрацювання"
@@ -645,11 +677,11 @@ const MyRequestsPage = () => {
               <Icon id="arrow-left-switch" className={style.editIcon} />
             </button>
           )}
-          {canSendRequestStatus(statusId) && (
+          {!isDeleted && canSendRequestStatus(statusId, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendRequestStatus(statusId)) {
+                if (canSendRequestStatus(statusId, request)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -658,11 +690,11 @@ const MyRequestsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {canSendFilesForStatus(statusId) && (
+          {!isDeleted && canSendFilesForStatus(statusId, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendFilesForStatus(statusId)) {
+                if (canSendFilesForStatus(statusId, request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -724,6 +756,7 @@ const MyRequestsPage = () => {
       cell: ({ row }) => (
         <Checkbox
           checked={selectedIds.has(String(row.original.request_id_plain))}
+          disabled={row.original.is_deleted_plain}
           onChange={() => toggleRow(row.original.request_id_plain)}
           onClick={e => e.stopPropagation()}
         />
@@ -1060,6 +1093,10 @@ const MyRequestsPage = () => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     try {
       await sendRequest(selectedRequest.id);
       fetchData();
@@ -1072,6 +1109,10 @@ const MyRequestsPage = () => {
   };
 
   const handleReturnToRevision = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     const comment = selectedRequest?.comment?.trim();
     const payload = comment ? { comment } : undefined;
 

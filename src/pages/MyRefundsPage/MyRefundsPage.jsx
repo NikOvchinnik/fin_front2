@@ -36,6 +36,7 @@ import {
 import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import { isDeletedRecord } from '../../helpers/softDelete';
 
 const MyRefundsPage = () => {
   const [loading, setLoading] = useState(true);
@@ -91,6 +92,7 @@ const MyRefundsPage = () => {
         userId,
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+        deleted: activeStatus === 'Видалені' ? 'true' : 'false',
       });
       setDataRequests(requests);
 
@@ -151,7 +153,7 @@ const MyRefundsPage = () => {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [userId, startDate, endDate, activeStatus]);
 
   useEffect(() => {
     if (!userSelectorId) {
@@ -231,7 +233,11 @@ const MyRefundsPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== 'Всі' &&
+      activeStatus !== 'Видалені'
+    ) {
       filteredRows = filteredRows.filter(
         row => getActiveStatus(row.status) === activeStatus
       );
@@ -373,7 +379,16 @@ const MyRefundsPage = () => {
       });
     }
 
+    if (activeStatus === 'Видалені') {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -483,6 +498,12 @@ const MyRefundsPage = () => {
           <button
             className={style.editBtn}
             onClick={() => {
+              const isDeleted = isDeletedRecord(request);
+              if (isDeleted) {
+                setSelectedRequest(request);
+                openModalEdit();
+                return;
+              }
               if (
                 request.status === 'Чернетка' ||
                 request.status === 'Потребує виправлень'
@@ -507,8 +528,9 @@ const MyRefundsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status === 'Чернетка' ||
-            request.status === 'Потребує виправлень') && (
+          {!isDeletedRecord(request) &&
+            (request.status === 'Чернетка' ||
+              request.status === 'Потребує виправлень') && (
             <button
               className={style.sendBtn}
               onClick={() => {
@@ -524,8 +546,10 @@ const MyRefundsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
-            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+          {!isDeletedRecord(request) &&
+            (request.status === 'Фінанси: Сплачено, очікуються документи' ||
+              request.status ===
+                'Бухгалтер: Сплачено, очікуються документи') && (
             <button
               className={style.sendBtn}
               onClick={() => {
@@ -863,6 +887,10 @@ const MyRefundsPage = () => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     try {
       await sendRequest(selectedRequest.id);
       fetchData();

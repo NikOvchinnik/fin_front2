@@ -42,6 +42,7 @@ export const statusSelectorBudgetingFin = [
   { value: 'Очікує затвердження', label: 'Очікує затвердження' },
   { value: 'Затверджено', label: 'Затверджено' },
   { value: 'Скасовано', label: 'Скасовано' },
+  { value: 'Видалені', label: 'Видалені' },
 ];
 
 export const statusSelectorBudgetingUser = [
@@ -54,6 +55,7 @@ export const statusSelectorBudgetingUser = [
   { value: 'Очікує затвердження', label: 'Очікує затвердження' },
   { value: 'Затверджено', label: 'Затверджено' },
   { value: 'Скасовано', label: 'Скасовано' },
+  { value: 'Видалені', label: 'Видалені' },
 ];
 
 export const getActiveBudgetingStatus = statusName => {
