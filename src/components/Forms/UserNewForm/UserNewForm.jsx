@@ -6,11 +6,15 @@ import { Notify } from 'notiflix';
 import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
 import { getProjects } from '../../../helpers/axios/projects';
+import { UserRole } from '../../../helpers/enums';
 
 const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
   const [projectsOptions, setProjectsOptions] = useState([]);
+  const canManageUserRoles = [UserRole.CEO, UserRole.FINANCE].includes(
+    Number(userRole)
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +76,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
       label: 'Роль',
       options: rolesOptions,
       validation: { required: 'This field is required' },
-      disabled: userRole !== 1,
+      disabled: !canManageUserRoles,
     },
     {
       type: 'select',

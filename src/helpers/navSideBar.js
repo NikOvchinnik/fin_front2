@@ -1,6 +1,8 @@
+import { UserRole } from './enums';
+
 export const getNavSideBar = (userId, userName) => [
   {
-    roles: [1],
+    roles: [UserRole.CEO],
     pages: [
       {
         page: 'Користувачі',
@@ -78,7 +80,7 @@ export const getNavSideBar = (userId, userName) => [
     ],
   },
   {
-    roles: [2],
+    roles: [UserRole.HEAD_OF_DEPARTMENT],
     pages: [
       {
         page: 'Користувачі',
@@ -122,7 +124,7 @@ export const getNavSideBar = (userId, userName) => [
     ],
   },
   {
-    roles: [3],
+    roles: [UserRole.APPLICANT],
     pages: [
       {
         page: 'Мої заявки',
@@ -142,8 +144,13 @@ export const getNavSideBar = (userId, userName) => [
     ],
   },
   {
-    roles: [4],
+    roles: [UserRole.FINANCE],
     pages: [
+      {
+        page: 'Користувачі',
+        link: `/users`,
+        icon: 'users',
+      },
       {
         page: 'Всі заявки',
         link: `/requests`,
@@ -234,7 +241,7 @@ export const getNavSideBar = (userId, userName) => [
     ],
   },
   {
-    roles: [5],
+    roles: [UserRole.ACCOUNTANT],
     pages: [
       {
         page: 'Всі заявки',

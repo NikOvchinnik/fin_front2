@@ -1,7 +1,9 @@
+import { UserRole } from './enums';
+
 export const roles = {
-  admin: { id: 1, label: 'Administrators' },
-  head: { id: 2, label: 'Department Heads' },
-  teamLead: { id: 3, label: 'Team Leads' },
-  financier: { id: 4, label: 'Financiers' },
-  accountant: { id: 5, label: 'Accountants' },
+  admin: { id: UserRole.CEO, label: 'Administrators' },
+  head: { id: UserRole.HEAD_OF_DEPARTMENT, label: 'Department Heads' },
+  teamLead: { id: UserRole.APPLICANT, label: 'Team Leads' },
+  financier: { id: UserRole.FINANCE, label: 'Financiers' },
+  accountant: { id: UserRole.ACCOUNTANT, label: 'Accountants' },
 };

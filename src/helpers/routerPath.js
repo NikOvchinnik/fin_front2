@@ -1,63 +1,92 @@
 import { lazy } from 'react';
+import { UserRole } from './enums';
 
 const routesConfig = [
   {
     path: 'users',
-    roles: [1, 2],
+    roles: [UserRole.CEO, UserRole.HEAD_OF_DEPARTMENT, UserRole.FINANCE],
     element: lazy(() => import('../pages/UsersPage/UsersPage')),
   },
   {
     path: 'requests',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() => import('../pages/RequestsPage/RequestsPage')),
   },
   {
     path: 'my-requests',
-    roles: [1, 2, 3, 4, 5],
+    roles: [
+      UserRole.CEO,
+      UserRole.HEAD_OF_DEPARTMENT,
+      UserRole.APPLICANT,
+      UserRole.FINANCE,
+      UserRole.ACCOUNTANT,
+    ],
     element: lazy(() => import('../pages/MyRequestsPage/MyRequestsPage')),
   },
   {
     path: 'my-refunds',
-    roles: [1, 2, 3, 4, 5],
+    roles: [
+      UserRole.CEO,
+      UserRole.HEAD_OF_DEPARTMENT,
+      UserRole.APPLICANT,
+      UserRole.FINANCE,
+      UserRole.ACCOUNTANT,
+    ],
     element: lazy(() => import('../pages/MyRefundsPage/MyRefundsPage')),
   },
   {
     path: 'budgeting',
-    roles: [1, 2, 4],
+    roles: [UserRole.CEO, UserRole.HEAD_OF_DEPARTMENT, UserRole.FINANCE],
     element: lazy(() => import('../pages/BudgetingsPage/BudgetingsPage')),
   },
   {
     path: 'my-budgeting',
-    roles: [1, 2, 3, 4, 5],
+    roles: [
+      UserRole.CEO,
+      UserRole.HEAD_OF_DEPARTMENT,
+      UserRole.APPLICANT,
+      UserRole.FINANCE,
+      UserRole.ACCOUNTANT,
+    ],
     element: lazy(() => import('../pages/MyBudgetingPage/MyBudgetingPage')),
   },
   {
     path: 'exchange-rate',
-    roles: [4],
+    roles: [UserRole.FINANCE],
     element: lazy(() => import('../pages/ExchangeRatePage/ExchangeRatePage')),
   },
   {
     path: 'history-requests',
-    roles: [1, 2, 4, 5],
+    roles: [
+      UserRole.CEO,
+      UserRole.HEAD_OF_DEPARTMENT,
+      UserRole.FINANCE,
+      UserRole.ACCOUNTANT,
+    ],
     element: lazy(() =>
       import('../pages/HistoryPage/RequestHistoryPage/RequestHistoryPage')
     ),
   },
   {
     path: 'history-budgeting',
-    roles: [1, 2, 4, 5],
+    roles: [
+      UserRole.CEO,
+      UserRole.HEAD_OF_DEPARTMENT,
+      UserRole.FINANCE,
+      UserRole.ACCOUNTANT,
+    ],
     element: lazy(() =>
       import('../pages/HistoryPage/BudgetingHistoryPage/BudgetingHistoryPage')
     ),
   },
   {
     path: 'search',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() => import('../pages/SearchPage/SearchPage')),
   },
   {
     path: 'analytics-payment-forms',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import(
         '../pages/Analytics/PaymentFormsAnalyticPage/PaymentFormsAnalyticPage'
@@ -67,7 +96,7 @@ const routesConfig = [
 
   {
     path: 'analytics-expense-categories',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import(
         '../pages/Analytics/ExpenseCategoriesAnalyticPage/ExpenseCategoriesAnalyticPage'
@@ -76,21 +105,21 @@ const routesConfig = [
   },
   {
     path: 'analytics-departments',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import('../pages/Analytics/DepartmetsAnalyticPage/DepartmetsAnalyticPage')
     ),
   },
   {
     path: 'analytics-currencies',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import('../pages/Analytics/CurrenciesAnalyticPage/CurrenciesAnalyticPage')
     ),
   },
   {
     path: 'analytics-contractors',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import(
         '../pages/Analytics/ContractorsAnalyticPage/ContractorsAnalyticPage'
@@ -99,21 +128,21 @@ const routesConfig = [
   },
   {
     path: 'analytics-total',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import('../pages/Analytics/RequestsAnalyticPage/RequestsAnalyticPage')
     ),
   },
   {
     path: 'analytics-users',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import('../pages/Analytics/UsersAnalyticPage/UsersAnalyticPage')
     ),
   },
   {
     path: 'analytics-google-sheets',
-    roles: [1, 4, 5],
+    roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() =>
       import('../pages/Analytics/GoogleSheetsPage/GoogleSheetsPage')
     ),

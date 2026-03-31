@@ -8,12 +8,19 @@ import { deleteUser, patchUser } from '../../../helpers/axios/users';
 import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
 import { getProjects } from '../../../helpers/axios/projects';
+import { UserRole } from '../../../helpers/enums';
 
 const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
   const [projectsOptions, setProjectsOptions] = useState([]);
   const [isModalConfirmOpen, setModalConfirmOpen] = useState(false);
+  const canManageUserRole = [UserRole.CEO, UserRole.FINANCE].includes(
+    Number(userRole)
+  );
+  const canDeleteUser = [UserRole.CEO, UserRole.FINANCE].includes(
+    Number(userRole)
+  );
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,7 +99,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
       label: 'Роль',
       options: rolesOptions,
       validation: { required: 'This field is required' },
-      disabled: userRole !== 1,
+      disabled: !canManageUserRole,
     },
     {
       type: 'select',
@@ -109,11 +116,15 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
   ];
 
   const buttons = [
-    {
-      label: 'Delete',
-      className: 'deleteBtn',
-      onClick: () => setModalConfirmOpen(true),
-    },
+    ...(canDeleteUser
+      ? [
+          {
+            label: 'Delete',
+            className: 'deleteBtn',
+            onClick: () => setModalConfirmOpen(true),
+          },
+        ]
+      : []),
     {
       label: 'Save',
       className: 'submitBtn',
