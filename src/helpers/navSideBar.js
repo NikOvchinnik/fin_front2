@@ -2,6 +2,14 @@ import { UserRole } from './enums';
 import { canAccessGoogleSheetsAnalytics } from './featureAccess';
 
 export const getNavSideBar = (userId, userName) => {
+  const showCeoGoogleSheets = canAccessGoogleSheetsAnalytics({
+    userId,
+    userRole: UserRole.CEO,
+  });
+  const showAccountantGoogleSheets = canAccessGoogleSheetsAnalytics({
+    userId,
+    userRole: UserRole.ACCOUNTANT,
+  });
   const showFinanceGoogleSheets = canAccessGoogleSheetsAnalytics({
     userId,
     userRole: UserRole.FINANCE,
@@ -78,10 +86,14 @@ export const getNavSideBar = (userId, userName) => {
               page: 'Валюти',
               link: '/analytics-currencies',
             },
-            // {
-            //   page: 'Google Sheets',
-            //   link: '/analytics-google-sheets',
-            // },
+            ...(showCeoGoogleSheets
+              ? [
+                  {
+                    page: 'Google Sheets',
+                    link: '/analytics-google-sheets',
+                  },
+                ]
+              : []),
           ],
         },
       ],
@@ -325,10 +337,14 @@ export const getNavSideBar = (userId, userName) => {
               page: 'Валюти',
               link: '/analytics-currencies',
             },
-            {
-              page: 'Google Sheets',
-              link: '/analytics-google-sheets',
-            },
+            ...(showAccountantGoogleSheets
+              ? [
+                  {
+                    page: 'Google Sheets',
+                    link: '/analytics-google-sheets',
+                  },
+                ]
+              : []),
           ],
         },
       ],
