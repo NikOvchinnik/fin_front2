@@ -1,9 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { lazy } from 'react';
 import { useSelector } from 'react-redux';
+import { canAccessGoogleSheetsAnalytics } from './helpers/featureAccess';
 import routesConfig from './helpers/routerPath';
 import {
   selectIsAuthenticated,
+  selectUserId,
   selectUserRole,
 } from './redux/auth/selectors';
 import LayoutSideBar from './components/LayoutSideBar/LayoutSideBar';
@@ -13,9 +15,17 @@ const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage/ResetPass
 
 const App = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
+  const userId = useSelector(selectUserId);
   const userRole = useSelector(selectUserRole);
 
   const filteredRoutes = routesConfig.filter(route => {
+    if (
+      route.path === 'analytics-google-sheets' &&
+      !canAccessGoogleSheetsAnalytics({ userId, userRole })
+    ) {
+      return false;
+    }
+
     return route.roles.includes(userRole);
   });
 
