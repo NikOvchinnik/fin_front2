@@ -9,28 +9,33 @@ import Form from '../../Form/Form';
 import style from './ApproveRequestForm.module.css';
 import { Notify } from 'notiflix';
 import { isDeletedRecord } from '../../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
+  const { t } = useTranslation();
   const isDeleted = isDeletedRecord(request);
 
   const fields = [
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
-      options:
+      label: t('fields.status'),
+      options: translateOptions(
         userRole === UserRole.FINANCE
           ? approveStatusFin
           : userRole === UserRole.ACCOUNTANT
           ? approveStatusBuh
           : [],
+        t
+      ),
       validation: { required: 'This field is required' },
       readOnly: isDeleted,
     },
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати',
+      label: t('fields.paymentDeadline'),
       validation: { required: 'This field is required' },
       readOnly: isDeleted,
     },

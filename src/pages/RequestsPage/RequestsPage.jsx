@@ -23,6 +23,8 @@ import {
   statusSelectorFin,
   approveStatusFin,
   approveStatusBuh,
+  FILTER_ALL,
+  FILTER_DELETED,
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import Form from '../../components/Form/Form';
@@ -40,8 +42,11 @@ import { changeFinStatusBulk } from '../../helpers/axios/requests';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
 import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../helpers/i18nOptions';
 
 const RequestsPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
@@ -49,12 +54,12 @@ const RequestsPage = () => {
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
-  const [selectedContractor, setSelectedContractor] = useState('Всі');
-  const [selectedPaymentForm, setSelectedPaymentForm] = useState('Всі');
+  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
+  const [selectedContractor, setSelectedContractor] = useState(FILTER_ALL);
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
-    useState('Всі');
+    useState(FILTER_ALL);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -76,7 +81,7 @@ const RequestsPage = () => {
   const [isModalBulkOpen, setModalBulkIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
-  const [activeStatus, setActiveStatus] = useState('Всі');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleColumns');
@@ -203,13 +208,13 @@ const RequestsPage = () => {
         requests = await getBuhRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
-          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       } else {
         requests = await getFinRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
-          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       }
 
@@ -217,7 +222,7 @@ const RequestsPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -227,7 +232,7 @@ const RequestsPage = () => {
 
       const currencies = await getCurrencies();
       const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(currencies || []).map(c => ({
           value: c.id,
           label: c.name,
@@ -237,7 +242,7 @@ const RequestsPage = () => {
 
       const contractors = await getContractors();
       const contractorSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(contractors || []).map(e => ({
           value: e.id,
           label: e.name,
@@ -247,7 +252,7 @@ const RequestsPage = () => {
 
       const paymentForms = await getPaymentForms();
       const paymentFormSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(paymentForms || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -257,7 +262,7 @@ const RequestsPage = () => {
 
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(expenseCategories || [])
           .filter(c => c.is_active)
           .map(c => ({
@@ -266,13 +271,13 @@ const RequestsPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
-    } catch (err) {
+    } catch {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [userRole, startDate, endDate, activeStatus]);
+  }, [userRole, startDate, endDate, activeStatus, t]);
 
   useEffect(() => {
     fetchData();
@@ -324,13 +329,13 @@ const RequestsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
+    if (selectedProject && selectedProject !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.project?.id === selectedProject
       );
     }
 
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
+    if (selectedCurrency && selectedCurrency !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.currency?.id === selectedCurrency
       );
@@ -344,7 +349,7 @@ const RequestsPage = () => {
       );
     }
 
-    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.expense_category?.id === selectedExpenseCategorie
       );
@@ -364,21 +369,21 @@ const RequestsPage = () => {
 
     if (
       activeStatus &&
-      activeStatus !== 'Всі' &&
-      activeStatus !== 'Видалені'
+      activeStatus !== FILTER_ALL &&
+      activeStatus !== FILTER_DELETED
     ) {
       filteredRows = filteredRows.filter(
-        row => getActiveStatus(row.status?.name) === activeStatus
+        row => getActiveStatus(row.status?.id, row.status?.name) === activeStatus
       );
     }
 
-    if (selectedContractor && selectedContractor !== 'Всі') {
+    if (selectedContractor && selectedContractor !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.contractor_id === selectedContractor
       );
     }
 
-    if (selectedPaymentForm && selectedPaymentForm !== 'Всі') {
+    if (selectedPaymentForm && selectedPaymentForm !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.payment_form?.id === selectedPaymentForm
       );
@@ -520,7 +525,7 @@ const RequestsPage = () => {
       });
     }
 
-    if (activeStatus === 'Видалені') {
+    if (activeStatus === FILTER_DELETED) {
       sortedRows.sort((a, b) => {
         const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
         const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
@@ -1113,12 +1118,14 @@ const RequestsPage = () => {
     }
   };
 
-  const bulkStatusOptions =
+  const bulkStatusOptions = translateOptions(
     userRole === UserRole.FINANCE
       ? approveStatusFin
       : userRole === UserRole.ACCOUNTANT
       ? approveStatusBuh
-      : [];
+      : [],
+    t
+  );
 
   const closeModalSendFiles = () => {
     setModalSendFilesIsOpen(false);
@@ -1150,7 +1157,7 @@ const RequestsPage = () => {
                   })
                 }
               >
-                Експорт у CSV
+                {t('common.exportCsv')}
               </button>
             </div>
             <div>
@@ -1160,7 +1167,7 @@ const RequestsPage = () => {
                 onClick={() => setShowAllFilters(prev => !prev)}
               >
                 <Icon id="filter_list" className={style.filterIcon} />
-                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+                {showAllFilters ? t('common.hideFilters') : t('common.allFilters')}
               </button>
             </div>
             <div className={style.formsContainer}>
@@ -1169,7 +1176,7 @@ const RequestsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: 'Підрозділ',
+                    label: t('fields.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -1184,7 +1191,7 @@ const RequestsPage = () => {
                     type="text"
                     name="applicant"
                     className={style.inputContainer}
-                    placeholder="Заявник"
+                    placeholder={t('fields.applicant')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -1195,7 +1202,7 @@ const RequestsPage = () => {
                     type="text"
                     name="payer"
                     className={style.inputContainer}
-                    placeholder="Платник"
+                    placeholder={t('fields.payer')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -1205,7 +1212,7 @@ const RequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: 'Стаття витрат',
+                    label: t('fields.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1225,7 +1232,7 @@ const RequestsPage = () => {
                         type="text"
                         name="request_id"
                         className={style.inputContainer}
-                        placeholder="ID заявки"
+                        placeholder={t('fields.id') + ' заявки'}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1236,7 +1243,7 @@ const RequestsPage = () => {
                         type="text"
                         name="payment_date_await"
                         className={style.inputContainer}
-                        placeholder="Кінцева дата оплати"
+                        placeholder={t('fields.paymentDeadline')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1247,7 +1254,7 @@ const RequestsPage = () => {
                         type="text"
                         name="purpose"
                         className={style.inputContainer}
-                        placeholder="Призначення"
+                        placeholder={t('fields.purpose')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1257,7 +1264,7 @@ const RequestsPage = () => {
                       {
                         type: 'select',
                         name: 'currency',
-                        label: 'Валюта',
+                        label: t('fields.currency'),
                         options: currenciesOptions,
                         onChange: value => setSelectedCurrency(value),
                       },
@@ -1274,7 +1281,7 @@ const RequestsPage = () => {
                         type="text"
                         name="payment_details"
                         className={style.inputContainer}
-                        placeholder="Реквізити"
+                        placeholder={t('fields.paymentDetails')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1284,7 +1291,7 @@ const RequestsPage = () => {
                       {
                         type: 'autocomplete-select',
                         name: 'contractor',
-                        label: 'Контрагент',
+                        label: t('fields.contractor'),
                         options: contractorsOptions,
                         onChange: option =>
                           setSelectedContractor(option?.value || ''),
@@ -1299,7 +1306,7 @@ const RequestsPage = () => {
                       {
                         type: 'autocomplete-select',
                         name: 'payment_form',
-                        label: 'Форма оплати',
+                        label: t('fields.paymentForm'),
                         options: paymentFormOptions,
                         onChange: option =>
                           setSelectedPaymentForm(option?.value || ''),
@@ -1316,8 +1323,8 @@ const RequestsPage = () => {
               <ul className={style.statuscontainer}>
                 {(
                   userRole === UserRole.ACCOUNTANT
-                    ? statusSelectorBuh
-                    : statusSelectorFin
+                    ? translateOptions(statusSelectorBuh, t)
+                    : translateOptions(statusSelectorFin, t)
                 ).map(status => (
                   <li key={status.value}>
                     <button
@@ -1337,7 +1344,7 @@ const RequestsPage = () => {
                     className={style.bulkEditButton}
                     onClick={openModalBulk}
                   >
-                    Редагувати обрані
+                    {t('common.editSelected')}
                   </button>
                 </div>
               )}
@@ -1345,7 +1352,7 @@ const RequestsPage = () => {
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
-                Фільтр колонок
+                {t('common.columnsFilter')}
               </button>
             </div>
           </div>
@@ -1354,8 +1361,7 @@ const RequestsPage = () => {
           ) : requestsRows.length === 0 ? (
             <div className={style.noDataContainer}>
               <p className={style.noDataText}>
-                Заявок за обраний період немає. Перегляньте, будь ласка, обрану
-                дату періоду.
+                {t('messages.noRequestsForPeriod')}
               </p>
             </div>
           ) : (
@@ -1375,7 +1381,7 @@ const RequestsPage = () => {
               {totals && (
                 <div className={style.totalsContainer}>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього валюти:</p>
+                    <p className={style.totalTitle}>{t('common.totalCurrency')}</p>
                     <ul className={style.totalList}>
                       {Object.entries(totals.totalsByCurrency).map(
                         ([cur, sum]) => (
@@ -1391,7 +1397,7 @@ const RequestsPage = () => {
                     </ul>
                   </div>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього сума в UAH:</p>
+                    <p className={style.totalTitle}>{t('common.totalAmountUah')}</p>
                     <p className={style.totalText}>
                       {totals.totalUAH.toLocaleString('uk-UA', {
                         minimumFractionDigits: 0,

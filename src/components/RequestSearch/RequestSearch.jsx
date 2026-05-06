@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import style from './RequestSearch.module.css';
 import { Notify } from 'notiflix';
 import { sendRequest } from '../../helpers/axios/requests';
@@ -8,7 +8,12 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getShortStatus, getStatusStyle } from '../../helpers/status';
+import {
+  FinancialStatusFilter,
+  getActiveStatus,
+  getShortStatus,
+  getStatusStyle,
+} from '../../helpers/status';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -19,6 +24,7 @@ import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColum
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
+import { FinancialRequestStatus } from '../../helpers/enums';
 
 const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -32,6 +38,27 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+
+  const canSendRequestStatus = useCallback(request => {
+    if (isDeletedRecord(request)) return false;
+    const statusId = Number(request?.status_id ?? request?.status?.id);
+    if (
+      statusId === FinancialRequestStatus.DRAFT ||
+      statusId === FinancialRequestStatus.NEEDS_REVISION
+    ) {
+      return true;
+    }
+
+    return [FinancialStatusFilter.DRAFT, FinancialStatusFilter.NEEDS_REVISION].includes(
+      getActiveStatus(request?.status_id, request?.status)
+    );
+  }, []);
+
+  const canSendFilesForStatus = useCallback(request =>
+    !isDeletedRecord(request) &&
+    getActiveStatus(request?.status_id, request?.status) ===
+      FinancialStatusFilter.AWAITING_DOCUMENTS,
+  []);
 
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
@@ -197,16 +224,11 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {!isDeletedRecord(request) &&
-            (request.status === 'Чернетка' ||
-              request.status === 'Потребує виправлень') && (
+          {canSendRequestStatus(request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status === 'Чернетка' ||
-                  request.status === 'Потребує виправлень'
-                ) {
+                if (canSendRequestStatus(request)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -215,18 +237,11 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {!isDeletedRecord(request) &&
-            (request.status === 'Фінанси: Сплачено, очікуються документи' ||
-              request.status ===
-                'Бухгалтер: Сплачено, очікуються документи') && (
+          {canSendFilesForStatus(request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status ===
-                    'Фінанси: Сплачено, очікуються документи' ||
-                  request.status === 'Бухгалтер: Сплачено, очікуються документи'
-                ) {
+                if (canSendFilesForStatus(request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -238,7 +253,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         </div>
       ),
     }));
-  }, [dataRequests]);
+  }, [dataRequests, canSendRequestStatus, canSendFilesForStatus]);
 
   const columns = [
     {

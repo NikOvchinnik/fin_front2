@@ -16,8 +16,11 @@ import {
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
 import { isDeletedRecord } from '../../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
+  const { t } = useTranslation();
   const [weeksOptions, setWeeksOptions] = useState([]);
   const isDeleted = isDeletedRecord(request);
 
@@ -33,7 +36,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
     const fetchData = async () => {
       try {
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
+      } catch {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
     };
@@ -44,8 +47,8 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
-      options:
+      label: t('fields.status'),
+      options: translateOptions(
         userRole === 4
           ? approveBudgetingStatusFin
           : userRole === 1
@@ -53,13 +56,15 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           : userRole === 2
           ? approveBudgetingStatusHd
           : [],
+        t
+      ),
       validation: { required: 'This field is required' },
       readOnly: isDeleted,
     },
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('fields.week'),
       options: weeksOptions,
       validation: { required: 'This field is required' },
       readOnly: isDeleted,

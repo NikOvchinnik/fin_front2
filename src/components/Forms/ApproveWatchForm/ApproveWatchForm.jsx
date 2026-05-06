@@ -2,21 +2,24 @@ import dayjs from 'dayjs';
 import { approveStatus } from '../../../helpers/status';
 import Form from '../../Form/Form';
 import style from './ApproveWatchForm.module.css';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
-const ApproveWatchForm = ({ request, closeModal, onRefresh, userRole }) => {
+const ApproveWatchForm = ({ request }) => {
+  const { t } = useTranslation();
   const fields = [
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
-      options: approveStatus,
+      label: t('fields.status'),
+      options: translateOptions(approveStatus, t),
       readOnly: true,
       validation: { required: 'This field is required' },
     },
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати',
+      label: t('fields.paymentDeadline'),
       validation: { required: 'This field is required' },
       readOnly: true,
     },

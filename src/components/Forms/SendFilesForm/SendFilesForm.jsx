@@ -14,6 +14,8 @@ import Loader from '../../Loader/Loader';
 import { approveFilesBuh, approveFilesFin } from '../../../helpers/status';
 import { UserRole } from '../../../helpers/enums';
 import { isDeletedRecord } from '../../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const SendFilesForm = ({
   request,
@@ -22,6 +24,7 @@ const SendFilesForm = ({
   formType,
   userRole,
 }) => {
+  const { t } = useTranslation();
   const [isModalLinkOpen, setModalLinkOpen] = useState(false);
   const [selectedLink, setSelectedLink] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -35,7 +38,7 @@ const SendFilesForm = ({
         setLoading(true);
         setRequestData(request);
         setDocumentLinks(['']);
-      } catch (err) {
+      } catch {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       } finally {
         setLoading(false);
@@ -107,13 +110,15 @@ const SendFilesForm = ({
           {
             type: 'select',
             name: 'status_id',
-            label: 'Статус',
-            options:
+            label: t('fields.status'),
+            options: translateOptions(
               userRole === UserRole.FINANCE
                 ? approveFilesFin
                 : userRole === UserRole.ACCOUNTANT
                 ? approveFilesBuh
                 : [],
+              t
+            ),
             validation: { required: 'This field is required' },
             readOnly: isDeleted,
           },
@@ -122,7 +127,7 @@ const SendFilesForm = ({
     {
       type: 'file',
       name: 'files',
-      label: 'Файли',
+      label: t('fields.files'),
       readOnly: isDeleted,
     },
   ];

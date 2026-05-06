@@ -41,17 +41,21 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../helpers/i18nOptions';
+import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
 
 const BudgetingsPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
+  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
-    useState('Всі');
+    useState(FILTER_ALL);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -71,7 +75,7 @@ const BudgetingsPage = () => {
   const [isModalBulkOpen, setModalBulkIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
-  const [activeStatus, setActiveStatus] = useState('Всі');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleBudgetColumns');
@@ -188,19 +192,19 @@ const BudgetingsPage = () => {
         requests = await getBudgetingFinancial({
           startDate: startDate ? startDate.format('MM.YYYY') : null,
           endDate: endDate ? endDate.format('MM.YYYY') : null,
-          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       } else if (userRole === 2) {
         requests = await getBudgetingHd({
           startDate: startDate ? startDate.format('MM.YYYY') : null,
           endDate: endDate ? endDate.format('MM.YYYY') : null,
-          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       } else if (userRole === 1) {
         requests = await getBudgetingCEO({
           startDate: startDate ? startDate.format('MM.YYYY') : null,
           endDate: endDate ? endDate.format('MM.YYYY') : null,
-          deleted: activeStatus === 'Видалені' ? 'true' : 'false',
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       }
 
@@ -208,7 +212,7 @@ const BudgetingsPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -218,7 +222,7 @@ const BudgetingsPage = () => {
 
       const currencies = await getCurrencies();
       const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(currencies || []).map(c => ({
           value: c.id,
           label: c.name,
@@ -228,7 +232,7 @@ const BudgetingsPage = () => {
 
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(expenseCategories || [])
           .filter(c => c.is_active)
           .map(c => ({
@@ -237,13 +241,13 @@ const BudgetingsPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
-    } catch (err) {
+    } catch {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [userRole, startDate, endDate, activeStatus]);
+  }, [userRole, startDate, endDate, activeStatus, t]);
 
   useEffect(() => {
     fetchData();
@@ -295,19 +299,19 @@ const BudgetingsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
+    if (selectedProject && selectedProject !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.project_id === selectedProject
       );
     }
 
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
+    if (selectedCurrency && selectedCurrency !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.currency_id === selectedCurrency
       );
     }
 
-    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.expense_category?.id === selectedExpenseCategorie
       );
@@ -339,11 +343,12 @@ const BudgetingsPage = () => {
 
     if (
       activeStatus &&
-      activeStatus !== 'Всі' &&
-      activeStatus !== 'Видалені'
+      activeStatus !== FILTER_ALL &&
+      activeStatus !== FILTER_DELETED
     ) {
       filteredRows = filteredRows.filter(
-        row => getActiveBudgetingStatus(row.status?.name) === activeStatus
+        row =>
+          getActiveBudgetingStatus(row.status?.id, row.status?.name) === activeStatus
       );
     }
 
@@ -447,7 +452,7 @@ const BudgetingsPage = () => {
       });
     }
 
-    if (activeStatus === 'Видалені') {
+    if (activeStatus === FILTER_DELETED) {
       sortedRows.sort((a, b) => {
         const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
         const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
@@ -905,14 +910,16 @@ const BudgetingsPage = () => {
     }
   };
 
-  const bulkStatusOptions =
+  const bulkStatusOptions = translateOptions(
     userRole === 4
       ? approveBudgetingStatusFin
       : userRole === 1
       ? approveBudgetingStatusCEO
       : userRole === 2
       ? approveBudgetingStatusHd
-      : [];
+      : [],
+    t
+  );
 
   return (
     <>
@@ -940,7 +947,7 @@ const BudgetingsPage = () => {
                   })
                 }
               >
-                Експорт у CSV
+                {t('common.exportCsv')}
               </button>
             </div>
             <div>
@@ -950,7 +957,7 @@ const BudgetingsPage = () => {
                 onClick={() => setShowAllFilters(prev => !prev)}
               >
                 <Icon id="filter_list" className={style.filterIcon} />
-                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+                {showAllFilters ? t('common.hideFilters') : t('common.allFilters')}
               </button>
             </div>
             <div className={style.formsContainer}>
@@ -959,7 +966,7 @@ const BudgetingsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: 'Підрозділ',
+                    label: t('fields.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -973,7 +980,7 @@ const BudgetingsPage = () => {
                   {
                     type: 'select',
                     name: 'currency',
-                    label: 'Валюта',
+                    label: t('fields.currency'),
                     options: currenciesOptions,
                     onChange: value => setSelectedCurrency(value),
                   },
@@ -988,7 +995,7 @@ const BudgetingsPage = () => {
                     type="text"
                     name="applicant"
                     className={style.inputContainer}
-                    placeholder="Заявник"
+                    placeholder={t('fields.applicant')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -998,7 +1005,7 @@ const BudgetingsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: 'Стаття витрат',
+                    label: t('fields.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1017,7 +1024,7 @@ const BudgetingsPage = () => {
                       type="text"
                       name="request_id"
                       className={style.inputContainer}
-                      placeholder="ID заявки"
+                    placeholder={t('fields.id') + ' заявки'}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1028,7 +1035,7 @@ const BudgetingsPage = () => {
                       type="text"
                       name="week"
                       className={style.inputContainer}
-                      placeholder="Тиждень"
+                    placeholder={t('fields.week')}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1039,7 +1046,7 @@ const BudgetingsPage = () => {
                       type="text"
                       name="purpose"
                       className={style.inputContainer}
-                      placeholder="Призначення"
+                    placeholder={t('fields.purpose')}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1048,7 +1055,7 @@ const BudgetingsPage = () => {
             )}
             <div className={style.statusRow}>
               <ul className={style.statuscontainer}>
-                {statusSelectorBudgetingFin.map(status => (
+                {translateOptions(statusSelectorBudgetingFin, t).map(status => (
                   <li key={status.value}>
                     <button
                       className={`${style.statusBtn} ${
@@ -1067,7 +1074,7 @@ const BudgetingsPage = () => {
                     className={style.bulkEditButton}
                     onClick={openModalBulk}
                   >
-                    Редагувати обрані
+                    {t('common.editSelected')}
                   </button>
                 </div>
               )}
@@ -1075,7 +1082,7 @@ const BudgetingsPage = () => {
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
-                Фільтр колонок
+                {t('common.columnsFilter')}
               </button>
             </div>
           </div>
@@ -1084,8 +1091,7 @@ const BudgetingsPage = () => {
           ) : requestsRows.length === 0 ? (
             <div className={style.noDataContainer}>
               <p className={style.noDataText}>
-                Заявок за обраний період немає. Перегляньте, будь ласка, обрану
-                дату періоду.
+                {t('messages.noRequestsForPeriod')}
               </p>
             </div>
           ) : (
@@ -1107,7 +1113,7 @@ const BudgetingsPage = () => {
                   <div className={style.currencyContainer}>
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього валюти (Оптимістична):
+                        {t('common.totalCurrencyOptimistic')}
                       </p>
                       <ul className={style.totalList}>
                         {Object.entries(totals.totalsByCurrencyOptimistic).map(
@@ -1126,7 +1132,7 @@ const BudgetingsPage = () => {
 
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього валюти (Песимістична):
+                        {t('common.totalCurrencyPessimistic')}
                       </p>
                       <ul className={style.totalList}>
                         {Object.entries(totals.totalsByCurrencyPessimistic).map(
@@ -1146,7 +1152,7 @@ const BudgetingsPage = () => {
                   <div className={style.currencyContainer}>
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього в UAH (Оптимістична):
+                        {t('common.totalUahOptimistic')}
                       </p>
                       <p className={style.totalText}>
                         {totals.totalUAHOptimistic.toLocaleString('uk-UA', {
@@ -1158,7 +1164,7 @@ const BudgetingsPage = () => {
 
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього в UAH (Песимістична):
+                        {t('common.totalUahPessimistic')}
                       </p>
                       <p className={style.totalText}>
                         {totals.totalUAHPessimistic.toLocaleString('uk-UA', {

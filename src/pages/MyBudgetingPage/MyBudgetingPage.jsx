@@ -22,6 +22,7 @@ import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
   getShortBudgetingStatus,
+  statusSelectorBudgetingUser,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
 import { useNavigate } from 'react-router-dom';
@@ -40,17 +41,21 @@ import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 import { BudgetingStatus, UserRole } from '../../helpers/enums';
 import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../helpers/i18nOptions';
+import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
 
 const MyBudgetingPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
+  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
-    useState('Всі');
+    useState(FILTER_ALL);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -74,7 +79,7 @@ const MyBudgetingPage = () => {
   const [isModalImportOpen, setModalImportIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
-  const [activeStatus, setActiveStatus] = useState('Всі');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyBudgetColumns');
@@ -145,19 +150,8 @@ const MyBudgetingPage = () => {
   }, [selectedIds, requestById]);
 
   const statusTabs = useMemo(
-    () => [
-      { value: 'Всі', label: 'Всі' },
-      { value: 'Чернетка', label: 'Чернетка' },
-      {
-        value: BudgetingStatus.NEEDS_REVISION,
-        label: 'Потребує виправлень',
-      },
-      { value: 'Очікує затвердження', label: 'Очікує затвердження' },
-      { value: 'Затверджено', label: 'Затверджено' },
-      { value: 'Скасовано', label: 'Скасовано' },
-      { value: 'Видалені', label: 'Видалені' },
-    ],
-    []
+    () => translateOptions(statusSelectorBudgetingUser, t),
+    [t]
   );
 
   const resetSelection = useCallback(() => {
@@ -241,14 +235,14 @@ const MyBudgetingPage = () => {
         userId,
         startDate: startDate ? startDate.format('MM.YYYY') : null,
         endDate: endDate ? endDate.format('MM.YYYY') : null,
-        deleted: activeStatus === 'Видалені' ? 'true' : 'false',
+        deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
       });
 
       setDataRequests(requests);
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -258,7 +252,7 @@ const MyBudgetingPage = () => {
 
       const currencies = await getCurrencies();
       const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(currencies || []).map(c => ({
           value: c.id,
           label: c.name,
@@ -268,7 +262,7 @@ const MyBudgetingPage = () => {
 
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(expenseCategories || [])
           .filter(c => c.is_active)
           .map(c => ({
@@ -278,14 +272,14 @@ const MyBudgetingPage = () => {
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
       return requests;
-    } catch (err) {
+    } catch {
       Notify.failure('Сталася помилка, спробуйте ще раз');
       return [];
     } finally {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [userId, startDate, endDate, activeStatus]);
+  }, [userId, startDate, endDate, activeStatus, t]);
 
   useEffect(() => {
     if (!userSelectorId) {
@@ -341,13 +335,13 @@ const MyBudgetingPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
+    if (selectedProject && selectedProject !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.project_id === selectedProject
       );
     }
 
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
+    if (selectedCurrency && selectedCurrency !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.currency_id === selectedCurrency
       );
@@ -359,7 +353,7 @@ const MyBudgetingPage = () => {
       );
     }
 
-    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.expense_category?.id === selectedExpenseCategorie
       );
@@ -385,14 +379,14 @@ const MyBudgetingPage = () => {
 
     if (
       activeStatus &&
-      activeStatus !== 'Всі' &&
-      activeStatus !== 'Видалені'
+      activeStatus !== FILTER_ALL &&
+      activeStatus !== FILTER_DELETED
     ) {
       filteredRows = filteredRows.filter(row => {
-        if (activeStatus === BudgetingStatus.NEEDS_REVISION) {
-          return Number(row.status?.id) === BudgetingStatus.NEEDS_REVISION;
-        }
-        return getActiveBudgetingStatus(row.status?.name) === activeStatus;
+        return (
+          getActiveBudgetingStatus(row.status?.id, row.status?.name) ===
+          activeStatus
+        );
       });
     }
 
@@ -494,7 +488,7 @@ const MyBudgetingPage = () => {
       });
     }
 
-    if (activeStatus === 'Видалені') {
+    if (activeStatus === FILTER_DELETED) {
       sortedRows.sort((a, b) => {
         const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
         const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
@@ -1066,7 +1060,7 @@ const MyBudgetingPage = () => {
               />
               <div className={style.btnsContainer}>
                 <button className={style.newBtn} onClick={openModal}>
-                  Створити бюджет <span>+</span>
+                  {t('common.createBudget')} <span>+</span>
                 </button>
                 <button
                   className={style.csvBtn}
@@ -1078,10 +1072,10 @@ const MyBudgetingPage = () => {
                     })
                   }
                 >
-                  Експорт у CSV
+                  {t('common.exportCsv')}
                 </button>
                 <button className={style.csvBtn} onClick={openModalImport}>
-                  Імпорт з Google Sheets
+                  {t('common.importGoogleSheets')}
                 </button>
               </div>
             </div>
@@ -1092,7 +1086,7 @@ const MyBudgetingPage = () => {
                 onClick={() => setShowAllFilters(prev => !prev)}
               >
                 <Icon id="filter_list" className={style.filterIcon} />
-                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+                {showAllFilters ? t('common.hideFilters') : t('common.allFilters')}
               </button>
             </div>
             <div className={style.formsContainer}>
@@ -1101,7 +1095,7 @@ const MyBudgetingPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: 'Підрозділ',
+                    label: t('fields.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -1115,7 +1109,7 @@ const MyBudgetingPage = () => {
                   {
                     type: 'select',
                     name: 'currency',
-                    label: 'Валюта',
+                    label: t('fields.currency'),
                     options: currenciesOptions,
                     onChange: value => setSelectedCurrency(value),
                   },
@@ -1130,7 +1124,7 @@ const MyBudgetingPage = () => {
                     type="text"
                     name="purpose"
                     className={style.inputContainer}
-                    placeholder="Призначення"
+                    placeholder={t('fields.purpose')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -1140,7 +1134,7 @@ const MyBudgetingPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: 'Стаття витрат',
+                    label: t('fields.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1159,7 +1153,7 @@ const MyBudgetingPage = () => {
                       type="text"
                       name="request_id"
                       className={style.inputContainer}
-                      placeholder="ID заявки"
+                      placeholder={t('fields.id') + ' заявки'}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1170,7 +1164,7 @@ const MyBudgetingPage = () => {
                       type="text"
                       name="week"
                       className={style.inputContainer}
-                      placeholder="Тиждень"
+                      placeholder={t('fields.week')}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1198,7 +1192,7 @@ const MyBudgetingPage = () => {
                     className={style.bulkEditButton}
                     onClick={openModalSendBulk}
                   >
-                    Відправити всі
+                    {t('common.sendAll')}
                   </button>
                 </div>
               )}
@@ -1206,7 +1200,7 @@ const MyBudgetingPage = () => {
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
-                Фільтр колонок
+                {t('common.columnsFilter')}
               </button>
             </div>
           </div>
@@ -1215,8 +1209,7 @@ const MyBudgetingPage = () => {
           ) : requestsRows.length === 0 ? (
             <div className={style.noDataContainer}>
               <p className={style.noDataText}>
-                Заявок за обраний період немає. Перегляньте, будь ласка, обрану
-                дату періоду.
+                {t('messages.noRequestsForPeriod')}
               </p>
             </div>
           ) : (
@@ -1238,7 +1231,7 @@ const MyBudgetingPage = () => {
                   <div className={style.currencyContainer}>
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього валюти (Оптимістична):
+                        {t('common.totalCurrencyOptimistic')}
                       </p>
                       <ul className={style.totalList}>
                         {Object.entries(totals.totalsByCurrencyOptimistic).map(
@@ -1257,7 +1250,7 @@ const MyBudgetingPage = () => {
 
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього валюти (Песимістична):
+                        {t('common.totalCurrencyPessimistic')}
                       </p>
                       <ul className={style.totalList}>
                         {Object.entries(totals.totalsByCurrencyPessimistic).map(
@@ -1277,7 +1270,7 @@ const MyBudgetingPage = () => {
                   <div className={style.currencyContainer}>
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього в UAH (Оптимістична):
+                        {t('common.totalUahOptimistic')}
                       </p>
                       <p className={style.totalText}>
                         {totals.totalUAHOptimistic.toLocaleString('uk-UA', {
@@ -1289,7 +1282,7 @@ const MyBudgetingPage = () => {
 
                     <div className={style.totalContainer}>
                       <p className={style.totalTitle}>
-                        Всього в UAH (Песимістична):
+                        {t('common.totalUahPessimistic')}
                       </p>
                       <p className={style.totalText}>
                         {totals.totalUAHPessimistic.toLocaleString('uk-UA', {

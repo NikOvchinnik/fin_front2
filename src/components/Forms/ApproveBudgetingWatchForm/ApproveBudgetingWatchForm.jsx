@@ -9,13 +9,14 @@ import {
   getWeeksOfMonth,
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const ApproveBudgetingWatchForm = ({
   request,
-  closeModal,
-  onRefresh,
   userRole,
 }) => {
+  const { t } = useTranslation();
   const [weeksOptions, setWeeksOptions] = useState([]);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
@@ -30,7 +31,7 @@ const ApproveBudgetingWatchForm = ({
     const fetchData = async () => {
       try {
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
+      } catch {
         Notify.failure('Сталася помилка, спробуйте ще раз');
       }
     };
@@ -41,15 +42,15 @@ const ApproveBudgetingWatchForm = ({
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
-      options: approveBudgetingStatus,
+      label: t('fields.status'),
+      options: translateOptions(approveBudgetingStatus, t),
       validation: { required: 'This field is required' },
       readOnly: true,
     },
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('fields.week'),
       options: weeksOptions,
       validation: { required: 'This field is required' },
       readOnly: true,
