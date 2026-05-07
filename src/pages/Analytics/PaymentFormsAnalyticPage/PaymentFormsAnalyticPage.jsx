@@ -12,8 +12,10 @@ import Icon from '../../../components/Icon/Icon';
 import { exportToCSV } from '../../../helpers/exportToCSV';
 import { getProjects } from '../../../helpers/axios/projects';
 import { monthsOptionsAll } from '../../../helpers/months';
+import { useTranslation } from 'react-i18next';
 
 const PaymentFormsAnalyticPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [statisticsRows, setStatisticsRows] = useState([]);
   const [selectedProject, setSelectedProject] = useState('all');
@@ -115,7 +117,7 @@ const PaymentFormsAnalyticPage = () => {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
-          <p>Форма оплати</p>
+          <p>{t('labels.paymentForm')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_form')}
@@ -129,7 +131,7 @@ const PaymentFormsAnalyticPage = () => {
       accessorKey: 'paid_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки кількість</p>
+          <p>{t('labels.requestsCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_count')}
@@ -143,7 +145,7 @@ const PaymentFormsAnalyticPage = () => {
       accessorKey: 'paid_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки сума</p>
+          <p>{t('labels.requestsAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_sum')}

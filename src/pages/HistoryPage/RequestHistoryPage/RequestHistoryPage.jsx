@@ -15,11 +15,13 @@ import dayjs from 'dayjs';
 import utc from 'dayjs/plugin/utc';
 import timezone from 'dayjs/plugin/timezone';
 import { getActiveStatus, statusHistory } from '../../../helpers/history';
+import { useTranslation } from 'react-i18next';
 
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 const RequestHistoryPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
@@ -61,23 +63,23 @@ const RequestHistoryPage = () => {
   const columns = [
     {
       accessorKey: 'date',
-      header: 'Дата',
+      header: t('labels.date'),
     },
     {
       accessorKey: 'request_id',
-      header: 'ID заявки',
+      header: t('labels.requestId'),
     },
     {
       accessorKey: 'status',
-      header: 'Статус',
+      header: t('labels.status'),
     },
     {
       accessorKey: 'userName',
-      header: 'Редактор',
+      header: t('labels.editor'),
     },
     {
       accessorKey: 'comment',
-      header: 'Коментар',
+      header: t('labels.comment'),
     },
   ];
 

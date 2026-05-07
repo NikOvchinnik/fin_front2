@@ -42,7 +42,7 @@ const ApproveBudgetingWatchForm = ({
     {
       type: 'select',
       name: 'status',
-      label: t('fields.status'),
+      label: t('labels.status'),
       options: translateOptions(approveBudgetingStatus, t),
       validation: { required: 'This field is required' },
       readOnly: true,
@@ -50,7 +50,7 @@ const ApproveBudgetingWatchForm = ({
     {
       type: 'select',
       name: 'week',
-      label: t('fields.week'),
+      label: t('labels.week'),
       options: weeksOptions,
       validation: { required: 'This field is required' },
       readOnly: true,

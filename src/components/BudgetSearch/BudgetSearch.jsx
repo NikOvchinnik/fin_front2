@@ -20,8 +20,10 @@ import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchF
 import { sendBudgeting } from '../../helpers/axios/budgeting';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
 
 const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
+  const { t } = useTranslation();
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
@@ -171,7 +173,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
         </div>
       ),
     },
@@ -179,7 +181,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
         </div>
       ),
     },
@@ -187,7 +189,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
         </div>
       ),
     },
@@ -195,7 +197,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'week',
       header: (
         <div className={style.sortContainer}>
-          <p>Тиждень</p>
+          <p>{t('labels.week')}</p>
         </div>
       ),
     },
@@ -203,7 +205,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
         </div>
       ),
     },
@@ -211,7 +213,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'amount_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума оптимістична</p>
+          <p>{t('labels.optimisticAmount')}</p>
         </div>
       ),
     },
@@ -219,7 +221,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'amount_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума песимістична</p>
+          <p>{t('labels.pessimisticAmount')}</p>
         </div>
       ),
     },
@@ -227,7 +229,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
         </div>
       ),
     },
@@ -235,7 +237,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'amount_uah_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH оптимістична</p>
+          <p>{t('labels.amountUahOptimistic')}</p>
         </div>
       ),
     },
@@ -243,7 +245,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'amount_uah_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH песимістична</p>
+          <p>{t('labels.amountUahPessimistic')}</p>
         </div>
       ),
     },
@@ -251,7 +253,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
         </div>
       ),
     },
@@ -259,7 +261,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'applicant',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявник</p>
+          <p>{t('labels.applicant')}</p>
         </div>
       ),
     },
@@ -267,7 +269,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
-          <p>Період</p>
+          <p>{t('labels.period')}</p>
         </div>
       ),
     },
@@ -275,13 +277,13 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
         </div>
       ),
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 

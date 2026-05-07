@@ -21,11 +21,15 @@
     "all": "All",
     "deleted": "Deleted"
   },
-  "fields": {
+  "labels": {
     "id": "ID",
     "requestDate": "Request date",
     "paymentDeadline": "Payment deadline",
+    "date": "Date",
+    "requestId": "Request ID",
     "department": "Department",
+    "editor": "Editor",
+    "comment": "Comment",
     "paymentForm": "Payment form",
     "contractor": "Contractor",
     "paymentDetails": "Payment details",
@@ -48,7 +52,11 @@
     "amountUahOptimistic": "Amount in UAH optimistic",
     "amountUahPessimistic": "Amount in UAH pessimistic",
     "optimisticBalance": "Optimistic balance (remaining)",
-    "pessimisticBalance": "Pessimistic balance (remaining)"
+    "pessimisticBalance": "Pessimistic balance (remaining)",
+    "requestsCount": "Requests count",
+    "requestsAmount": "Requests amount",
+    "budgetCount": "Budget count",
+    "budgetAmount": "Budget amount"
   },
   "nav": {
     "users": "Users",

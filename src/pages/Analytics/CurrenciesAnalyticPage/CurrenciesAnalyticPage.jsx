@@ -12,8 +12,10 @@ import Icon from '../../../components/Icon/Icon';
 import { exportToCSV } from '../../../helpers/exportToCSV';
 import { getProjects } from '../../../helpers/axios/projects';
 import { monthsOptionsAll } from '../../../helpers/months';
+import { useTranslation } from 'react-i18next';
 
 const CurrenciesAnalyticPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [statisticsRows, setStatisticsRows] = useState([]);
   const [selectedProject, setSelectedProject] = useState('all');
@@ -147,7 +149,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -161,7 +163,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'paid_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки кількість</p>
+          <p>{t('labels.requestsCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_count')}
@@ -175,7 +177,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'paid_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки сума</p>
+          <p>{t('labels.requestsAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_sum')}
@@ -189,7 +191,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'budget_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Бюджет кількість</p>
+          <p>{t('labels.budgetCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('budget_count')}
@@ -203,7 +205,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'budget_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Бюджет сума</p>
+          <p>{t('labels.budgetAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('budget_sum')}

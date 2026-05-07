@@ -267,7 +267,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   ];
 
   const mappedFields = isDeleted
-    ? fields.map(field => {
+    ? labels.map(field => {
         if (field.type === 'number-select-group') {
           return {
             ...field,

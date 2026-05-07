@@ -641,7 +641,7 @@ const BudgetingsPage = () => {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('request_id')}
@@ -655,7 +655,7 @@ const BudgetingsPage = () => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('created_at')}
@@ -669,7 +669,7 @@ const BudgetingsPage = () => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
@@ -683,7 +683,7 @@ const BudgetingsPage = () => {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
-          <p>Період</p>
+          <p>{t('labels.period')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('tech')}
@@ -697,7 +697,7 @@ const BudgetingsPage = () => {
       accessorKey: 'week',
       header: (
         <div className={style.sortContainer}>
-          <p>Тиждень</p>
+          <p>{t('labels.week')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('week')}
@@ -711,7 +711,7 @@ const BudgetingsPage = () => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('purpose')}
@@ -725,7 +725,7 @@ const BudgetingsPage = () => {
       accessorKey: 'amount_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума оптимістична</p>
+          <p>{t('labels.optimisticAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_optimistic')}
@@ -739,7 +739,7 @@ const BudgetingsPage = () => {
       accessorKey: 'amount_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума песимістична</p>
+          <p>{t('labels.pessimisticAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_pessimistic')}
@@ -753,7 +753,7 @@ const BudgetingsPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -767,7 +767,7 @@ const BudgetingsPage = () => {
       accessorKey: 'amount_uah_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH оптимістична</p>
+          <p>{t('labels.amountUahOptimistic')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah_optimistic')}
@@ -781,7 +781,7 @@ const BudgetingsPage = () => {
       accessorKey: 'amount_uah_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH песимістична</p>
+          <p>{t('labels.amountUahPessimistic')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah_pessimistic')}
@@ -795,7 +795,7 @@ const BudgetingsPage = () => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
@@ -809,7 +809,7 @@ const BudgetingsPage = () => {
       accessorKey: 'applicant',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявник</p>
+          <p>{t('labels.applicant')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('applicant')}
@@ -823,7 +823,7 @@ const BudgetingsPage = () => {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('status')}
@@ -835,7 +835,7 @@ const BudgetingsPage = () => {
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
@@ -966,7 +966,7 @@ const BudgetingsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: t('fields.department'),
+                    label: t('labels.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -980,7 +980,7 @@ const BudgetingsPage = () => {
                   {
                     type: 'select',
                     name: 'currency',
-                    label: t('fields.currency'),
+                    label: t('labels.currency'),
                     options: currenciesOptions,
                     onChange: value => setSelectedCurrency(value),
                   },
@@ -995,7 +995,7 @@ const BudgetingsPage = () => {
                     type="text"
                     name="applicant"
                     className={style.inputContainer}
-                    placeholder={t('fields.applicant')}
+                    placeholder={t('labels.applicant')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -1005,7 +1005,7 @@ const BudgetingsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: t('fields.expenseCategory'),
+                    label: t('labels.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1024,7 +1024,7 @@ const BudgetingsPage = () => {
                       type="text"
                       name="request_id"
                       className={style.inputContainer}
-                    placeholder={t('fields.id') + ' заявки'}
+                    placeholder={t('labels.id') + ' заявки'}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1035,7 +1035,7 @@ const BudgetingsPage = () => {
                       type="text"
                       name="week"
                       className={style.inputContainer}
-                    placeholder={t('fields.week')}
+                    placeholder={t('labels.week')}
                       onChange={handleSearchChange}
                     />
                   </label>
@@ -1046,7 +1046,7 @@ const BudgetingsPage = () => {
                       type="text"
                       name="purpose"
                       className={style.inputContainer}
-                    placeholder={t('fields.purpose')}
+                    placeholder={t('labels.purpose')}
                       onChange={handleSearchChange}
                     />
                   </label>

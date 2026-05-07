@@ -21,11 +21,15 @@
     "all": "Всі",
     "deleted": "Видалені"
   },
-  "fields": {
+  "labels": {
     "id": "ID",
     "requestDate": "Дата заявки",
     "paymentDeadline": "Кінцева дата оплати",
+    "date": "Дата",
+    "requestId": "ID заявки",
     "department": "Підрозділ",
+    "editor": "Редактор",
+    "comment": "Коментар",
     "paymentForm": "Форма оплати",
     "contractor": "Контрагент",
     "paymentDetails": "Реквізити",
@@ -48,7 +52,11 @@
     "amountUahOptimistic": "Сума в UAH оптимістична",
     "amountUahPessimistic": "Сума в UAH песимістична",
     "optimisticBalance": "Баланс оптимістичний (залишок)",
-    "pessimisticBalance": "Баланс песимістичний (залишок)"
+    "pessimisticBalance": "Баланс песимістичний (залишок)",
+    "requestsCount": "Заявки кількість",
+    "requestsAmount": "Заявки сума",
+    "budgetCount": "Бюджет кількість",
+    "budgetAmount": "Бюджет сума"
   },
   "nav": {
     "users": "Користувачі",

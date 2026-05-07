@@ -20,7 +20,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'status',
-      label: t('fields.status'),
+      label: t('labels.status'),
       options: translateOptions(
         userRole === UserRole.FINANCE
           ? approveStatusFin
@@ -35,7 +35,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
     {
       type: 'date',
       name: 'payment_date_await',
-      label: t('fields.paymentDeadline'),
+      label: t('labels.paymentDeadline'),
       validation: { required: 'This field is required' },
       readOnly: isDeleted,
     },

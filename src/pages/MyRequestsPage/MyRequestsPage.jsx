@@ -771,7 +771,7 @@ const MyRequestsPage = () => {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('request_id')}
@@ -785,7 +785,7 @@ const MyRequestsPage = () => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('created_at')}
@@ -799,7 +799,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_date_await',
       header: (
         <div className={style.sortContainer}>
-          <p>Кінцева дата оплати</p>
+          <p>{t('labels.paymentDeadline')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_date_await')}
@@ -813,7 +813,7 @@ const MyRequestsPage = () => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
@@ -827,7 +827,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
-          <p>Форма оплати</p>
+          <p>{t('labels.paymentForm')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_form')}
@@ -841,7 +841,7 @@ const MyRequestsPage = () => {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
-          <p>Контрагент</p>
+          <p>{t('labels.contractor')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('contractor')}
@@ -855,7 +855,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_details',
       header: (
         <div className={style.sortContainer}>
-          <p>Реквізити</p>
+          <p>{t('labels.paymentDetails')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_details')}
@@ -869,7 +869,7 @@ const MyRequestsPage = () => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('purpose')}
@@ -883,7 +883,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_period',
       header: (
         <div className={style.sortContainer}>
-          <p>Період оплати</p>
+          <p>{t('labels.paymentPeriod')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_period')}
@@ -897,7 +897,7 @@ const MyRequestsPage = () => {
       accessorKey: 'amount',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума</p>
+          <p>{t('labels.amount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount')}
@@ -911,7 +911,7 @@ const MyRequestsPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -925,7 +925,7 @@ const MyRequestsPage = () => {
       accessorKey: 'amount_uah',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума UAH</p>
+          <p>{t('labels.amountUah')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah')}
@@ -939,7 +939,7 @@ const MyRequestsPage = () => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
@@ -953,7 +953,7 @@ const MyRequestsPage = () => {
       accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс оптимістичний (залишок)</p>
+          <p>{t('labels.optimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_optimistic')}
@@ -967,7 +967,7 @@ const MyRequestsPage = () => {
       accessorKey: 'planned_balance_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс песимістичний (залишок)</p>
+          <p>{t('labels.pessimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_pessimistic')}
@@ -979,13 +979,13 @@ const MyRequestsPage = () => {
     },
     {
       accessorKey: 'files',
-      header: 'Файли',
+      header: t('labels.files'),
     },
     {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('status')}
@@ -997,7 +997,7 @@ const MyRequestsPage = () => {
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
@@ -1218,7 +1218,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: t('fields.department'),
+                    label: t('labels.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -1232,7 +1232,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: t('fields.expenseCategory'),
+                    label: t('labels.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1247,7 +1247,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'contractor',
-                    label: t('fields.contractor'),
+                    label: t('labels.contractor'),
                     options: contractorsOptions,
                     onChange: option =>
                       setSelectedContractor(option?.value || ''),
@@ -1262,7 +1262,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'payment_form',
-                    label: t('fields.paymentForm'),
+                    label: t('labels.paymentForm'),
                     options: paymentFormOptions,
                     onChange: option =>
                       setSelectedPaymentForm(option?.value || ''),
@@ -1282,7 +1282,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="request_id"
                         className={style.inputContainer}
-                        placeholder={t('fields.id') + ' заявки'}
+                        placeholder={t('labels.id') + ' заявки'}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1293,7 +1293,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="payment_date_await"
                         className={style.inputContainer}
-                        placeholder={t('fields.paymentDeadline')}
+                        placeholder={t('labels.paymentDeadline')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1304,7 +1304,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="purpose"
                         className={style.inputContainer}
-                        placeholder={t('fields.purpose')}
+                        placeholder={t('labels.purpose')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1316,7 +1316,7 @@ const MyRequestsPage = () => {
                       {
                         type: 'select',
                         name: 'currency',
-                        label: t('fields.currency'),
+                        label: t('labels.currency'),
                         options: currenciesOptions,
                         onChange: value => setSelectedCurrency(value),
                       },
@@ -1331,7 +1331,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="payment_details"
                         className={style.inputContainer}
-                        placeholder={t('fields.paymentDetails')}
+                        placeholder={t('labels.paymentDetails')}
                         onChange={handleSearchChange}
                       />
                     </label>

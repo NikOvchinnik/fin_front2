@@ -47,7 +47,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'status',
-      label: t('fields.status'),
+      label: t('labels.status'),
       options: translateOptions(
         userRole === 4
           ? approveBudgetingStatusFin
@@ -64,7 +64,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'week',
-      label: t('fields.week'),
+      label: t('labels.week'),
       options: weeksOptions,
       validation: { required: 'This field is required' },
       readOnly: isDeleted,

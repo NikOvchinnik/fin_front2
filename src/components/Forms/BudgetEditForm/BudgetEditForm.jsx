@@ -202,7 +202,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   ];
 
   const mappedFields = isDeleted
-    ? fields.map(field => {
+    ? labels.map(field => {
         if (field.type === 'number-number-group') {
           return {
             ...field,

@@ -11,7 +11,7 @@ const ApproveWatchForm = ({ request }) => {
     {
       type: 'select',
       name: 'status',
-      label: t('fields.status'),
+      label: t('labels.status'),
       options: translateOptions(approveStatus, t),
       readOnly: true,
       validation: { required: 'This field is required' },
@@ -19,7 +19,7 @@ const ApproveWatchForm = ({ request }) => {
     {
       type: 'date',
       name: 'payment_date_await',
-      label: t('fields.paymentDeadline'),
+      label: t('labels.paymentDeadline'),
       validation: { required: 'This field is required' },
       readOnly: true,
     },

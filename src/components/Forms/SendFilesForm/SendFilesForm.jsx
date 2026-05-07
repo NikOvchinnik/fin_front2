@@ -110,7 +110,7 @@ const SendFilesForm = ({
           {
             type: 'select',
             name: 'status_id',
-            label: t('fields.status'),
+            label: t('labels.status'),
             options: translateOptions(
               userRole === UserRole.FINANCE
                 ? approveFilesFin
@@ -127,7 +127,7 @@ const SendFilesForm = ({
     {
       type: 'file',
       name: 'files',
-      label: t('fields.files'),
+      label: t('labels.files'),
       readOnly: isDeleted,
     },
   ];
