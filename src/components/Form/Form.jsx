@@ -810,7 +810,7 @@ const Form = ({
     <ThemeProvider theme={theme}>
       {title && <h2 className={style.title}>{title}</h2>}
       <form className={style[styleForm]} onSubmit={handleSubmit(onSubmit)}>
-        {labels.map((field, index) => (
+        {fields.map((field, index) => (
           <div key={index} className={style.inputContainer}>
             {renderField(field)}
           </div>
