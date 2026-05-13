@@ -8,8 +8,10 @@ import Form from '../../../components/Form/Form';
 import { exportBudgetingToGoogle } from '../../../helpers/axios/budgeting';
 import { exportRequestsToGoogle } from '../../../helpers/axios/requests';
 import { Notify } from 'notiflix';
+import { useTranslation } from 'react-i18next';
 
 const GoogleSheetsPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [selectedYearRequest, setSelectedYearRequest] = useState(
     dayjs().year()
@@ -21,18 +23,17 @@ const GoogleSheetsPage = () => {
   const handleSubmit = async type => {
     setLoading(true);
     try {
-      let response;
       if (type === 'requests') {
-        response = await exportRequestsToGoogle(selectedYearRequest);
+        await exportRequestsToGoogle(selectedYearRequest);
       } else if (type === 'budgetings') {
-        response = await exportBudgetingToGoogle(selectedYearBudgeting);
+        await exportBudgetingToGoogle(selectedYearBudgeting);
       } else {
         throw new Error('Unknown export type');
       }
 
-      Notify.success('Дані відправлені!');
+      Notify.success(t('notifications.dataSent'));
     } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', err);
     } finally {
       setLoading(false);
@@ -47,23 +48,23 @@ const GoogleSheetsPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>GoogleSheets</DocTitle>
           <div className={style.titleContainer}>
-            <h2>Гугл таблиці аналітика</h2>
+            <h2>{t('analytics.googleSheets')}</h2>
           </div>
 
           <div className={style.formsSelectorContainer}>
             <div className={style.formContainer}>
               {' '}
-              <h3>Аналітика заявок на рік</h3>
+              <h3>{t('analytics.requestsYear')}</h3>
               <Form
                 fields={[
                   {
                     type: 'select',
                     name: 'year',
-                    label: 'Рік',
+                    label: t('labels.year'),
                     options: yearsOptions(),
                     button: {
                       type: 'button',
-                      label: 'Експорт',
+                      label: t('actions.export'),
                       onClick: () => handleSubmit('requests'),
                       className: 'submitBtn',
                     },
@@ -76,17 +77,17 @@ const GoogleSheetsPage = () => {
               />
             </div>
             <div className={style.formContainer}>
-              <h3>Аналітика бюджетування на рік</h3>
+              <h3>{t('analytics.budgetingYear')}</h3>
               <Form
                 fields={[
                   {
                     type: 'select',
                     name: 'year',
-                    label: 'Рік',
+                    label: t('labels.year'),
                     options: yearsOptions(),
                     button: {
                       type: 'button',
-                      label: 'Експорт',
+                      label: t('actions.export'),
                       onClick: () => handleSubmit('budgetings'),
                       className: 'submitBtn',
                     },

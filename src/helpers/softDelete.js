@@ -1,7 +1,7 @@
 export const deletedFilterTabs = [
-  { value: 'false', label: 'Активні' },
-  { value: 'true', label: 'Видалені' },
-  { value: 'all', label: 'Всі' },
+  { value: 'false', label: 'Активні', labelKey: 'filters.active' },
+  { value: 'true', label: 'Видалені', labelKey: 'filters.deleted' },
+  { value: 'all', label: 'Всі', labelKey: 'filters.all' },
 ];
 
 export const getDeletedFilterParam = value => {

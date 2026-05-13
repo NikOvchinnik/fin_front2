@@ -24,8 +24,10 @@ import {
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
 import { isDeletedRecord } from '../../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
 
 const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -85,8 +87,8 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
         setExpenseCategoryOptions(options);
 
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -104,9 +106,9 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       setModalConfirmOpen(false);
       onRefresh();
       closeModal();
-      Notify.success('Бюджет видалено!');
+      Notify.success(t('notifications.budgetDeleted'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -116,9 +118,9 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       await restoreBudgeting(request.id);
       onRefresh();
       closeModal();
-      Notify.success('Бюджет відновлено!');
+      Notify.success(t('notifications.budgetRestored'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -127,30 +129,30 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     {
       type: 'text',
       name: 'applicant',
-      label: 'Заявник',
-      validation: { required: 'This field is required' },
+      label: t('labels.applicant'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'project',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'select',
       name: 'period',
-      label: 'Плановий період',
+      label: t('labels.plannedPeriod'),
       options: periods,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       onChange: (value, setValue) => {
         setWeeksOptions(getWeeksOfMonth(value));
         setValue('week', '', { shouldValidate: true });
@@ -159,50 +161,50 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('labels.week'),
       options: weeksOptions,
       validation: {
-        required: 'This field is required',
+        required: t('validation.required'),
         validate: value =>
           weeksOptions.some(option => option.value === value) ||
-          'Оберіть тиждень для обраного періоду',
+          t('validation.selectWeekForPeriod'),
       },
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'number-number-group',
       number1: {
         name: 'amount_opt',
-        label: 'Оптимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.optimisticAmount'),
+        validation: { required: t('validation.required') },
       },
       number2: {
         name: 'amount_pes',
-        label: 'Песимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.pessimisticAmount'),
+        validation: { required: t('validation.required') },
       },
     },
     {
       type: 'select',
       name: 'currency',
-      label: 'Валюта',
+      label: t('labels.currency'),
       options: currencyOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
+      label: t('labels.comment'),
     },
   ];
 
   const mappedFields = isDeleted
-    ? labels.map(field => {
+    ? fields.map(field => {
         if (field.type === 'number-number-group') {
           return {
             ...field,
@@ -217,7 +219,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const buttons = isDeleted
     ? [
         {
-          label: 'Відновити',
+          label: t('actions.restore'),
           className: 'submitBtn',
           type: 'button',
           onClick: handleRestore,
@@ -225,12 +227,12 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       ]
     : [
         {
-          label: 'Видалити',
+          label: t('actions.delete'),
           className: 'deleteBtn',
           onClick: () => setModalConfirmOpen(true),
         },
         {
-          label: 'Зберегти',
+          label: t('actions.save'),
           className: 'submitBtn',
           type: 'submit',
         },
@@ -245,27 +247,27 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
           <ul className={style.commentsList}>
             {request.applicant_comment && (
               <li className={style.commentApplicant}>
-                Коментар заявника: {request.applicant_comment}
+                {t('labels.applicantComment')}: {request.applicant_comment}
               </li>
             )}
             {request.finance_comment && (
               <li className={style.commentFinance}>
-                Коментар фінанси: {request.finance_comment}
+                {t('labels.financeComment')}: {request.finance_comment}
               </li>
             )}
             {request.ceo_comment && (
               <li className={style.commentCeo}>
-                Коментар CEO/COO/CFO: {request.ceo_comment}
+                {t('labels.ceoComment')}: {request.ceo_comment}
               </li>
             )}
           </ul>
           <Form
-            title="Редагувати бюджет"
+            title={t('forms.editBudget')}
             fields={mappedFields}
             buttons={buttons}
             onSubmit={async data => {
               if (isDeleted) {
-                Notify.warning('Видалений бюджет не можна редагувати');
+                Notify.warning(t('notifications.deletedBudgetCannotEdit'));
                 return;
               }
               try {
@@ -291,9 +293,9 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
                 await updateMyBudgeting(formData);
                 onRefresh();
                 closeModal();
-                Notify.success('Інформацію змінено!');
+                Notify.success(t('notifications.infoChanged'));
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                Notify.failure(t('notifications.genericError'));
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);
@@ -317,8 +319,10 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
             onCloseModal={closeModalConfirm}
           >
             <ConfirmModal
-              title="Видалити бюджет"
-              message={`Ви впевнені, що хочете видалити бюджет ${request.purpose}?`}
+              title={t('modals.deleteBudgetTitle')}
+              message={t('modals.deleteBudgetMessage', {
+                name: request.purpose,
+              })}
               onConfirm={handleDelete}
               onClose={closeModalConfirm}
             />

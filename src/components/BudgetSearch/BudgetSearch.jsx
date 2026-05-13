@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import style from './BudgetSearch.module.css';
 import { Notify } from 'notiflix';
-import { sendRequest } from '../../helpers/axios/requests';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -13,7 +12,6 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import {
   getBudgetingStatusStyle,
-  getShortBudgetingStatus,
 } from '../../helpers/budgetingStatuses';
 import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
@@ -21,6 +19,7 @@ import { sendBudgeting } from '../../helpers/axios/budgeting';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
+import { translateBudgetingStatus } from '../../helpers/i18nOptions';
 
 const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const { t } = useTranslation();
@@ -125,7 +124,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
             color: getBudgetingStatusStyle(request.status?.id).color,
           }}
         >
-          {getShortBudgetingStatus(request.status?.name)}
+          {translateBudgetingStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status?.name || '',
@@ -324,16 +323,16 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
 
   const handleSend = async () => {
     if (isDeletedRecord(selectedRequest)) {
-      Notify.warning('Видалений бюджет не можна змінювати');
+      Notify.warning(t('notifications.deletedBudgetCannotChange'));
       return;
     }
     try {
       await sendBudgeting(selectedRequest.id);
       onRefresh(selectedRequest.id, 'budgeting', deletedFilter);
       closeModalConfirm();
-      Notify.success('Заявку відправлено!');
+      Notify.success(t('notifications.budgetSent'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -343,7 +342,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       <div className={style.filterContainer}>
         <button className={style.filterBtn} onClick={openModalColumns}>
           <Icon id="filter_list" className={style.filterIcon} />
-          Фільтр колонок
+          {t('common.columnsFilter')}
         </button>
         <button
           className={style.csvBtn}
@@ -355,7 +354,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
             })
           }
         >
-          Експорт у CSV
+          {t('common.exportCsv')}
         </button>
       </div>
       <Table
@@ -407,8 +406,10 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         onCloseModal={closeModalConfirm}
       >
         <ConfirmModal
-          title="Відправити бюджет"
-          message={`Ви впевнені, що хочете відправити бюджет на затвердження ${selectedRequest?.purpose}?`}
+          title={t('modals.sendBudgetTitle')}
+          message={t('modals.sendBudgetMessage', {
+            name: selectedRequest?.purpose,
+          })}
           onConfirm={handleSend}
           onClose={closeModalConfirm}
         />

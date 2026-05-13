@@ -12,7 +12,6 @@ import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import {
   getActiveStatus,
-  getShortStatus,
   getStatusStyle,
   statusSelectorUser,
   FILTER_ALL,
@@ -41,7 +40,10 @@ import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
-import { translateOptions } from '../../helpers/i18nOptions';
+import {
+  translateFinancialStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
 import { FinancialRequestStatus } from '../../helpers/enums';
 
 const MyRefundsPage = () => {
@@ -517,7 +519,7 @@ const MyRefundsPage = () => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {getShortStatus(request.status)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status || '',

@@ -14,20 +14,20 @@ const ApproveWatchForm = ({ request }) => {
       label: t('labels.status'),
       options: translateOptions(approveStatus, t),
       readOnly: true,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'date',
       name: 'payment_date_await',
       label: t('labels.paymentDeadline'),
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
-      validation: { required: 'This field is required' },
+      label: t('labels.comment'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
   ];
@@ -37,22 +37,22 @@ const ApproveWatchForm = ({ request }) => {
       <ul className={style.commentsList}>
         {request.comment && (
           <li className={style.commentApplicant}>
-            Коментар заявника: {request.comment}
+            {t('labels.applicantComment')}: {request.comment}
           </li>
         )}
         {request.finance_comment && (
           <li className={style.commentFinance}>
-            Коментар фінанси: {request.finance_comment}
+            {t('labels.financeComment')}: {request.finance_comment}
           </li>
         )}
         {request.accounting_comment && (
           <li className={style.commentBuh}>
-            Коментар бухгалтерія: {request.accounting_comment}
+            {t('labels.accountingComment')}: {request.accounting_comment}
           </li>
         )}
       </ul>
       <Form
-        title="Перегляд заявки"
+        title={t('forms.watchRequest')}
         fields={fields}
         defaultValues={{
           status: request.status?.id || '',

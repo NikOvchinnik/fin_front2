@@ -13,6 +13,7 @@ import { exportToCSV } from '../../../helpers/exportToCSV';
 import { getProjects } from '../../../helpers/axios/projects';
 import { monthsOptionsAll } from '../../../helpers/months';
 import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const UsersAnalyticPage = () => {
   const { t } = useTranslation();
@@ -38,7 +39,7 @@ const UsersAnalyticPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'all', label: 'Всі' },
+        { value: 'all', label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -93,7 +94,7 @@ const UsersAnalyticPage = () => {
       );
 
       const totalRow = {
-        user_name: <p className={style.titleRow}>Total</p>,
+        user_name: <p className={style.titleRow}>{t('common.total')}</p>,
         user_name_plain: 'Total',
         paid_count: <p className={style.totalTextRow}>{totalCount}</p>,
         paid_count_plain: totalCount,
@@ -120,8 +121,8 @@ const UsersAnalyticPage = () => {
       };
 
       setStatisticsRows([...rows, totalRow]);
-    } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+    } catch {
+      Notify.failure(t('notifications.genericError'));
     } finally {
       setLoading(false);
     }
@@ -261,7 +262,7 @@ const UsersAnalyticPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>UsersAnalytic</DocTitle>
           <div className={style.titleContainer}>
-            <h2>Заявки по користувачам</h2>
+            <h2>{t('analytics.byUsers')}</h2>
             <button
               className={style.csvBtn}
               onClick={() =>
@@ -272,7 +273,7 @@ const UsersAnalyticPage = () => {
                 })
               }
             >
-              Експорт у CSV
+              {t('common.exportCsv')}
             </button>
           </div>
           <div className={style.formSelectorContainer}>
@@ -281,7 +282,7 @@ const UsersAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'project',
-                  label: 'Підрозділ',
+                  label: t('labels.department'),
                   options: projectOptions,
                   onChange: value => setSelectedProject(value),
                 },
@@ -295,8 +296,8 @@ const UsersAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'month',
-                  label: 'Місяць',
-                  options: monthsOptionsAll,
+                  label: t('labels.month'),
+                  options: translateOptions(monthsOptionsAll, t),
                   onChange: value => setSelectedMonth(value),
                 },
               ]}
@@ -309,7 +310,7 @@ const UsersAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'year',
-                  label: 'Рік',
+                  label: t('labels.year'),
                   options: yearsOptions(),
                   onChange: value => setSelectedYear(value),
                 },

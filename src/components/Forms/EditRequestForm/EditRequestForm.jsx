@@ -25,10 +25,13 @@ import {
 import Icon from '../../Icon/Icon';
 import Loader from '../../Loader/Loader';
 import { isDeletedRecord } from '../../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const refundIds = [15, 16, 17, 18, 19];
 
 const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -106,8 +109,8 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           label: e.name,
         }));
         setContractorsOptions(contractorSelector);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -129,9 +132,9 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       setModalConfirmOpen(false);
       onRefresh();
       closeModal();
-      Notify.success('Заявку видалено!');
+      Notify.success(t('notifications.requestDeleted'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -141,16 +144,16 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       await restoreRequest(request.id);
       onRefresh();
       closeModal();
-      Notify.success('Заявку відновлено!');
+      Notify.success(t('notifications.requestRestored'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
 
   const handleDeleteLink = async () => {
     if (isDeleted) {
-      Notify.warning('Видалену заявку не можна змінювати');
+      Notify.warning(t('notifications.deletedRequestCannotChange'));
       return;
     }
     try {
@@ -162,9 +165,9 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       }));
       setSelectedLink(null);
       onRefresh();
-      Notify.success('Інформацію змінено!');
+      Notify.success(t('notifications.infoChanged'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -173,61 +176,61 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
     {
       type: 'autocomplete-select',
       name: 'project_id',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-select',
       name: 'payment_form_id',
-      label: 'Форма оплати',
+      label: t('labels.paymentForm'),
       options: paymentFormOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-input',
       name: 'contractor_id',
-      label: 'Контрагент',
+      label: t('labels.contractor'),
       options: contractorsOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
       name: 'payment_details',
-      label: 'Реквізити',
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentDetails'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати(тільки вт. або чт.)',
+      label: t('labels.paymentDateRestricted'),
       validation:
         formType === 'all'
-          ? { required: 'This field is required' }
+          ? { required: t('validation.required') }
           : {
-              required: 'This field is required',
+              required: t('validation.required'),
               validate: value => {
-                if (!value) return "Дата обов'язкова";
+                if (!value) return t('validation.dateRequired');
                 const selected = new Date(value);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                if (selected < today) return 'Неможна обрати минулу дату';
+                if (selected < today) return t('validation.pastDateNotAllowed');
                 const day = selected.getDay();
                 if (day !== 2 && day !== 4)
-                  return 'Можна обрати тільки Вт або Чт';
+                  return t('validation.onlyTueOrThu');
                 return true;
               },
             },
@@ -236,38 +239,38 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
     {
       type: 'autocomplete-select',
       name: 'payment_period',
-      label: 'Період оплати',
-      options: periodOptions,
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentPeriod'),
+      options: translateOptions(periodOptions, t),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'number-select-group',
       number: {
         name: 'amount',
-        label: 'Сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.amount'),
+        validation: { required: t('validation.required') },
       },
       select: {
         name: 'currency_id',
-        label: 'Валюта',
+        label: t('labels.currency'),
         options: currencyOptions,
-        validation: { required: 'This field is required' },
+        validation: { required: t('validation.required') },
       },
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
+      label: t('labels.comment'),
     },
     {
       type: 'file',
       name: 'files',
-      label: 'Файли',
+      label: t('labels.files'),
     },
   ];
 
   const mappedFields = isDeleted
-    ? labels.map(field => {
+    ? fields.map(field => {
         if (field.type === 'number-select-group') {
           return {
             ...field,
@@ -282,7 +285,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const buttons = isDeleted
     ? [
         {
-          label: 'Відновити',
+          label: t('actions.restore'),
           className: 'submitBtn',
           type: 'button',
           onClick: handleRestore,
@@ -290,12 +293,12 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       ]
     : [
         {
-          label: 'Видалити',
+          label: t('actions.delete'),
           className: 'deleteBtn',
           onClick: () => setModalConfirmOpen(true),
         },
         {
-          label: 'Зберегти',
+          label: t('actions.save'),
           className: 'submitBtn',
           type: 'submit',
         },
@@ -331,27 +334,27 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           <ul className={style.commentsList}>
             {request.comment && (
               <li className={style.commentApplicant}>
-                Коментар заявника: {request.comment}
+                {t('labels.applicantComment')}: {request.comment}
               </li>
             )}
             {request.finance_comment && (
               <li className={style.commentFinance}>
-                Коментар фінанси: {request.finance_comment}
+                {t('labels.financeComment')}: {request.finance_comment}
               </li>
             )}
             {request.accounting_comment && (
               <li className={style.commentBuh}>
-                Коментар бухгалтерія: {request.accounting_comment}
+                {t('labels.accountingComment')}: {request.accounting_comment}
               </li>
             )}
           </ul>
           <Form
-            title="Редагувати заявку"
+            title={t('forms.editRequest')}
             fields={mappedFields}
             buttons={buttons}
             onSubmit={async data => {
               if (isDeleted) {
-                Notify.warning('Видалену заявку не можна редагувати');
+                Notify.warning(t('notifications.deletedRequestCannotEdit'));
                 return;
               }
               try {
@@ -400,9 +403,9 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
                 await updateRequest(formData);
                 onRefresh();
                 closeModal();
-                Notify.success('Інформацію змінено!');
+                Notify.success(t('notifications.infoChanged'));
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                Notify.failure(t('notifications.genericError'));
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);
@@ -429,8 +432,10 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
             onCloseModal={closeModalConfirm}
           >
             <ConfirmModal
-              title="Видалити заявку"
-              message={`Ви впевнені, що хочете видалити заявку  ${request.contractor}?`}
+              title={t('modals.deleteRequestTitle')}
+              message={t('modals.deleteRequestMessage', {
+                name: request.contractor,
+              })}
               onConfirm={handleDelete}
               onClose={closeModalConfirm}
             />
@@ -440,8 +445,10 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
             onCloseModal={closeModalLink}
           >
             <ConfirmModal
-              title="Видалити файл"
-              message={`Ви впевнені, що хочете видалити файл ${selectedLink?.file_url}?`}
+              title={t('modals.deleteFileTitle')}
+              message={t('modals.deleteFileMessage', {
+                name: selectedLink?.file_url,
+              })}
               onConfirm={handleDeleteLink}
               onClose={closeModalLink}
             />

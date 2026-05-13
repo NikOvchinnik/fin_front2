@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import style from './ExpandableText.module.css';
+import { useTranslation } from 'react-i18next';
 
 const ExpandableText = ({ text, limit = 80 }) => {
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   if (!text) return <span>-</span>;
@@ -18,7 +20,7 @@ const ExpandableText = ({ text, limit = 80 }) => {
           className={style.toggleBtn}
           onClick={() => setExpanded(prev => !prev)}
         >
-          {expanded ? ' Сховати' : ' Показати все'}
+          {expanded ? t('expandable.hide') : t('expandable.showAll')}
         </button>
       )}
     </span>

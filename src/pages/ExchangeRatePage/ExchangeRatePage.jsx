@@ -8,8 +8,10 @@ import ReactCountryFlag from 'react-country-flag';
 import Icon from '../../components/Icon/Icon';
 import { useSelector } from 'react-redux';
 import { selectUserId } from '../../redux/auth/selectors';
+import { useTranslation } from 'react-i18next';
 
 const ExchangeRatePage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [currencies, setCurrencies] = useState([]);
   const [updatedRates, setUpdatedRates] = useState({});
@@ -24,8 +26,8 @@ const ExchangeRatePage = () => {
         initialRates[c.id] = c.rate;
       });
       setUpdatedRates(initialRates);
-    } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+    } catch {
+      Notify.failure(t('notifications.genericError'));
     } finally {
       setLoading(false);
     }
@@ -52,10 +54,10 @@ const ExchangeRatePage = () => {
         })),
       };
       await updateCurrencies(payload);
-      Notify.success('Курси успішно оновлено!');
+      Notify.success(t('notifications.ratesUpdated'));
       fetchData();
-    } catch (err) {
-      Notify.failure('Не вдалося зберегти курси');
+    } catch {
+      Notify.failure(t('notifications.ratesSaveFailed'));
     }
   };
 
@@ -82,7 +84,7 @@ const ExchangeRatePage = () => {
       ) : (
         <section className={style.mainContainer}>
           <DocTitle>ExchangeRate</DocTitle>
-          <h1 className={style.title}>Редагування курсів валют</h1>
+          <h1 className={style.title}>{t('exchangeRate.title')}</h1>
           <div className={style.cardsContainer}>
             {currencies.map(currency => (
               <div key={currency.id} className={style.card}>
@@ -105,12 +107,14 @@ const ExchangeRatePage = () => {
                   onChange={e => handleRateChange(currency.id, e.target.value)}
                   className={style.rateInput}
                 />
-                <div className={style.rateDate}>Дата: {currency.rate_date}</div>
+                <div className={style.rateDate}>
+                  {t('exchangeRate.date', { date: currency.rate_date })}
+                </div>
               </div>
             ))}
           </div>
           <button className={style.saveButton} onClick={handleSaveAll}>
-            Зберегти всі
+            {t('actions.saveAll')}
           </button>
         </section>
       )}

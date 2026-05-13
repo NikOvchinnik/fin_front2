@@ -13,8 +13,11 @@ import {
   deletedFilterTabs,
   getDeletedFilterParam,
 } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../helpers/i18nOptions';
 
 const SearchPage = () => {
+  const { t } = useTranslation();
   const [loadingTable, setLoadingTable] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequestType, setSelectedRequestType] = useState('request');
@@ -23,7 +26,7 @@ const SearchPage = () => {
 
   const fetchData = useCallback(async (id, type, deleted = selectedDeletedFilter) => {
     if (!id) {
-      Notify.failure('Введіть ID заявки');
+      Notify.failure(t('notifications.enterRequestId'));
       return;
     }
     try {
@@ -52,9 +55,9 @@ const SearchPage = () => {
       const message = err.response?.data?.message;
 
       if (err.response?.status === 404 || /not found/i.test(message)) {
-        Notify.failure('Заявку не знайдено');
+        Notify.failure(t('notifications.requestNotFound'));
       } else {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure(t('notifications.genericError'));
       }
 
       setSubmitted(false);
@@ -73,22 +76,22 @@ const SearchPage = () => {
             {
               type: 'select',
               name: 'type',
-              label: 'Тип заявки',
-              options: searchType,
+              label: t('labels.requestType'),
+              options: translateOptions(searchType, t),
             },
             {
               type: 'select',
               name: 'deleted_filter',
-              label: 'Показувати',
-              options: deletedFilterTabs,
+              label: t('labels.show'),
+              options: translateOptions(deletedFilterTabs, t),
               onChange: value => setSelectedDeletedFilter(value),
             },
             {
               type: 'text',
               name: 'id',
-              label: 'ID заявки',
+              label: t('labels.requestId'),
               button: {
-                label: 'Search',
+                label: t('common.search'),
                 className: 'searchBtn',
                 type: 'submit',
               },

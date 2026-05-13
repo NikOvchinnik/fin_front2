@@ -16,6 +16,7 @@ import {
   Tooltip,
   Autocomplete,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const Form = ({
   title = null,
@@ -26,6 +27,7 @@ const Form = ({
   styleForm = 'formContainer',
   fontSize = 16,
 }) => {
+  const { t } = useTranslation();
   const {
     control,
     handleSubmit,
@@ -213,7 +215,7 @@ const Form = ({
               ...field.validation,
               pattern: {
                 value: /^\d+$/,
-                message: 'Only numbers',
+                message: t('validation.onlyNumbers'),
               },
             }}
             render={({ field: input }) => (
@@ -688,14 +690,16 @@ const Form = ({
                       field.readOnly ? style.fileUploadButtonDisabled : ''
                     }`}
                   >
-                    Обрати файл
+                    {t('common.selectFile')}
                   </label>
                   <span className={style.fileUploadName}>
                     {Array.isArray(input.value) && input.value.length > 0
                       ? input.value.length === 1
                         ? input.value[0]?.name
-                        : `Обрано файлів: ${input.value.length}`
-                      : 'Файл не обрано'}
+                        : t('common.selectedFiles', {
+                            count: input.value.length,
+                          })
+                      : t('common.noFileSelected')}
                   </span>
                 </div>
                 {errors[field.name] && (

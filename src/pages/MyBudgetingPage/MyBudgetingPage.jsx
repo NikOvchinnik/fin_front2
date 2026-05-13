@@ -21,7 +21,6 @@ import {
 import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
-  getShortBudgetingStatus,
   statusSelectorBudgetingUser,
 } from '../../helpers/budgetingStatuses';
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
@@ -42,7 +41,10 @@ import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/
 import { BudgetingStatus, UserRole } from '../../helpers/enums';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
-import { translateOptions } from '../../helpers/i18nOptions';
+import {
+  translateBudgetingStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
 import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
 
 const MyBudgetingPage = () => {
@@ -559,7 +561,7 @@ const MyBudgetingPage = () => {
             color: getBudgetingStatusStyle(request.status?.id).color,
           }}
         >
-          {getShortBudgetingStatus(request.status?.name)}
+          {translateBudgetingStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status?.name || '',

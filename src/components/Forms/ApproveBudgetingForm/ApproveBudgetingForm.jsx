@@ -37,7 +37,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
       try {
         setWeeksOptions(defaultWeeks);
       } catch {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
@@ -58,7 +58,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           : [],
         t
       ),
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: isDeleted,
     },
     {
@@ -66,14 +66,14 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
       name: 'week',
       label: t('labels.week'),
       options: weeksOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: isDeleted,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
-      validation: { required: 'This field is required' },
+      label: t('labels.comment'),
+      validation: { required: t('validation.required') },
       readOnly: isDeleted,
     },
   ];
@@ -82,7 +82,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
     ? []
     : [
         {
-          label: 'Відправити',
+          label: t('actions.send'),
           className: 'submitBtn',
           type: 'submit',
         },
@@ -93,27 +93,27 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
       <ul className={style.commentsList}>
         {request.applicant_comment && (
           <li className={style.commentApplicant}>
-            Коментар заявника: {request.applicant_comment}
+            {t('labels.applicantComment')}: {request.applicant_comment}
           </li>
         )}
         {request.finance_comment && (
           <li className={style.commentFinance}>
-            Коментар фінанси: {request.finance_comment}
+            {t('labels.financeComment')}: {request.finance_comment}
           </li>
         )}
         {request.ceo_comment && (
           <li className={style.commentCeo}>
-            Коментар CEO/COO/CFO: {request.ceo_comment}
+            {t('labels.ceoComment')}: {request.ceo_comment}
           </li>
         )}
       </ul>
       <Form
-        title="Погодження бюджету"
+        title={t('forms.approveBudget')}
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {
           if (isDeleted) {
-            Notify.warning('Видалений бюджет не можна змінювати');
+            Notify.warning(t('notifications.deletedBudgetCannotChange'));
             return;
           }
           try {
@@ -125,9 +125,9 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
             await updateBudgetingStatus(request.id, formData);
             onRefresh();
             closeModal();
-            Notify.success('Статус бюджету змінено!');
+            Notify.success(t('notifications.budgetStatusChanged'));
           } catch (error) {
-            Notify.failure('Сталася помилка, спробуйте ще раз');
+            Notify.failure(t('notifications.genericError'));
             console.error('Error: ', error);
           }
         }}

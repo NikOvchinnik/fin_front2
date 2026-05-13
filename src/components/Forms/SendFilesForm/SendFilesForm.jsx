@@ -39,7 +39,7 @@ const SendFilesForm = ({
         setRequestData(request);
         setDocumentLinks(['']);
       } catch {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -85,7 +85,7 @@ const SendFilesForm = ({
 
   const handleDeleteLink = async () => {
     if (isDeleted) {
-      Notify.warning('Видалений запис не можна змінювати');
+      Notify.warning(t('notifications.deletedRecordCannotChange'));
       return;
     }
     try {
@@ -97,9 +97,9 @@ const SendFilesForm = ({
       }));
       setSelectedLink(null);
       onRefresh();
-      Notify.success('Інформацію змінено!');
+      Notify.success(t('notifications.infoChanged'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -119,7 +119,7 @@ const SendFilesForm = ({
                 : [],
               t
             ),
-            validation: { required: 'This field is required' },
+            validation: { required: t('validation.required') },
             readOnly: isDeleted,
           },
         ]
@@ -136,7 +136,7 @@ const SendFilesForm = ({
     ? []
     : [
         {
-          label: 'Зберегти',
+          label: t('actions.save'),
           className: 'submitBtn',
           type: 'submit',
         },
@@ -148,10 +148,10 @@ const SendFilesForm = ({
         <Loader />
       ) : (
         <div className={style.editContainer}>
-          <h2 className={style.modalTitle}>Додати документи</h2>
+          <h2 className={style.modalTitle}>{t('forms.addDocuments')}</h2>
           {requestData.files?.length > 0 && (
             <div className={style.addedLinksBlock}>
-              <p className={style.linksTitle}>Додані файли</p>
+              <p className={style.linksTitle}>{t('forms.addedFiles')}</p>
               {requestData.files.map((file, index) => (
                 <div key={file.id} className={style.addedLinkRow}>
                   <a
@@ -161,7 +161,7 @@ const SendFilesForm = ({
                     className={style.addedLink}
                     title={file.file_url}
                   >
-                    {`Посилання: ${file.file_url}`}
+                    {t('forms.fileLink', { url: file.file_url })}
                   </a>
                   <button
                     type="button"
@@ -170,7 +170,7 @@ const SendFilesForm = ({
                       setSelectedLink(file);
                       setModalLinkOpen(true);
                     }}
-                    aria-label={`Видалити Link ${index + 1}`}
+                    aria-label={`${t('actions.delete')} Link ${index + 1}`}
                     disabled={isDeleted}
                   >
                     <Icon id="trash" className={style.removeLinkIcon} />
@@ -180,13 +180,13 @@ const SendFilesForm = ({
             </div>
           )}
           <div className={style.linksBlock}>
-            <p className={style.linksTitle}>Додати новий файл</p>
+            <p className={style.linksTitle}>{t('forms.addNewFile')}</p>
             {documentLinks.map((link, index) => (
               <div key={index} className={style.linkInputRow}>
                 <input
                   type="url"
                   className={style.linkInput}
-                  placeholder="Додати посилання на файл"
+                  placeholder={t('forms.addFileLink')}
                   value={link}
                   disabled={isDeleted}
                   onChange={e =>
@@ -197,7 +197,7 @@ const SendFilesForm = ({
                   type="button"
                   className={style.removeLinkBtn}
                   onClick={() => handleRemoveDocumentLink(index)}
-                  aria-label="Видалити поле лінка"
+                  aria-label={t('actions.delete')}
                   disabled={isDeleted}
                 >
                   <Icon id="trash" className={style.removeLinkIcon} />
@@ -220,7 +220,7 @@ const SendFilesForm = ({
             buttons={buttons}
             onSubmit={async data => {
               if (isDeleted) {
-                Notify.warning('Видалений запис не можна змінювати');
+                Notify.warning(t('notifications.deletedRecordCannotChange'));
                 return;
               }
               try {
@@ -238,7 +238,11 @@ const SendFilesForm = ({
 
                 const invalidLink = links.find(link => !isValidHttpUrl(link));
                 if (invalidLink) {
-                  Notify.failure(`Invalid document link: ${invalidLink}`);
+                  Notify.failure(
+                    t('notifications.invalidDocumentLink', {
+                      link: invalidLink,
+                    })
+                  );
                   return;
                 }
 
@@ -252,16 +256,16 @@ const SendFilesForm = ({
                 await sendFilesRequest(formData);
                 onRefresh();
                 closeModal();
-                Notify.success('Інформацію змінено!');
+                Notify.success(t('notifications.infoChanged'));
               } catch (error) {
                 if (error?.response?.status === 400) {
                   const message =
                     error?.response?.data?.message ||
                     error?.response?.data?.error ||
-                    'Некоректні дані для додавання документів';
+                    t('notifications.invalidDocumentsData');
                   Notify.failure(message);
                 } else {
-                  Notify.failure('Сталася помилка, спробуйте ще раз');
+                  Notify.failure(t('notifications.genericError'));
                 }
                 console.error('Error: ', error);
               } finally {
@@ -278,8 +282,10 @@ const SendFilesForm = ({
             onCloseModal={closeModalLink}
           >
             <ConfirmModal
-              title="Видалити файл"
-              message={`Ви впевнені, що хочете видалити файл ${selectedLink?.file_url}?`}
+              title={t('modals.deleteFileTitle')}
+              message={t('modals.deleteFileMessage', {
+                name: selectedLink?.file_url,
+              })}
               onConfirm={handleDeleteLink}
               onClose={closeModalLink}
             />

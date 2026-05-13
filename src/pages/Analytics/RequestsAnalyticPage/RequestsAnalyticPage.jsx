@@ -31,7 +31,7 @@ const RequestsAnalyticPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'all', label: 'Всі' },
+        { value: 'all', label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -86,7 +86,7 @@ const RequestsAnalyticPage = () => {
       );
 
       const totalRow = {
-        date: <p className={style.titleRow}>Total</p>,
+        date: <p className={style.titleRow}>{t('common.total')}</p>,
         date_plain: 'Total',
         paid_count: <p className={style.totalTextRow}>{totalCount}</p>,
         paid_count_plain: totalCount,
@@ -113,8 +113,8 @@ const RequestsAnalyticPage = () => {
       };
 
       setStatisticsRows([...rows, totalRow]);
-    } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+    } catch {
+      Notify.failure(t('notifications.genericError'));
     } finally {
       setLoading(false);
     }
@@ -252,7 +252,7 @@ const RequestsAnalyticPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>RequestsAnalytic</DocTitle>
           <div className={style.titleContainer}>
-            <h2>Загальна аналітика</h2>
+            <h2>{t('analytics.total')}</h2>
             <button
               className={style.csvBtn}
               onClick={() =>
@@ -263,7 +263,7 @@ const RequestsAnalyticPage = () => {
                 })
               }
             >
-              Експорт у CSV
+              {t('common.exportCsv')}
             </button>
           </div>
           <div className={style.formSelectorContainer}>
@@ -272,7 +272,7 @@ const RequestsAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'project',
-                  label: 'Підрозділ',
+                  label: t('labels.department'),
                   options: projectOptions,
                   onChange: value => setSelectedProject(value),
                 },

@@ -10,26 +10,22 @@ import dayjs from 'dayjs';
 import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import { useSelector } from 'react-redux';
-import {
-  selectUserId,
-  selectUserName,
-  selectUserRole,
-} from '../../../redux/auth/selectors';
+import { selectUserName } from '../../../redux/auth/selectors';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
 import {
   getWeeksOfMonth,
   resolveWeekRangeValue,
 } from '../../../helpers/budgetingWeekOptions';
+import { useTranslation } from 'react-i18next';
 
 const BudgetNewForm = ({ closeModal, onRefresh }) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weeksOptions, setWeeksOptions] = useState([]);
-  const userRole = useSelector(selectUserRole);
-  const userId = useSelector(selectUserId);
   const userName = useSelector(selectUserName);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
@@ -68,8 +64,8 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
         );
 
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -81,30 +77,30 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
     {
       type: 'text',
       name: 'applicant',
-      label: 'Заявник',
-      validation: { required: 'This field is required' },
+      label: t('labels.applicant'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'project',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'select',
       name: 'period',
-      label: 'Плановий період',
+      label: t('labels.plannedPeriod'),
       options: generateDefaultPeriods(12),
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       onChange: (value, setValue) => {
         setWeeksOptions(getWeeksOfMonth(value));
         setValue('week', '', { shouldValidate: true });
@@ -113,51 +109,51 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('labels.week'),
       options: weeksOptions,
       validation: {
-        required: 'This field is required',
+        required: t('validation.required'),
         validate: value =>
           weeksOptions.some(option => option.value === value) ||
-          'Оберіть тиждень для обраного періоду',
+          t('validation.selectWeekForPeriod'),
       },
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'number-number-group',
       number1: {
         name: 'amount_opt',
-        label: 'Оптимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.optimisticAmount'),
+        validation: { required: t('validation.required') },
       },
       number2: {
         name: 'amount_pes',
-        label: 'Песимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.pessimisticAmount'),
+        validation: { required: t('validation.required') },
       },
     },
     {
       type: 'select',
       name: 'currency',
-      label: 'Валюта',
+      label: t('labels.currency'),
       options: currencyOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
+      label: t('labels.comment'),
     },
   ];
 
   const buttons = [
     {
-      label: 'Створити',
+      label: t('actions.create'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -170,7 +166,7 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
       ) : (
         <div className={style.newContainer}>
           <Form
-            title="Створити бюджет"
+            title={t('forms.createBudget')}
             fields={fields}
             buttons={buttons}
             onSubmit={async data => {
@@ -196,9 +192,9 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
                 await postMyBudgeting(formData);
                 onRefresh();
                 closeModal();
-                Notify.success('Новий бюджет створено!');
+                Notify.success(t('notifications.newBudgetCreated'));
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                Notify.failure(t('notifications.genericError'));
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);

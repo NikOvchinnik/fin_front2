@@ -7,8 +7,10 @@ import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
 import { getProjects } from '../../../helpers/axios/projects';
 import { UserRole } from '../../../helpers/enums';
+import { useTranslation } from 'react-i18next';
 
 const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
+  const { t } = useTranslation();
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
   const [projectsOptions, setProjectsOptions] = useState([]);
@@ -39,8 +41,8 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
           label: p.name,
         }));
         setProjectsOptions(projectSelector);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
@@ -50,20 +52,20 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
     {
       type: 'text',
       name: 'first_name',
-      label: 'Ім’я',
-      validation: { required: 'This field is required' },
+      label: t('user.firstName'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
       name: 'last_name',
-      label: 'Прізвище',
-      validation: { required: 'This field is required' },
+      label: t('user.lastName'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
       name: 'email',
       label: 'Email',
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
@@ -73,28 +75,28 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'role_id',
-      label: 'Роль',
+      label: t('user.role'),
       options: rolesOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       disabled: !canManageUserRoles,
     },
     {
       type: 'select',
       name: 'project_id',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectsOptions,
     },
     {
       type: 'select',
       name: 'department_id',
-      label: 'Департамент',
+      label: t('nav.departments'),
       options: departmentsOptions,
     },
   ];
 
   const buttons = [
     {
-      label: 'Save new user',
+      label: t('actions.save'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -103,7 +105,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
   return (
     <div className={style.newContainer}>
       <Form
-        title="New user"
+        title={t('forms.newUser')}
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {
@@ -124,9 +126,9 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
             await postUser(formData);
             onRefresh();
             closeModal();
-            Notify.success('Нового юзера створено!');
+            Notify.success(t('notifications.userCreated'));
           } catch (error) {
-            Notify.failure('Сталася помилка, спробуйте ще раз');
+            Notify.failure(t('notifications.genericError'));
             console.error('Error: ', error);
           }
         }}

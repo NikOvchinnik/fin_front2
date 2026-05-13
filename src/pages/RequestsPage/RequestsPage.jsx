@@ -17,7 +17,6 @@ import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import {
   getActiveStatus,
-  getShortStatus,
   getStatusStyle,
   statusSelectorBuh,
   statusSelectorFin,
@@ -43,7 +42,10 @@ import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
-import { translateOptions } from '../../helpers/i18nOptions';
+import {
+  translateFinancialStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
 
 const RequestsPage = () => {
   const { t } = useTranslation();
@@ -651,7 +653,7 @@ const RequestsPage = () => {
             color: getStatusStyle(request.status?.name).color,
           }}
         >
-          {getShortStatus(request.status?.name)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status?.name || '',

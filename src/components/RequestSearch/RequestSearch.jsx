@@ -11,7 +11,6 @@ import dayjs from 'dayjs';
 import {
   FinancialStatusFilter,
   getActiveStatus,
-  getShortStatus,
   getStatusStyle,
 } from '../../helpers/status';
 import { selectUserRole } from '../../redux/auth/selectors';
@@ -26,6 +25,7 @@ import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { FinancialRequestStatus } from '../../helpers/enums';
 import { useTranslation } from 'react-i18next';
+import { translateFinancialStatus } from '../../helpers/i18nOptions';
 
 const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const { t } = useTranslation();
@@ -138,7 +138,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
             className={style.copyText}
             onClick={() => {
               navigator.clipboard.writeText(request.payment_details || '');
-              Notify.success('Текст скопійовано!');
+              Notify.success(t('notifications.copied'));
             }}
           >
             <Icon id="copy" className={style.sortIcon} />
@@ -202,7 +202,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {getShortStatus(request.status)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status || '',
@@ -469,16 +469,16 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
 
   const handleSend = async () => {
     if (isDeletedRecord(selectedRequest)) {
-      Notify.warning('Видалену заявку не можна змінювати');
+      Notify.warning(t('notifications.deletedRequestCannotChange'));
       return;
     }
     try {
       await sendRequest(selectedRequest.id);
       onRefresh(selectedRequest.id, 'request', deletedFilter);
       closeModalConfirm();
-      Notify.success('Заявку відправлено!');
+      Notify.success(t('notifications.requestSent'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -488,7 +488,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       <div className={style.filterContainer}>
         <button className={style.filterBtn} onClick={openModalColumns}>
           <Icon id="filter_list" className={style.filterIcon} />
-          Фільтр колонок
+          {t('common.columnsFilter')}
         </button>
         <button
           className={style.csvBtn}
@@ -500,7 +500,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
             })
           }
         >
-          Експорт у CSV
+          {t('common.exportCsv')}
         </button>
       </div>
       <Table
@@ -541,8 +541,10 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         onCloseModal={closeModalConfirm}
       >
         <ConfirmModal
-          title="Відправити заявку"
-          message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
+          title={t('modals.sendRequestTitle')}
+          message={t('modals.sendRequestMessage', {
+            name: selectedRequest?.contractor,
+          })}
           onConfirm={handleSend}
           onClose={closeModalConfirm}
         />

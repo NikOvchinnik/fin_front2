@@ -9,8 +9,10 @@ import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
 import { getProjects } from '../../../helpers/axios/projects';
 import { UserRole } from '../../../helpers/enums';
+import { useTranslation } from 'react-i18next';
 
 const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
+  const { t } = useTranslation();
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
   const [projectsOptions, setProjectsOptions] = useState([]);
@@ -45,8 +47,8 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
           label: p.name,
         }));
         setProjectsOptions(projectSelector);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
@@ -62,9 +64,9 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
       setModalConfirmOpen(false);
       onRefresh();
       closeModal();
-      Notify.success('Юзера видалено!');
+      Notify.success(t('notifications.userDeleted'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -73,20 +75,20 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
     {
       type: 'text',
       name: 'first_name',
-      label: 'Ім’я',
-      validation: { required: 'This field is required' },
+      label: t('user.firstName'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
       name: 'last_name',
-      label: 'Прізвище',
-      validation: { required: 'This field is required' },
+      label: t('user.lastName'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
       name: 'email',
       label: 'Email',
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
@@ -96,21 +98,21 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'role_id',
-      label: 'Роль',
+      label: t('user.role'),
       options: rolesOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       disabled: !canManageUserRole,
     },
     {
       type: 'select',
       name: 'project_id',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectsOptions,
     },
     {
       type: 'select',
       name: 'department_id',
-      label: 'Департамент',
+      label: t('nav.departments'),
       options: departmentsOptions,
     },
   ];
@@ -119,14 +121,14 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
     ...(canDeleteUser
       ? [
           {
-            label: 'Delete',
+            label: t('actions.delete'),
             className: 'deleteBtn',
             onClick: () => setModalConfirmOpen(true),
           },
         ]
       : []),
     {
-      label: 'Save',
+      label: t('actions.save'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -135,7 +137,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
   return (
     <div className={style.editContainer}>
       <Form
-        title="Edit user"
+        title={t('forms.editUser')}
         fields={fields}
         buttons={buttons}
         onSubmit={async data => {
@@ -156,9 +158,9 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
             await patchUser(user.user_id, formData);
             onRefresh();
             closeModal();
-            Notify.success('Інформацію змінено!');
+            Notify.success(t('notifications.infoChanged'));
           } catch (error) {
-            Notify.failure('Сталася помилка, спробуйте ще раз');
+            Notify.failure(t('notifications.genericError'));
             console.error('Error: ', error);
           }
         }}
@@ -177,8 +179,10 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
         onCloseModal={closeModalConfirm}
       >
         <ConfirmModal
-          title="Delete user"
-          message={`Ви впевнені, що хочете видалити юзера ${user.user_first_name} ${user.user_last_name}?`}
+          title={t('modals.deleteUserTitle')}
+          message={t('modals.deleteUserMessage', {
+            name: `${user.user_first_name} ${user.user_last_name}`,
+          })}
           onConfirm={handleDelete}
           onClose={closeModalConfirm}
         />

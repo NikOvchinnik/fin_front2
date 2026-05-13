@@ -10,11 +10,7 @@ import { NavLink } from 'react-router-dom';
 import Icon from '../../components/Icon/Icon';
 import Loader from '../../components/Loader/Loader';
 import DocTitle from '../../components/DocTitle/DocTitle';
-
-const schemaYup = Yup.object().shape({
-  password: Yup.string().required('*вкажіть новий пароль'),
-  confirmPassword: Yup.string().required('*підтвердіть пароль'),
-});
+import { useTranslation } from 'react-i18next';
 
 const defaultValues = {
   password: '',
@@ -22,6 +18,7 @@ const defaultValues = {
 };
 
 const ResetPasswordPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState(null);
   const navigate = useNavigate();
@@ -41,17 +38,24 @@ const ResetPasswordPage = () => {
     formState: { errors },
   } = useForm({
     defaultValues: defaultValues,
-    resolver: yupResolver(schemaYup),
+    resolver: yupResolver(
+      Yup.object().shape({
+        password: Yup.string().required(t('validation.newPasswordRequired')),
+        confirmPassword: Yup.string().required(
+          t('validation.confirmPasswordRequired')
+        ),
+      })
+    ),
   });
 
   const onSubmit = async data => {
     if (!token) {
-      Notify.failure('Токен не знайдено...');
+      Notify.failure(t('notifications.tokenNotFound'));
       return;
     }
 
     if (data.password !== data.confirmPassword) {
-      Notify.failure('Паролі не співпадають');
+      Notify.failure(t('notifications.passwordMismatch'));
       return;
     }
 
@@ -60,10 +64,10 @@ const ResetPasswordPage = () => {
       formData.append('token', token);
       formData.append('new_password', data.password);
       await resetPassword(formData);
-      Notify.success('Пароль успішно змінено!');
+      Notify.success(t('notifications.passwordChanged'));
       navigate('/');
     } catch (err) {
-      Notify.failure('Сталася помилка при зміні пароля');
+      Notify.failure(t('notifications.passwordChangeError'));
       console.error(err);
     }
   };
@@ -76,7 +80,7 @@ const ResetPasswordPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>Reset Password</DocTitle>
           {!token ? (
-            <p className={style.error}>Недійсний або відсутній токен.</p>
+            <p className={style.error}>{t('auth.invalidToken')}</p>
           ) : (
             <div className={style.loginContent}>
               <NavLink to="/">
@@ -86,13 +90,13 @@ const ResetPasswordPage = () => {
                 onSubmit={handleSubmit(onSubmit)}
                 className={style.formContainer}
               >
-                <h2 className={style.formTitle}>Скидання паролю</h2>
+                <h2 className={style.formTitle}>{t('auth.resetPassword')}</h2>
                 <div className={style.inputContainer}>
                   <label className={style.formLabel}>
                     <input
                       className={style.formInput}
                       type={isPasswordVisible ? 'text' : 'password'}
-                      placeholder="Пароль"
+                      placeholder={t('auth.passwordPlaceholder')}
                       {...register('password')}
                     />
                     <button
@@ -112,7 +116,7 @@ const ResetPasswordPage = () => {
                     <input
                       className={style.formInput}
                       type={isPasswordConfirmVisible ? 'text' : 'password'}
-                      placeholder="Підтвердіть пароль"
+                      placeholder={t('auth.confirmPasswordPlaceholder')}
                       {...register('confirmPassword')}
                     />
                     <button
@@ -132,7 +136,7 @@ const ResetPasswordPage = () => {
                   )}
                 </div>
                 <button type="submit" className={style.formBtnSubmit}>
-                  Змінити пароль
+                  {t('auth.changePassword')}
                 </button>
               </form>
             </div>

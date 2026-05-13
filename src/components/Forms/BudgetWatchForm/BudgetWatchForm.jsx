@@ -17,6 +17,7 @@ import {
   resolveWeekRangeValue,
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
+import { useTranslation } from 'react-i18next';
 
 const BudgetWatchForm = ({
   request,
@@ -25,6 +26,7 @@ const BudgetWatchForm = ({
   onCopyCreated,
   formType,
 }) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -82,8 +84,8 @@ const BudgetWatchForm = ({
         setExpenseCategoryOptions(options);
 
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -95,32 +97,32 @@ const BudgetWatchForm = ({
     {
       type: 'text',
       name: 'applicant',
-      label: 'Заявник',
-      validation: { required: 'This field is required' },
+      label: t('labels.applicant'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'project',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'select',
       name: 'period',
-      label: 'Плановий період',
+      label: t('labels.plannedPeriod'),
       options: periods,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       onChange: (value, setValue) => {
         setWeeksOptions(getWeeksOfMonth(value));
         setValue('week', '', { shouldValidate: true });
@@ -130,57 +132,57 @@ const BudgetWatchForm = ({
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('labels.week'),
       options: weeksOptions,
       validation: {
-        required: 'This field is required',
+        required: t('validation.required'),
         validate: value =>
           weeksOptions.some(option => option.value === value) ||
-          'Оберіть тиждень для обраного періоду',
+          t('validation.selectWeekForPeriod'),
       },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'number-number-group',
       number1: {
         name: 'amount_opt',
-        label: 'Оптимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.optimisticAmount'),
+        validation: { required: t('validation.required') },
         readOnly: true,
       },
       number2: {
         name: 'amount_pes',
-        label: 'Песимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.pessimisticAmount'),
+        validation: { required: t('validation.required') },
         readOnly: true,
       },
     },
     {
       type: 'select',
       name: 'currency',
-      label: 'Валюта',
+      label: t('labels.currency'),
       options: currencyOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
+      label: t('labels.comment'),
       readOnly: true,
     },
   ];
 
   const buttons = [
     {
-      label: 'Зробити копію',
+      label: t('actions.copy'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -195,22 +197,22 @@ const BudgetWatchForm = ({
           <ul className={style.commentsList}>
             {request.applicant_comment && (
               <li className={style.commentApplicant}>
-                Коментар заявника: {request.applicant_comment}
+                {t('labels.applicantComment')}: {request.applicant_comment}
               </li>
             )}
             {request.finance_comment && (
               <li className={style.commentFinance}>
-                Коментар фінанси: {request.finance_comment}
+                {t('labels.financeComment')}: {request.finance_comment}
               </li>
             )}
             {request.ceo_comment && (
               <li className={style.commentCeo}>
-                Коментар CEO/COO/CFO: {request.ceo_comment}
+                {t('labels.ceoComment')}: {request.ceo_comment}
               </li>
             )}
           </ul>
           <Form
-            title="Перегляд бюджету"
+            title={t('forms.watchBudget')}
             fields={fields}
             buttons={formType === 'all' ? [] : buttons}
             onSubmit={async data => {
@@ -242,9 +244,9 @@ const BudgetWatchForm = ({
                   await onRefresh();
                   closeModal();
                 }
-                Notify.success('Бюджет створено!');
+                Notify.success(t('notifications.budgetCreated'));
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                Notify.failure(t('notifications.genericError'));
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);

@@ -16,10 +16,13 @@ import {
   postContractors,
 } from '../../../helpers/axios/contractors';
 import Loader from '../../Loader/Loader';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const refundIds = [15, 16, 17, 18, 19];
 
 const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -73,8 +76,8 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
           label: e.name,
         }));
         setContractorsOptions(contractorSelector);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -102,57 +105,57 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
     {
       type: 'autocomplete-select',
       name: 'project_id',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-select',
       name: 'payment_form_id',
-      label: 'Форма оплати',
+      label: t('labels.paymentForm'),
       options: paymentFormOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'autocomplete-input',
       name: 'contractor_id',
-      label: 'Контрагент',
+      label: t('labels.contractor'),
       options: contractorsOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'text',
       name: 'payment_details',
-      label: 'Реквізити',
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentDetails'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати(тільки вт. або чт.)',
+      label: t('labels.paymentDateRestricted'),
       validation: {
-        required: 'This field is required',
+        required: t('validation.required'),
         validate: value => {
-          if (!value) return "Дата обов'язкова";
+          if (!value) return t('validation.dateRequired');
           const selected = new Date(value);
           const today = new Date();
           today.setHours(0, 0, 0, 0);
-          if (selected < today) return 'Неможна обрати минулу дату';
+          if (selected < today) return t('validation.pastDateNotAllowed');
           const day = selected.getDay();
-          if (day !== 2 && day !== 4) return 'Можна обрати тільки Вт або Чт';
+          if (day !== 2 && day !== 4) return t('validation.onlyTueOrThu');
           return true;
         },
       },
@@ -161,39 +164,39 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
     {
       type: 'autocomplete-select',
       name: 'payment_period',
-      label: 'Період оплати',
-      options: periodOptions,
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentPeriod'),
+      options: translateOptions(periodOptions, t),
+      validation: { required: t('validation.required') },
     },
     {
       type: 'number-select-group',
       number: {
         name: 'amount',
-        label: 'Сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.amount'),
+        validation: { required: t('validation.required') },
       },
       select: {
         name: 'currency_id',
-        label: 'Валюта',
+        label: t('labels.currency'),
         options: currencyOptions,
-        validation: { required: 'This field is required' },
+        validation: { required: t('validation.required') },
       },
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
+      label: t('labels.comment'),
     },
     {
       type: 'file',
       name: 'files',
-      label: 'Файли',
+      label: t('labels.files'),
     },
   ];
 
   const buttons = [
     {
-      label: 'Створити',
+      label: t('actions.create'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -206,7 +209,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       ) : (
         <div className={style.newContainer}>
           <Form
-            title="Створити заявку"
+            title={t('forms.createRequest')}
             fields={fields}
             buttons={buttons}
             onSubmit={async data => {
@@ -254,9 +257,9 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
                 await createRequest(formData);
                 onRefresh();
                 closeModal();
-                Notify.success('Нову заявку створено!');
+                Notify.success(t('notifications.requestCreated'));
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                Notify.failure(t('notifications.genericError'));
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);

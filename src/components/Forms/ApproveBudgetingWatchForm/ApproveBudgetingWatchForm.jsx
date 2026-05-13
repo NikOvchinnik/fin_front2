@@ -32,7 +32,7 @@ const ApproveBudgetingWatchForm = ({
       try {
         setWeeksOptions(defaultWeeks);
       } catch {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
@@ -44,7 +44,7 @@ const ApproveBudgetingWatchForm = ({
       name: 'status',
       label: t('labels.status'),
       options: translateOptions(approveBudgetingStatus, t),
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
@@ -52,14 +52,14 @@ const ApproveBudgetingWatchForm = ({
       name: 'week',
       label: t('labels.week'),
       options: weeksOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
-      validation: { required: 'This field is required' },
+      label: t('labels.comment'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
   ];
@@ -69,22 +69,22 @@ const ApproveBudgetingWatchForm = ({
       <ul className={style.commentsList}>
         {request.applicant_comment && (
           <li className={style.commentApplicant}>
-            Коментар заявника: {request.applicant_comment}
+            {t('labels.applicantComment')}: {request.applicant_comment}
           </li>
         )}
         {request.finance_comment && (
           <li className={style.commentFinance}>
-            Коментар фінанси: {request.finance_comment}
+            {t('labels.financeComment')}: {request.finance_comment}
           </li>
         )}
         {request.ceo_comment && (
           <li className={style.commentCeo}>
-            Коментар CEO/COO/CFO: {request.ceo_comment}
+            {t('labels.ceoComment')}: {request.ceo_comment}
           </li>
         )}
       </ul>
       <Form
-        title="Перегляд заявки"
+        title={t('forms.watchBudget')}
         fields={fields}
         defaultValues={{
           status: request.status?.id,

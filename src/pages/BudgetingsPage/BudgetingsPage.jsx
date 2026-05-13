@@ -28,7 +28,6 @@ import {
 import {
   getBudgetingStatusStyle,
   getActiveBudgetingStatus,
-  getShortBudgetingStatus,
   statusSelectorBudgetingFin,
   approveBudgetingStatusFin,
   approveBudgetingStatusCEO,
@@ -42,7 +41,10 @@ import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveF
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
-import { translateOptions } from '../../helpers/i18nOptions';
+import {
+  translateBudgetingStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
 import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
 
 const BudgetingsPage = () => {
@@ -526,7 +528,7 @@ const BudgetingsPage = () => {
             color: getBudgetingStatusStyle(request.status?.id).color,
           }}
         >
-          {getShortBudgetingStatus(request.status?.name)}
+          {translateBudgetingStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status?.name || '',

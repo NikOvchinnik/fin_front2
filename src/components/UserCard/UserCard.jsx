@@ -6,8 +6,10 @@ import { Link } from 'react-router-dom';
 import UserEditForm from '../Forms/UserEditForm/UserEditForm';
 import { Notify } from 'notiflix';
 import { UserRole } from '../../helpers/enums';
+import { useTranslation } from 'react-i18next';
 
 const UserCard = ({ user, onRefresh, userRole }) => {
+  const { t } = useTranslation();
   const [isModalOpen, setModalIsOpen] = useState(false);
 
   const openModal = () => {
@@ -31,7 +33,7 @@ const UserCard = ({ user, onRefresh, userRole }) => {
     ) {
       openModal();
     } else {
-      Notify.warning('Ви не можете редагувати користувача');
+      Notify.warning(t('notifications.cannotEditUser'));
     }
   };
 

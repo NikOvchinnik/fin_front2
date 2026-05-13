@@ -2,15 +2,10 @@ import { useMemo, useState } from 'react';
 import { Notify } from 'notiflix';
 import style from './GoogleSheetImportForm.module.css';
 import { importFromGoogleSheet } from '../../../helpers/axios/imports';
+import { useTranslation } from 'react-i18next';
 
 const GOOGLE_SHEET_URL_REGEXP =
   /^https?:\/\/docs\.google\.com\/spreadsheets\/d\/[A-Za-z0-9_-]+(?:\/.*)?$/;
-
-const IMPORT_STATUS_LABEL = {
-  success: 'Успішно',
-  partial_success: 'Частково успішно',
-  failed: 'Неуспішно',
-};
 
 const IMPORT_STATUS_CLASS = {
   success: 'statusSuccess',
@@ -18,29 +13,30 @@ const IMPORT_STATUS_CLASS = {
   failed: 'statusFailed',
 };
 
-const getErrorMessage = error => {
+const getErrorMessage = (error, t) => {
   return (
     error?.response?.data?.message ||
     error?.response?.data?.error ||
-    'Сталася помилка імпорту, спробуйте ще раз'
+    t('import.error')
   );
 };
 
-const flattenTabErrors = tabs =>
+const flattenTabErrors = (tabs, t) =>
   (tabs || []).flatMap(tab =>
     (tab.errors || []).map(error => ({
       tabName: tab.tab_name || '-',
       rowNumber: error.row_number ?? '-',
-      message: error.message || 'Помилка валідації',
+      message: error.message || t('import.validationError'),
     }))
   );
 
 const GoogleSheetImportForm = ({
-  title = 'Імпорт з Google Sheets',
+  title,
   importType,
   closeModal,
   onImported,
 }) => {
+  const { t } = useTranslation();
   const [sheetUrl, setSheetUrl] = useState('');
   const [result, setResult] = useState(null);
   const [formError, setFormError] = useState('');
@@ -48,8 +44,8 @@ const GoogleSheetImportForm = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const flattenedErrors = useMemo(
-    () => flattenTabErrors(result?.tabs),
-    [result?.tabs]
+    () => flattenTabErrors(result?.tabs, t),
+    [result?.tabs, t]
   );
 
   const handleSubmit = async event => {
@@ -60,12 +56,12 @@ const GoogleSheetImportForm = ({
     setRequestError('');
 
     if (!trimmedUrl) {
-      setFormError('Вкажіть посилання на Google Sheets');
+      setFormError(t('import.urlRequired'));
       return;
     }
 
     if (!GOOGLE_SHEET_URL_REGEXP.test(trimmedUrl)) {
-      setFormError('Вкажіть валідне посилання Google Sheets');
+      setFormError(t('import.invalidUrl'));
       return;
     }
 
@@ -80,11 +76,11 @@ const GoogleSheetImportForm = ({
       setResult(response);
 
       if (response.status === 'success') {
-        Notify.success('Імпорт виконано успішно');
+        Notify.success(t('import.success'));
       } else if (response.status === 'partial_success') {
-        Notify.warning('Імпорт виконано частково');
+        Notify.warning(t('import.partial'));
       } else {
-        Notify.failure('Імпорт завершився з помилкою');
+        Notify.failure(t('import.failed'));
       }
 
       if (
@@ -94,7 +90,7 @@ const GoogleSheetImportForm = ({
         await onImported();
       }
     } catch (error) {
-      const message = getErrorMessage(error);
+      const message = getErrorMessage(error, t);
       setRequestError(message);
       Notify.failure(message);
     } finally {
@@ -104,11 +100,11 @@ const GoogleSheetImportForm = ({
 
   return (
     <div className={style.container}>
-      <h2 className={style.title}>{title}</h2>
+      <h2 className={style.title}>{title || t('import.title')}</h2>
 
       <form className={style.form} onSubmit={handleSubmit}>
         <label className={style.label} htmlFor={`sheet-url-${importType}`}>
-          Посилання на Google Sheets
+          {t('import.sheetUrl')}
         </label>
         <input
           id={`sheet-url-${importType}`}
@@ -133,7 +129,7 @@ const GoogleSheetImportForm = ({
             className={style.submitBtn}
             disabled={isSubmitting}
           >
-            {isSubmitting ? 'Імпортуємо...' : 'Імпортувати'}
+            {isSubmitting ? t('actions.importing') : t('actions.import')}
           </button>
           <button
             type="button"
@@ -141,7 +137,7 @@ const GoogleSheetImportForm = ({
             disabled={isSubmitting}
             onClick={closeModal}
           >
-            Закрити
+            {t('common.close')}
           </button>
         </div>
       </form>
@@ -154,7 +150,13 @@ const GoogleSheetImportForm = ({
                 style[IMPORT_STATUS_CLASS[result.status] || 'statusFailed']
               }`}
             >
-              {IMPORT_STATUS_LABEL[result.status] || result.status}
+              {t(
+                result.status === 'success'
+                  ? 'import.statusSuccess'
+                  : result.status === 'partial_success'
+                  ? 'import.statusPartial'
+                  : 'import.statusFailed'
+              )}
             </span>
             {result.job_id != null && (
               <span className={style.jobId}>Job ID: {result.job_id}</span>
@@ -163,19 +165,19 @@ const GoogleSheetImportForm = ({
 
           <div className={style.summaryGrid}>
             <div className={style.summaryItem}>
-              <p className={style.summaryLabel}>Всього рядків</p>
+              <p className={style.summaryLabel}>{t('import.totalRows')}</p>
               <p className={style.summaryValue}>
                 {result.summary?.total_rows ?? 0}
               </p>
             </div>
             <div className={style.summaryItem}>
-              <p className={style.summaryLabel}>Імпортовано</p>
+              <p className={style.summaryLabel}>{t('import.imported')}</p>
               <p className={style.summaryValue}>
                 {result.summary?.imported_rows ?? 0}
               </p>
             </div>
             <div className={style.summaryItem}>
-              <p className={style.summaryLabel}>З помилками</p>
+              <p className={style.summaryLabel}>{t('import.failedRows')}</p>
               <p className={style.summaryValue}>
                 {result.summary?.failed_rows ?? 0}
               </p>
@@ -184,14 +186,14 @@ const GoogleSheetImportForm = ({
 
           {flattenedErrors.length > 0 && (
             <div className={style.errorsContainer}>
-              <p className={style.errorsTitle}>Деталі помилок</p>
+              <p className={style.errorsTitle}>{t('import.errorDetails')}</p>
               <div className={style.errorsTableWrapper}>
                 <table className={style.errorsTable}>
                   <thead>
                     <tr>
-                      <th>Вкладка</th>
-                      <th>Рядок</th>
-                      <th>Причина</th>
+                      <th>{t('import.tab')}</th>
+                      <th>{t('import.row')}</th>
+                      <th>{t('import.reason')}</th>
                     </tr>
                   </thead>
                   <tbody>
