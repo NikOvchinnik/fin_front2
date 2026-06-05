@@ -1,9 +1,14 @@
 import dayjs from 'dayjs';
 import {
   changeBuhStatus,
+  changeCeoStatus,
   changeFinStatus,
 } from '../../../helpers/axios/requests';
-import { approveStatusBuh, approveStatusFin } from '../../../helpers/status';
+import {
+  approveStatusBuh,
+  approveStatusCeo,
+  approveStatusFin,
+} from '../../../helpers/status';
 import { FinancialRequestStatus, UserRole } from '../../../helpers/enums';
 import Form from '../../Form/Form';
 import style from './ApproveRequestForm.module.css';
@@ -15,30 +20,35 @@ import { translateOptions } from '../../../helpers/i18nOptions';
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
   const isDeleted = isDeletedRecord(request);
+  const isCeoFlow = userRole === UserRole.CEO;
+  const statusOptions = isCeoFlow
+    ? approveStatusCeo
+    : userRole === UserRole.FINANCE
+    ? approveStatusFin
+    : userRole === UserRole.ACCOUNTANT
+    ? approveStatusBuh
+    : [];
 
   const fields = [
     {
       type: 'select',
       name: 'status',
       label: t('labels.status'),
-      options: translateOptions(
-        userRole === UserRole.FINANCE
-          ? approveStatusFin
-          : userRole === UserRole.ACCOUNTANT
-          ? approveStatusBuh
-          : [],
-        t
-      ),
+      options: translateOptions(statusOptions, t),
       validation: { required: t('validation.required') },
       readOnly: isDeleted,
     },
-    {
-      type: 'date',
-      name: 'payment_date_await',
-      label: t('labels.paymentDeadline'),
-      validation: { required: t('validation.required') },
-      readOnly: isDeleted,
-    },
+    ...(!isCeoFlow
+      ? [
+          {
+            type: 'date',
+            name: 'payment_date_await',
+            label: t('labels.paymentDeadline'),
+            validation: { required: t('validation.required') },
+            readOnly: isDeleted,
+          },
+        ]
+      : []),
     {
       type: 'textarea',
       name: 'comment',
@@ -76,6 +86,11 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
             {t('labels.accountingComment')}: {request.accounting_comment}
           </li>
         )}
+        {request.ceo_comment && (
+          <li className={style.commentFinance}>
+            {t('labels.ceoComment')}: {request.ceo_comment}
+          </li>
+        )}
       </ul>
       <Form
         title={t('forms.approveRequests')}
@@ -87,6 +102,18 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
             return;
           }
           try {
+            if (isCeoFlow) {
+              await changeCeoStatus({
+                id: request.id,
+                ceo_status: Number(data.status),
+                comment: data.comment?.trim() || '',
+              });
+              onRefresh();
+              closeModal();
+              Notify.success(t('notifications.requestStatusChanged'));
+              return;
+            }
+
             const formData = new FormData();
             const backendFieldName =
               userRole === UserRole.FINANCE
@@ -100,10 +127,8 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
             formData.append('comment', data.comment?.trim() || '');
             formData.append('payment_date_await', data.payment_date_await);
 
-            if (userRole === UserRole.FINANCE)
-              await changeFinStatus(formData);
-            if (userRole === UserRole.ACCOUNTANT)
-              await changeBuhStatus(formData);
+            if (userRole === UserRole.FINANCE) await changeFinStatus(formData);
+            if (userRole === UserRole.ACCOUNTANT) await changeBuhStatus(formData);
             onRefresh();
             closeModal();
             Notify.success(t('notifications.requestStatusChanged'));
@@ -113,12 +138,13 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
           }
         }}
         defaultValues={{
-          status:
-            userRole === UserRole.FINANCE
-              ? FinancialRequestStatus.SENT_TO_PAYMENT
-              : userRole === UserRole.ACCOUNTANT
-              ? FinancialRequestStatus.ACCOUNTANT_PAID
-              : '',
+          status: isCeoFlow
+            ? FinancialRequestStatus.SENT_TO_PAYMENT
+            : userRole === UserRole.FINANCE
+            ? FinancialRequestStatus.SENT_TO_PAYMENT
+            : userRole === UserRole.ACCOUNTANT
+            ? FinancialRequestStatus.ACCOUNTANT_PAID
+            : '',
           comment: '',
           payment_date_await:
             request.payment_date_await || dayjs().format('YYYY-MM-DD'),

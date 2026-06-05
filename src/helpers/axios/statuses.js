@@ -16,6 +16,14 @@ export const getMainStatuses = async () => {
   }
 };
 
+export const getCeoStatuses = async () => {
+  try {
+    return await axios.get('/api/status/statuses-for-ceo');
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getBuhStatuses = async () => {
   try {
     return await axios.get('/api/status/statuses-for-buh');

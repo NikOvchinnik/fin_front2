@@ -7,6 +7,7 @@ export const FinancialStatusFilter = Object.freeze({
   ALL: FILTER_ALL,
   DRAFT: 'draft',
   PENDING_APPROVAL: 'pending_approval',
+  PENDING_EXECUTIVE_APPROVAL: 'pending_executive_approval',
   SENT_TO_PAYMENT: 'sent_to_payment',
   PAID: 'paid',
   AWAITING_DOCUMENTS: 'awaiting_documents',
@@ -27,6 +28,9 @@ export const getStatusStyle = status => {
     case FinancialRequestStatus.PENDING_APPROVAL:
     case 'Очікує затвердження':
       return { color: '#c79a1b' };
+    case FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL:
+    case 'Потребує затвердження CEO/COO/CFO':
+      return { color: '#c79a1b' };
     case FinancialRequestStatus.SENT_TO_PAYMENT:
     case 'Передано на оплату':
       return { color: '#378a9e' };
@@ -44,8 +48,10 @@ export const getStatusStyle = status => {
     case 'Потребує виправлень':
     case FinancialRequestStatus.FINANCE_CANCELED:
     case FinancialRequestStatus.ACCOUNTANT_CANCELED:
+    case FinancialRequestStatus.EXECUTIVE_CANCELED:
     case 'Фінанси: Скасовано':
     case 'Бухгалтер: Скасовано':
+    case 'CEO/COO/CFO: Скасовано':
       return { color: '#c74736' };
     default:
       return { color: '#6c757d' };
@@ -58,6 +64,11 @@ export const statusSelectorFin = [
     value: FinancialStatusFilter.PENDING_APPROVAL,
     label: 'Очікує затвердження',
     labelKey: 'financialStatus.pendingApproval',
+  },
+  {
+    value: FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
   },
   {
     value: FinancialStatusFilter.SENT_TO_PAYMENT,
@@ -133,6 +144,11 @@ export const statusSelectorUser = [
     labelKey: 'financialStatus.pendingApproval',
   },
   {
+    value: FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
+  {
     value: FinancialStatusFilter.SENT_TO_PAYMENT,
     label: 'Передано на оплату',
     labelKey: 'financialStatus.sentToPayment',
@@ -186,6 +202,11 @@ export const approveStatus = [
     labelKey: 'financialStatus.sentToPayment',
   },
   {
+    value: FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
+  {
     value: FinancialRequestStatus.ACCOUNTANT_PAID,
     label: 'Бухгалтер: Сплачено',
     labelKey: 'financialStatus.accountantPaid',
@@ -214,6 +235,11 @@ export const approveStatus = [
     value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
     label: 'Фінанси: Сплачено, очікуються документи',
     labelKey: 'financialStatus.financePaidAwaitingDocuments',
+  },
+  {
+    value: FinancialRequestStatus.EXECUTIVE_CANCELED,
+    label: 'CEO/COO/CFO: Скасовано',
+    labelKey: 'financialStatus.executiveCanceled',
   },
 ];
 
@@ -269,6 +295,11 @@ export const approveStatusFin = [
     label: 'Фінанси: Скасовано',
     labelKey: 'financialStatus.financeCanceled',
   },
+  {
+    value: FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
 ];
 
 export const approveStatusBuh = [
@@ -294,6 +325,24 @@ export const approveStatusBuh = [
   },
 ];
 
+export const approveStatusCeo = [
+  {
+    value: FinancialRequestStatus.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
+  },
+  {
+    value: FinancialRequestStatus.NEEDS_REVISION,
+    label: 'Повернути на допрацювання',
+    labelKey: 'financialStatus.needsRevision',
+  },
+  {
+    value: FinancialRequestStatus.EXECUTIVE_CANCELED,
+    label: 'CEO/COO/CFO: Скасовано',
+    labelKey: 'financialStatus.executiveCanceled',
+  },
+];
+
 export const getShortStatus = statusName => {
   if (!statusName) return '';
   // if (
@@ -314,6 +363,8 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
       return FinancialStatusFilter.DRAFT;
     case FinancialRequestStatus.PENDING_APPROVAL:
       return FinancialStatusFilter.PENDING_APPROVAL;
+    case FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL:
+      return FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL;
     case FinancialRequestStatus.SENT_TO_PAYMENT:
       return FinancialStatusFilter.SENT_TO_PAYMENT;
     case FinancialRequestStatus.FINANCE_PAID:
@@ -326,6 +377,7 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
       return FinancialStatusFilter.NEEDS_REVISION;
     case FinancialRequestStatus.FINANCE_CANCELED:
     case FinancialRequestStatus.ACCOUNTANT_CANCELED:
+    case FinancialRequestStatus.EXECUTIVE_CANCELED:
       return FinancialStatusFilter.CANCELED;
     default:
       break;
@@ -340,7 +392,11 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
     'Бухгалтер: Сплачено, очікуються документи',
   ];
 
-  const canceledStatuses = ['Фінанси: Скасовано', 'Бухгалтер: Скасовано'];
+  const canceledStatuses = [
+    'Фінанси: Скасовано',
+    'Бухгалтер: Скасовано',
+    'CEO/COO/CFO: Скасовано',
+  ];
 
   if (paidStatuses.includes(fallbackStatusName)) {
     return FinancialStatusFilter.PAID;
@@ -360,6 +416,10 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
 
   if (fallbackStatusName === 'Очікує затвердження') {
     return FinancialStatusFilter.PENDING_APPROVAL;
+  }
+
+  if (fallbackStatusName === 'Потребує затвердження CEO/COO/CFO') {
+    return FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL;
   }
 
   if (fallbackStatusName === 'Передано на оплату') {

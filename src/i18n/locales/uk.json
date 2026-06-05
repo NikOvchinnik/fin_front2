@@ -78,6 +78,7 @@
   "nav": {
     "users": "Користувачі",
     "allRequests": "Всі заявки",
+    "executiveApproval": "Затвердження CEO/COO/CFO",
     "myRequests": "Мої заявки",
     "refunds": "Повернення коштів",
     "budgeting": "Бюджетування",
@@ -270,6 +271,7 @@
   "financialStatus": {
     "draft": "Чернетка",
     "pendingApproval": "Очікує затвердження",
+    "pendingExecutiveApproval": "Потребує затвердження CEO/COO/CFO",
     "sentToPayment": "Передано на оплату",
     "paid": "Сплачено",
     "awaitingDocuments": "Очікуються документи",
@@ -281,6 +283,7 @@
     "accountantPaidAwaitingDocuments": "Бухгалтер: Сплачено, очікуються документи",
     "financeCanceled": "Фінанси: Скасовано",
     "accountantCanceled": "Бухгалтер: Скасовано",
+    "executiveCanceled": "CEO/COO/CFO: Скасовано",
     "allDocumentsAdded": "Всі документи додано",
     "awaitingMoreDocuments": "Очікуються ще документи"
   },

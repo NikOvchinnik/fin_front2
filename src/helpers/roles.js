@@ -7,3 +7,5 @@ export const roles = {
   financier: { id: UserRole.FINANCE, label: 'Financiers' },
   accountant: { id: UserRole.ACCOUNTANT, label: 'Accountants' },
 };
+
+export const isExecutiveRole = userRole => Number(userRole) === UserRole.CEO;

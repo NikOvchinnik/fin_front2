@@ -47,6 +47,20 @@ export const getBuhRequests = async ({ startDate, endDate, deleted }) => {
   }
 };
 
+export const getCeoRequests = async ({ startDate, endDate, deleted }) => {
+  try {
+    const params = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+    if (deleted != null) params.deleted = deleted;
+    return await axios.get('/api/financial-request/all-requests-for-ceo', {
+      params,
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getMyRequests = async ({ userId, startDate, endDate, deleted }) => {
   try {
     const params = {};
@@ -163,6 +177,14 @@ export const changeFinStatus = async payload => {
 export const changeBuhStatus = async payload => {
   try {
     return await axios.post('/api/financial-request/change-status-by-buh', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changeCeoStatus = async payload => {
+  try {
+    return await axios.post('/api/financial-request/change-status-by-ceo', payload);
   } catch (error) {
     throw error;
   }

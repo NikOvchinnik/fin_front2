@@ -78,6 +78,7 @@
   "nav": {
     "users": "Users",
     "allRequests": "All requests",
+    "executiveApproval": "CEO/COO/CFO approval",
     "myRequests": "My requests",
     "refunds": "Refunds",
     "budgeting": "Budgeting",
@@ -99,6 +100,7 @@
   "financialStatus": {
     "draft": "Draft",
     "pendingApproval": "Pending approval",
+    "pendingExecutiveApproval": "Needs CEO/COO/CFO approval",
     "sentToPayment": "Sent for payment",
     "paid": "Paid",
     "awaitingDocuments": "Awaiting documents",
@@ -110,6 +112,7 @@
     "accountantPaidAwaitingDocuments": "Accountant: Paid, awaiting documents",
     "financeCanceled": "Finance: Canceled",
     "accountantCanceled": "Accountant: Canceled",
+    "executiveCanceled": "CEO/COO/CFO: Canceled",
     "allDocumentsAdded": "All documents added",
     "awaitingMoreDocuments": "More documents expected"
   },

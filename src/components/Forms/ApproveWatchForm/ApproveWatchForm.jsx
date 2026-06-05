@@ -50,6 +50,11 @@ const ApproveWatchForm = ({ request }) => {
             {t('labels.accountingComment')}: {request.accounting_comment}
           </li>
         )}
+        {request.ceo_comment && (
+          <li className={style.commentFinance}>
+            {t('labels.ceoComment')}: {request.ceo_comment}
+          </li>
+        )}
       </ul>
       <Form
         title={t('forms.watchRequest')}

@@ -9,6 +9,8 @@ import {
   selectUserRole,
 } from './redux/auth/selectors';
 import LayoutSideBar from './components/LayoutSideBar/LayoutSideBar';
+import { UserRole } from './helpers/enums';
+import { isExecutiveRole } from './helpers/roles';
 
 const HomePage = lazy(() => import('./pages/HomePage/HomePage'));
 const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage/ResetPasswordPage'));
@@ -17,6 +19,7 @@ const App = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const userId = useSelector(selectUserId);
   const userRole = useSelector(selectUserRole);
+  const isExecutiveUser = isExecutiveRole(userRole);
 
   const filteredRoutes = routesConfig.filter(route => {
     if (
@@ -26,10 +29,17 @@ const App = () => {
       return false;
     }
 
-    return route.roles.includes(userRole);
+    return (
+      route.roles.includes(userRole) ||
+      (isExecutiveUser && route.roles.includes(UserRole.CEO))
+    );
   });
 
   const renderRootComponent = role => {
+    if (isExecutiveUser) {
+      return <Navigate to={`requests`} />;
+    }
+
     switch (role) {
       case 1:
         return <Navigate to={`requests`} />;  //CEO/COO/CFO

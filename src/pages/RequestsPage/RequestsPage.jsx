@@ -3,7 +3,11 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './RequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getBuhRequests, getFinRequests } from '../../helpers/axios/requests';
+import {
+  getBuhRequests,
+  getCeoRequests,
+  getFinRequests,
+} from '../../helpers/axios/requests';
 import {
   getCurrencies,
   getExpenseCategories,
@@ -30,6 +34,7 @@ import Form from '../../components/Form/Form';
 import { getProjects } from '../../helpers/axios/projects';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import ApproveRequestForm from '../../components/Forms/ApproveRequestForm/ApproveRequestForm';
 import ApproveWatchForm from '../../components/Forms/ApproveWatchForm/ApproveWatchForm';
@@ -46,6 +51,7 @@ import {
   translateFinancialStatus,
   translateOptions,
 } from '../../helpers/i18nOptions';
+import { isExecutiveRole } from '../../helpers/roles';
 
 const RequestsPage = () => {
   const { t } = useTranslation();
@@ -90,6 +96,13 @@ const RequestsPage = () => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+  const location = useLocation();
+  const isExecutiveUser = isExecutiveRole(userRole);
+  const isExecutiveApprovalPage =
+    location.pathname === '/executive-requests';
+  const canBulkEditRequests =
+    !isExecutiveApprovalPage &&
+    [UserRole.FINANCE, UserRole.ACCOUNTANT].includes(userRole);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
@@ -101,16 +114,22 @@ const RequestsPage = () => {
     [dataRequests]
   );
 
-  const canEditRequestStatus = (statusId, role, request) => {
-    if (isDeletedRecord(request)) return false;
-    if (role === UserRole.FINANCE) {
-      return statusId === FinancialRequestStatus.PENDING_APPROVAL;
-    }
-    if (role === UserRole.ACCOUNTANT) {
-      return statusId === FinancialRequestStatus.SENT_TO_PAYMENT;
-    }
-    return false;
-  };
+  const canEditRequestStatus = useCallback(
+    (statusId, role, request) => {
+      if (isDeletedRecord(request)) return false;
+      if (isExecutiveApprovalPage && isExecutiveUser) {
+        return statusId === FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL;
+      }
+      if (role === UserRole.FINANCE) {
+        return statusId === FinancialRequestStatus.PENDING_APPROVAL;
+      }
+      if (role === UserRole.ACCOUNTANT) {
+        return statusId === FinancialRequestStatus.SENT_TO_PAYMENT;
+      }
+      return false;
+    },
+    [isExecutiveApprovalPage, isExecutiveUser]
+  );
 
   const canSendFilesForStatus = (statusId, request) =>
     !isDeletedRecord(request) &&
@@ -118,6 +137,7 @@ const RequestsPage = () => {
       statusId === FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS);
 
   const hasBulkRestrictedSelection = useMemo(() => {
+    if (!canBulkEditRequests) return false;
     if (!selectedIds.size) return false;
 
     for (const id of selectedIds) {
@@ -127,7 +147,13 @@ const RequestsPage = () => {
     }
 
     return false;
-  }, [selectedIds, requestById, userRole]);
+  }, [
+    canBulkEditRequests,
+    selectedIds,
+    requestById,
+    userRole,
+    canEditRequestStatus,
+  ]);
 
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -206,7 +232,13 @@ const RequestsPage = () => {
     try {
       setLoadingTable(true);
       let requests;
-      if (userRole === UserRole.ACCOUNTANT) {
+      if (isExecutiveApprovalPage && isExecutiveUser) {
+        requests = await getCeoRequests({
+          startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
+          endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
+        });
+      } else if (userRole === UserRole.ACCOUNTANT) {
         requests = await getBuhRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
@@ -279,7 +311,15 @@ const RequestsPage = () => {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [userRole, startDate, endDate, activeStatus, t]);
+  }, [
+    userRole,
+    isExecutiveUser,
+    isExecutiveApprovalPage,
+    startDate,
+    endDate,
+    activeStatus,
+    t,
+  ]);
 
   useEffect(() => {
     fetchData();
@@ -646,11 +686,11 @@ const RequestsPage = () => {
         <span
           style={{
             borderLeft: `4px solid ${
-              getStatusStyle(request.status?.name).color
+              getStatusStyle(request.status).color
             }`,
             paddingLeft: '6px',
             fontWeight: '700',
-            color: getStatusStyle(request.status?.name).color,
+            color: getStatusStyle(request.status).color,
           }}
         >
           {translateFinancialStatus(request.status, t)}
@@ -661,11 +701,18 @@ const RequestsPage = () => {
         <div className={style.actionContainer}>
           {!isDeletedRecord(request) &&
             (userRole === UserRole.FINANCE ||
-              userRole === UserRole.ACCOUNTANT) && (
+              userRole === UserRole.ACCOUNTANT ||
+              (isExecutiveApprovalPage && isExecutiveUser)) && (
             <button
               className={style.editBtn}
               onClick={() => {
-                if (canEditRequestStatus(request.status?.id, userRole, request)) {
+                if (
+                  canEditRequestStatus(
+                    request.status?.id ?? request.status_id,
+                    userRole,
+                    request
+                  )
+                ) {
                   setSelectedRequest(request);
                   openModal();
                 } else {
@@ -714,6 +761,10 @@ const RequestsPage = () => {
     sortConfig,
     selectedExpenseCategorie,
     userRole,
+    isExecutiveApprovalPage,
+    isExecutiveUser,
+    canEditRequestStatus,
+    t,
   ]);
 
   const totals = useMemo(() => {
@@ -739,26 +790,28 @@ const RequestsPage = () => {
     return { totalsByCurrency, totalUAH };
   }, [requestsRows]);
 
+  const selectColumn = {
+    accessorKey: 'select',
+    header: (
+      <Checkbox
+        checked={isAllSelectedOnPage}
+        indeterminate={isSomeSelectedOnPage}
+        onChange={toggleAllOnPage}
+        onClick={e => e.stopPropagation()}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={selectedIds.has(row.original.request_id_plain)}
+        disabled={row.original.is_deleted_plain}
+        onChange={() => toggleRow(row.original.request_id_plain)}
+        onClick={e => e.stopPropagation()}
+      />
+    ),
+  };
+
   const columns = [
-    {
-      accessorKey: 'select',
-      header: (
-        <Checkbox
-          checked={isAllSelectedOnPage}
-          indeterminate={isSomeSelectedOnPage}
-          onChange={toggleAllOnPage}
-          onClick={e => e.stopPropagation()}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedIds.has(row.original.request_id_plain)}
-          disabled={row.original.is_deleted_plain}
-          onChange={() => toggleRow(row.original.request_id_plain)}
-          onClick={e => e.stopPropagation()}
-        />
-      ),
-    },
+    ...(canBulkEditRequests ? [selectColumn] : []),
     {
       accessorKey: 'request_id',
       header: (
@@ -1121,7 +1174,9 @@ const RequestsPage = () => {
   };
 
   const bulkStatusOptions = translateOptions(
-    userRole === UserRole.FINANCE
+    !canBulkEditRequests
+      ? []
+      : userRole === UserRole.FINANCE
       ? approveStatusFin
       : userRole === UserRole.ACCOUNTANT
       ? approveStatusBuh
@@ -1340,7 +1395,7 @@ const RequestsPage = () => {
                   </li>
                 ))}
               </ul>
-              {selectedIds.size > 0 && (
+              {canBulkEditRequests && selectedIds.size > 0 && (
                 <div className={style.bulkActionsInline}>
                   <button
                     className={style.bulkEditButton}
@@ -1416,7 +1471,7 @@ const RequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}
-              userRole={userRole}
+              userRole={isExecutiveApprovalPage ? UserRole.CEO : userRole}
             />
           </ModalWindow>
           <ModalWindow

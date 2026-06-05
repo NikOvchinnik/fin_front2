@@ -3,6 +3,8 @@ import { BudgetingStatus, FinancialRequestStatus } from './enums';
 const financialStatusKeyById = {
   [FinancialRequestStatus.DRAFT]: 'financialStatus.draft',
   [FinancialRequestStatus.PENDING_APPROVAL]: 'financialStatus.pendingApproval',
+  [FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL]:
+    'financialStatus.pendingExecutiveApproval',
   [FinancialRequestStatus.NEEDS_REVISION]: 'financialStatus.needsRevision',
   [FinancialRequestStatus.SENT_TO_PAYMENT]: 'financialStatus.sentToPayment',
   [FinancialRequestStatus.ACCOUNTANT_PAID]: 'financialStatus.accountantPaid',
@@ -14,11 +16,15 @@ const financialStatusKeyById = {
   [FinancialRequestStatus.FINANCE_PAID]: 'financialStatus.financePaid',
   [FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS]:
     'financialStatus.financePaidAwaitingDocuments',
+  [FinancialRequestStatus.EXECUTIVE_CANCELED]:
+    'financialStatus.executiveCanceled',
 };
 
 const financialStatusKeyByName = {
   Чернетка: 'financialStatus.draft',
   'Очікує затвердження': 'financialStatus.pendingApproval',
+  'Потребує затвердження CEO/COO/CFO':
+    'financialStatus.pendingExecutiveApproval',
   'Потребує виправлень': 'financialStatus.needsRevision',
   'Передано на оплату': 'financialStatus.sentToPayment',
   'Бухгалтер: Сплачено': 'financialStatus.accountantPaid',
@@ -29,6 +35,7 @@ const financialStatusKeyByName = {
   'Фінанси: Сплачено': 'financialStatus.financePaid',
   'Фінанси: Сплачено, очікуються документи':
     'financialStatus.financePaidAwaitingDocuments',
+  'CEO/COO/CFO: Скасовано': 'financialStatus.executiveCanceled',
 };
 
 const budgetingStatusKeyById = {
