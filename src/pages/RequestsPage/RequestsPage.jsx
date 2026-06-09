@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import {
   getActiveStatus,
   getStatusStyle,
+  FinancialStatusFilter,
   statusSelectorBuh,
   statusSelectorFin,
   approveStatusFin,
@@ -34,7 +35,6 @@ import Form from '../../components/Form/Form';
 import { getProjects } from '../../helpers/axios/projects';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import ApproveRequestForm from '../../components/Forms/ApproveRequestForm/ApproveRequestForm';
 import ApproveWatchForm from '../../components/Forms/ApproveWatchForm/ApproveWatchForm';
@@ -96,12 +96,12 @@ const RequestsPage = () => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
-  const location = useLocation();
   const isExecutiveUser = isExecutiveRole(userRole);
-  const isExecutiveApprovalPage =
-    location.pathname === '/executive-requests';
+  const isExecutiveApprovalMode =
+    isExecutiveUser &&
+    activeStatus === FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL;
   const canBulkEditRequests =
-    !isExecutiveApprovalPage &&
+    !isExecutiveApprovalMode &&
     [UserRole.FINANCE, UserRole.ACCOUNTANT].includes(userRole);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
@@ -117,7 +117,7 @@ const RequestsPage = () => {
   const canEditRequestStatus = useCallback(
     (statusId, role, request) => {
       if (isDeletedRecord(request)) return false;
-      if (isExecutiveApprovalPage && isExecutiveUser) {
+      if (isExecutiveApprovalMode) {
         return statusId === FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL;
       }
       if (role === UserRole.FINANCE) {
@@ -128,7 +128,7 @@ const RequestsPage = () => {
       }
       return false;
     },
-    [isExecutiveApprovalPage, isExecutiveUser]
+    [isExecutiveApprovalMode]
   );
 
   const canSendFilesForStatus = (statusId, request) =>
@@ -232,7 +232,7 @@ const RequestsPage = () => {
     try {
       setLoadingTable(true);
       let requests;
-      if (isExecutiveApprovalPage && isExecutiveUser) {
+      if (isExecutiveApprovalMode) {
         requests = await getCeoRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
@@ -313,8 +313,7 @@ const RequestsPage = () => {
     }
   }, [
     userRole,
-    isExecutiveUser,
-    isExecutiveApprovalPage,
+    isExecutiveApprovalMode,
     startDate,
     endDate,
     activeStatus,
@@ -702,7 +701,7 @@ const RequestsPage = () => {
           {!isDeletedRecord(request) &&
             (userRole === UserRole.FINANCE ||
               userRole === UserRole.ACCOUNTANT ||
-              (isExecutiveApprovalPage && isExecutiveUser)) && (
+              isExecutiveApprovalMode) && (
             <button
               className={style.editBtn}
               onClick={() => {
@@ -761,8 +760,7 @@ const RequestsPage = () => {
     sortConfig,
     selectedExpenseCategorie,
     userRole,
-    isExecutiveApprovalPage,
-    isExecutiveUser,
+    isExecutiveApprovalMode,
     canEditRequestStatus,
     t,
   ]);
@@ -1471,7 +1469,7 @@ const RequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}
-              userRole={isExecutiveApprovalPage ? UserRole.CEO : userRole}
+              userRole={isExecutiveApprovalMode ? UserRole.CEO : userRole}
             />
           </ModalWindow>
           <ModalWindow

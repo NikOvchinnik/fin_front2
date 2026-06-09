@@ -11,8 +11,6 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../../redux/auth/slice';
 import { useTranslation } from 'react-i18next';
-import { UserRole } from '../../helpers/enums';
-import { isExecutiveRole } from '../../helpers/roles';
 
 const SideBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -26,7 +24,6 @@ const SideBar = () => {
   const userRole = useSelector(selectUserRole);
   const userName = useSelector(selectUserName);
   const userId = useSelector(selectUserId);
-  const isExecutiveUser = isExecutiveRole(userRole);
 
   const dispatch = useDispatch();
   const location = useLocation();
@@ -55,11 +52,7 @@ const SideBar = () => {
   };
 
   const filteredPages = getNavSideBar(userId)
-    .filter(
-      item =>
-        item.roles.includes(userRole) ||
-        (isExecutiveUser && item.roles.includes(UserRole.CEO))
-    )
+    .filter(item => item.roles.includes(userRole))
     .flatMap(item => item.pages);
 
   const toggleSubmenu = index => {

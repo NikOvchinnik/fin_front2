@@ -32,12 +32,6 @@ export const getNavSideBar = userId => {
           icon: 'files',
         },
         {
-          page: 'Затвердження CEO/COO/CFO',
-          pageKey: 'nav.executiveApproval',
-          link: `/executive-requests`,
-          icon: 'files',
-        },
-        {
           page: 'Мої заявки',
           pageKey: 'nav.myRequests',
           link: `/my-requests`,

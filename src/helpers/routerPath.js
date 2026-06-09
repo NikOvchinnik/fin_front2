@@ -13,11 +13,6 @@ const routesConfig = [
     element: lazy(() => import('../pages/RequestsPage/RequestsPage')),
   },
   {
-    path: 'executive-requests',
-    roles: [UserRole.CEO],
-    element: lazy(() => import('../pages/RequestsPage/RequestsPage')),
-  },
-  {
     path: 'my-requests',
     roles: [
       UserRole.CEO,
