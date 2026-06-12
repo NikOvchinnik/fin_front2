@@ -41,6 +41,8 @@ const App = () => {
         return <Navigate to={`requests`} />; //Фінансист
       case 5:
         return <Navigate to={`requests`} />; //Бухгалтер
+      case 6:
+        return <Navigate to={`employees`} />; //Кадровик
       default:
         return <HomePage />;
     }

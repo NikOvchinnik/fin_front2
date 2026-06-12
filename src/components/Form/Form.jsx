@@ -23,6 +23,7 @@ const Form = ({
   fields,
   buttons = [],
   onSubmit,
+  onInvalid,
   defaultValues,
   styleForm = 'formContainer',
   fontSize = 16,
@@ -813,7 +814,10 @@ const Form = ({
   return (
     <ThemeProvider theme={theme}>
       {title && <h2 className={style.title}>{title}</h2>}
-      <form className={style[styleForm]} onSubmit={handleSubmit(onSubmit)}>
+      <form
+        className={style[styleForm]}
+        onSubmit={handleSubmit(onSubmit, onInvalid)}
+      >
         {fields.map((field, index) => (
           <div key={index} className={style.inputContainer}>
             {renderField(field)}

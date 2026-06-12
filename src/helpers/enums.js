@@ -4,6 +4,7 @@ export const UserRole = Object.freeze({
   APPLICANT: 3,
   FINANCE: 4,
   ACCOUNTANT: 5,
+  HR: 6,
 });
 
 export const BudgetingStatus = Object.freeze({

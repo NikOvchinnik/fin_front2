@@ -413,5 +413,16 @@ export const getNavSideBar = userId => {
         },
       ],
     },
+    {
+      roles: [UserRole.HR],
+      pages: [
+        {
+          page: 'Співробітники',
+          pageKey: 'nav.employees',
+          link: `/employees`,
+          icon: 'users',
+        },
+      ],
+    },
   ];
 };

@@ -1,0 +1,229 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.2;
+  color: var(--heading-text);
+}
+
+.subtitle {
+  margin-top: 6px;
+  color: var(--main-text);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primaryBtn,
+.secondaryBtn,
+.historyBtn,
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  min-height: 40px;
+  transition: all 0.3s ease;
+}
+
+.primaryBtn,
+.secondaryBtn {
+  gap: 8px;
+  padding: 8px 14px;
+  font-weight: 500;
+}
+
+.primaryBtn {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.primaryBtn:hover,
+.primaryBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.secondaryBtn {
+  border: 1px solid var(--button);
+  color: var(--button);
+}
+
+.secondaryBtn:hover,
+.secondaryBtn:focus {
+  border-color: var(--button-hover);
+  color: var(--button-hover);
+}
+
+.btnIcon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+.plus {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  background-color: var(--white);
+}
+
+.summaryItem span {
+  font-size: 13px;
+  color: #777;
+}
+
+.summaryItem strong {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--heading-text);
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--reset-button);
+  color: var(--reset-button);
+  fill: currentColor;
+}
+
+.iconBtn:hover,
+.iconBtn:focus {
+  border-color: var(--reset-button-hover);
+  color: var(--reset-button-hover);
+}
+
+.actionIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.historyBtn {
+  border: 1px solid var(--border-hover);
+  color: var(--main-text);
+  padding: 0 10px;
+}
+
+.historyBtn:hover,
+.historyBtn:focus {
+  border-color: var(--main-text);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: flex-start;
+  border: 1px dashed var(--border-hover);
+  border-radius: 8px;
+  padding: 20px;
+  background-color: var(--white);
+}
+
+.historyModal {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(92vw, 620px);
+  padding: 24px;
+}
+
+.historyModal h2 {
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--modal-title);
+  text-align: center;
+}
+
+.historyEmployee {
+  color: var(--heading-text);
+  font-weight: 600;
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.historyItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.historyMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #777;
+  font-size: 13px;
+}
+
+.emptyHistory {
+  color: #777;
+}
+
+@media screen and (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .headerActions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .mainContainer {
+    gap: 24px;
+  }
+
+  .title {
+    font-size: 32px;
+  }
+}
+
