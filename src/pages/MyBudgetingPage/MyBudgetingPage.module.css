@@ -167,7 +167,7 @@
 }
 
 .statuscontainer {
-  display: flex;
+  display: inline-flex;
   justify-content: flex-start;
   flex-wrap: nowrap;
   gap: 4px;
@@ -176,7 +176,8 @@
   background: var(--toggle-lang-background);
   overflow-x: auto;
   overflow-y: hidden;
-  width: 100%;
+  width: fit-content;
+  max-width: 100%;
   scrollbar-width: thin;
 }
 

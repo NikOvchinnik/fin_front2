@@ -11,11 +11,7 @@ import { loginSuccess } from '../../redux/auth/slice';
 import { loginUser } from '../../helpers/axios/users';
 import ResetPassword from '../Forms/ResetPassword/ResetPassword';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
-
-const schemaYup = Yup.object().shape({
-  login: Yup.string().required('*вкажіть ваш email'),
-  password: Yup.string().required('*вкажіть ваш пароль'),
-});
+import { useTranslation } from 'react-i18next';
 
 const defaultValues = {
   login: '',
@@ -23,6 +19,7 @@ const defaultValues = {
 };
 
 const LoginForm = () => {
+  const { t } = useTranslation();
   const dispatch = useDispatch();
   const [isPasswordVisible, setPasswordVisible] = useState(false);
   const [showEmailTooltip, setShowEmailTooltip] = useState(false);
@@ -34,7 +31,12 @@ const LoginForm = () => {
     formState: { errors },
   } = useForm({
     defaultValues: defaultValues,
-    resolver: yupResolver(schemaYup),
+    resolver: yupResolver(
+      Yup.object().shape({
+        login: Yup.string().required(t('validation.emailRequired')),
+        password: Yup.string().required(t('validation.passwordRequired')),
+      })
+    ),
   });
 
   const onSubmit = async data => {
@@ -48,9 +50,9 @@ const LoginForm = () => {
       setPasswordVisible(false);
     } catch (err) {
       if (err.response?.status === 401) {
-        Notify.failure('Невірний логін або пароль');
+        Notify.failure(t('notifications.invalidCredentials'));
       } else {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure(t('notifications.genericError'));
       }
     }
   };
@@ -70,13 +72,13 @@ const LoginForm = () => {
           <img src="/logo_black.svg" alt="logo" className={style.logo} />
         </NavLink>
         <form onSubmit={handleSubmit(onSubmit)} className={style.formContainer}>
-          <h2 className={style.formTitle}>Вхід</h2>
+          <h2 className={style.formTitle}>{t('auth.loginTitle')}</h2>
           <div className={style.inputContainer}>
             <label className={style.formLabel}>
               <input
                 className={style.formInput}
                 type="text"
-                placeholder="Вкажіть email"
+                placeholder={t('auth.emailPlaceholder')}
                 {...register('login')}
               />
               <button
@@ -89,7 +91,7 @@ const LoginForm = () => {
             </label>
             {showEmailTooltip && (
               <p className={style.tooltipText}>
-                Введіть вашу email адресу (наприклад: example@gmail.com)
+                {t('auth.emailHelp')}
               </p>
             )}
             {errors.login && (
@@ -101,7 +103,7 @@ const LoginForm = () => {
               <input
                 className={style.formInput}
                 type={isPasswordVisible ? 'text' : 'password'}
-                placeholder="Пароль"
+                placeholder={t('auth.passwordPlaceholder')}
                 {...register('password')}
               />
               <button
@@ -117,7 +119,7 @@ const LoginForm = () => {
             )}
           </div>
           <button type="submit" className={style.formBtnSubmit}>
-            Увійти
+            {t('auth.loginButton')}
           </button>
         </form>
         <button
@@ -125,7 +127,7 @@ const LoginForm = () => {
           type="button"
           className={style.formBtnReset}
         >
-          Не пам'ятаю пароль
+          {t('auth.forgotPassword')}
         </button>
       </div>
       <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>

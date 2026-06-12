@@ -45,7 +45,7 @@ store.subscribe(() => {
       if (decodedToken.exp * 1000 < Date.now()) {
         store.dispatch(logout());
       }
-    } catch (e) {
+    } catch {
       store.dispatch(logout());
     }
   }

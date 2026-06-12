@@ -3,8 +3,12 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './MyRequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getMyRequests, sendRequest } from '../../helpers/axios/requests';
-import { changeFinStatusBulk } from '../../helpers/axios/statuses';
+import {
+  changeFinStatusBulk,
+  getMyRequests,
+  returnRequestToRevision,
+  sendRequest,
+} from '../../helpers/axios/requests';
 import { useMediaQuery, Checkbox } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -13,15 +17,16 @@ import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import {
   getActiveStatus,
-  getShortStatus,
   getStatusStyle,
   statusSelectorUser,
+  FILTER_ALL,
+  FILTER_DELETED,
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
@@ -34,8 +39,18 @@ import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
+import { FinancialRequestStatus } from '../../helpers/enums';
+import {
+  isDeletedRecord,
+} from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import {
+  translateFinancialStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
 
 const MyRequestsPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
@@ -43,12 +58,12 @@ const MyRequestsPage = () => {
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
-  const [selectedContractor, setSelectedContractor] = useState('Всі');
-  const [selectedPaymentForm, setSelectedPaymentForm] = useState('Всі');
+  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
+  const [selectedContractor, setSelectedContractor] = useState(FILTER_ALL);
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
-    useState('Всі');
+    useState(FILTER_ALL);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -67,24 +82,32 @@ const MyRequestsPage = () => {
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
+  const [isModalReturnOpen, setModalReturnIsOpen] = useState(false);
   const [isModalSendBulkOpen, setModalSendBulkIsOpen] = useState(false);
   const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [isModalImportOpen, setModalImportIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
-  const [activeStatus, setActiveStatus] = useState('Всі');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyRequestsColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('action')) {
+      return [...parsed, 'action'];
+    }
+
+    return parsed;
   });
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
-  const { userId } = useParams();
   const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
+  const userId = userSelectorId;
   const navigate = useNavigate();
   const requestById = useMemo(
     () =>
@@ -94,8 +117,29 @@ const MyRequestsPage = () => {
     [dataRequests]
   );
 
-  const canSendRequestStatus = statusId => statusId === 1 || statusId === 3;
-  const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+  const canSendRequestStatus = (statusId, request) =>
+    !isDeletedRecord(request) &&
+    (statusId === FinancialRequestStatus.DRAFT ||
+      statusId === FinancialRequestStatus.NEEDS_REVISION);
+  const canSendFilesForStatus = (statusId, request) =>
+    !isDeletedRecord(request) &&
+    (statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
+      statusId === FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS);
+  const canReturnRequestToRevision = request => {
+    if (isDeletedRecord(request)) return false;
+    const statusId = request?.status_id ?? request?.status?.id;
+    const statusName = request?.status?.name ?? request?.status;
+    return (
+      statusId === FinancialRequestStatus.PENDING_APPROVAL ||
+      statusName === 'Очікує затвердження'
+    );
+  };
+
+  const getApiErrorMessage = error => {
+    const data = error?.response?.data;
+    if (typeof data === 'string') return data;
+    return data?.message || data?.error || '';
+  };
 
   const hasBulkSendRestrictedSelection = useMemo(() => {
     if (!selectedIds.size) return false;
@@ -103,7 +147,7 @@ const MyRequestsPage = () => {
     for (const id of selectedIds) {
       const request = requestById.get(String(id));
       const statusId = request?.status_id ?? request?.status?.id;
-      if (!canSendRequestStatus(statusId)) return true;
+      if (!canSendRequestStatus(statusId, request)) return true;
     }
 
     return false;
@@ -136,34 +180,46 @@ const MyRequestsPage = () => {
 
   const toggleRow = useCallback(id => {
     setSelectedIds(prev => {
+      const request = requestById.get(String(id));
+      if (isDeletedRecord(request)) return prev;
       const next = new Set(prev);
       const key = String(id);
       next.has(key) ? next.delete(key) : next.add(key);
       return next;
     });
-  }, []);
+  }, [requestById]);
+
+  const selectablePageIds = useMemo(
+    () =>
+      pageRowIds.filter(id => {
+        const request = requestById.get(String(id));
+        return !isDeletedRecord(request);
+      }),
+    [pageRowIds, requestById]
+  );
 
   const isAllSelectedOnPage = useMemo(() => {
     return (
-      pageRowIds.length > 0 &&
-      pageRowIds.every(id => selectedIds.has(String(id)))
+      selectablePageIds.length > 0 &&
+      selectablePageIds.every(id => selectedIds.has(String(id)))
     );
-  }, [pageRowIds, selectedIds]);
+  }, [selectablePageIds, selectedIds]);
 
   const isSomeSelectedOnPage = useMemo(() => {
     return (
-      pageRowIds.some(id => selectedIds.has(String(id))) && !isAllSelectedOnPage
+      selectablePageIds.some(id => selectedIds.has(String(id))) &&
+      !isAllSelectedOnPage
     );
-  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+  }, [selectablePageIds, selectedIds, isAllSelectedOnPage]);
 
   const toggleAllOnPage = useCallback(() => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       const allSelected =
-        pageRowIds.length > 0 &&
-        pageRowIds.every(id => next.has(String(id)));
+        selectablePageIds.length > 0 &&
+        selectablePageIds.every(id => next.has(String(id)));
 
-      pageRowIds.forEach(id => {
+      selectablePageIds.forEach(id => {
         const key = String(id);
         if (allSelected) next.delete(key);
         else next.add(key);
@@ -171,7 +227,7 @@ const MyRequestsPage = () => {
 
       return next;
     });
-  }, [pageRowIds]);
+  }, [selectablePageIds]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -180,13 +236,14 @@ const MyRequestsPage = () => {
         userId,
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+        deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
       });
 
       setDataRequests(requests);
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -196,7 +253,7 @@ const MyRequestsPage = () => {
 
       const currencies = await getCurrencies();
       const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(currencies || []).map(c => ({
           value: c.id,
           label: c.name,
@@ -206,7 +263,7 @@ const MyRequestsPage = () => {
 
       const contractors = await getContractors();
       const contractorSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(contractors || []).map(e => ({
           value: e.id,
           label: e.name,
@@ -216,7 +273,7 @@ const MyRequestsPage = () => {
 
       const paymentForms = await getPaymentForms();
       const paymentFormSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(paymentForms || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -226,7 +283,7 @@ const MyRequestsPage = () => {
 
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(expenseCategories || [])
           .filter(c => c.is_active)
           .map(c => ({
@@ -235,21 +292,23 @@ const MyRequestsPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
-    } catch (err) {
+      return requests;
+    } catch {
       Notify.failure('Сталася помилка, спробуйте ще раз');
+      return [];
     } finally {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [userId, startDate, endDate, activeStatus, t]);
 
   useEffect(() => {
-    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+    if (!userSelectorId) {
       navigate('/');
     } else {
       fetchData();
     }
-  }, [fetchData]);
+  }, [fetchData, navigate, userId, userRole, userSelectorId]);
 
   const handleSort = key => {
     setSortConfig(prev => {
@@ -297,19 +356,19 @@ const MyRequestsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
+    if (selectedProject && selectedProject !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.project_id === selectedProject
       );
     }
 
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
+    if (selectedCurrency && selectedCurrency !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.currency?.id === selectedCurrency
       );
     }
 
-    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.expense_category_id === selectedExpenseCategorie
       );
@@ -321,19 +380,23 @@ const MyRequestsPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== FILTER_ALL &&
+      activeStatus !== FILTER_DELETED
+    ) {
       filteredRows = filteredRows.filter(
-        row => getActiveStatus(row.status) === activeStatus
+        row => getActiveStatus(row.status_id, row.status) === activeStatus
       );
     }
 
-    if (selectedContractor && selectedContractor !== 'Всі') {
+    if (selectedContractor && selectedContractor !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.contractor_id === selectedContractor
       );
     }
 
-    if (selectedPaymentForm && selectedPaymentForm !== 'Всі') {
+    if (selectedPaymentForm && selectedPaymentForm !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.payment_form_id === selectedPaymentForm
       );
@@ -463,8 +526,17 @@ const MyRequestsPage = () => {
       });
     }
 
+    if (activeStatus === FILTER_DELETED) {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => {
       const statusId = request.status_id ?? request.status?.id;
+      const isDeleted = isDeletedRecord(request);
 
       return {
       request_id: request.id,
@@ -568,16 +640,17 @@ const MyRequestsPage = () => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {getShortStatus(request.status)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status || '',
+      is_deleted_plain: isDeleted,
       action: (
         <div className={style.actionContainer}>
           <button
             className={style.editBtn}
             onClick={() => {
-              if (canSendRequestStatus(statusId)) {
+              if (isDeleted || canSendRequestStatus(statusId, request)) {
                 setSelectedRequest(request);
                 openModalEdit();
               } else {
@@ -598,11 +671,24 @@ const MyRequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {canSendRequestStatus(statusId) && (
+          {!isDeleted && canReturnRequestToRevision(request) && (
+            <button
+              className={style.returnBtn}
+              title="Повернути на доопрацювання"
+              aria-label="Повернути на доопрацювання"
+              onClick={() => {
+                setSelectedRequest(request);
+                setModalReturnIsOpen(true);
+              }}
+            >
+              <Icon id="arrow-left-switch" className={style.editIcon} />
+            </button>
+          )}
+          {!isDeleted && canSendRequestStatus(statusId, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendRequestStatus(statusId)) {
+                if (canSendRequestStatus(statusId, request)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -611,11 +697,11 @@ const MyRequestsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {canSendFilesForStatus(statusId) && (
+          {!isDeleted && canSendFilesForStatus(statusId, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendFilesForStatus(statusId)) {
+                if (canSendFilesForStatus(statusId, request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -677,6 +763,7 @@ const MyRequestsPage = () => {
       cell: ({ row }) => (
         <Checkbox
           checked={selectedIds.has(String(row.original.request_id_plain))}
+          disabled={row.original.is_deleted_plain}
           onChange={() => toggleRow(row.original.request_id_plain)}
           onClick={e => e.stopPropagation()}
         />
@@ -686,7 +773,7 @@ const MyRequestsPage = () => {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('request_id')}
@@ -700,7 +787,7 @@ const MyRequestsPage = () => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('created_at')}
@@ -714,7 +801,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_date_await',
       header: (
         <div className={style.sortContainer}>
-          <p>Кінцева дата оплати</p>
+          <p>{t('labels.paymentDeadline')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_date_await')}
@@ -728,7 +815,7 @@ const MyRequestsPage = () => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
@@ -742,7 +829,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
-          <p>Форма оплати</p>
+          <p>{t('labels.paymentForm')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_form')}
@@ -756,7 +843,7 @@ const MyRequestsPage = () => {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
-          <p>Контрагент</p>
+          <p>{t('labels.contractor')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('contractor')}
@@ -770,7 +857,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_details',
       header: (
         <div className={style.sortContainer}>
-          <p>Реквізити</p>
+          <p>{t('labels.paymentDetails')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_details')}
@@ -784,7 +871,7 @@ const MyRequestsPage = () => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('purpose')}
@@ -798,7 +885,7 @@ const MyRequestsPage = () => {
       accessorKey: 'payment_period',
       header: (
         <div className={style.sortContainer}>
-          <p>Період оплати</p>
+          <p>{t('labels.paymentPeriod')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_period')}
@@ -812,7 +899,7 @@ const MyRequestsPage = () => {
       accessorKey: 'amount',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума</p>
+          <p>{t('labels.amount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount')}
@@ -826,7 +913,7 @@ const MyRequestsPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -840,7 +927,7 @@ const MyRequestsPage = () => {
       accessorKey: 'amount_uah',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума UAH</p>
+          <p>{t('labels.amountUah')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah')}
@@ -854,7 +941,7 @@ const MyRequestsPage = () => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
@@ -868,7 +955,7 @@ const MyRequestsPage = () => {
       accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс оптимістичний (залишок)</p>
+          <p>{t('labels.optimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_optimistic')}
@@ -882,7 +969,7 @@ const MyRequestsPage = () => {
       accessorKey: 'planned_balance_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс песимістичний (залишок)</p>
+          <p>{t('labels.pessimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_pessimistic')}
@@ -894,13 +981,13 @@ const MyRequestsPage = () => {
     },
     {
       accessorKey: 'files',
-      header: 'Файли',
+      header: t('labels.files'),
     },
     {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('status')}
@@ -912,13 +999,16 @@ const MyRequestsPage = () => {
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
   const filteredColumns = useMemo(() => {
     if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
+    return columns.filter(
+      col =>
+        col.accessorKey === 'action' || visibleColumns.includes(col.accessorKey)
+    );
   }, [columns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
@@ -947,8 +1037,34 @@ const MyRequestsPage = () => {
     setModalWatchIsOpen(false);
   };
 
+  const handleCopyCreated = useCallback(
+    async createdRequestId => {
+      closeModalWatch();
+
+      const refreshedRequests = await fetchData();
+      const createdRequest = (refreshedRequests || []).find(
+        req => String(req.id) === String(createdRequestId)
+      );
+
+      if (!createdRequest) {
+        Notify.warning(
+          'Копію створено, але не вдалося одразу відкрити форму редагування.'
+        );
+        return;
+      }
+
+      setSelectedRequest(createdRequest);
+      openModalEdit();
+    },
+    [fetchData]
+  );
+
   const closeModalConfirm = () => {
     setModalSendIsOpen(false);
+  };
+
+  const closeModalReturnConfirm = () => {
+    setModalReturnIsOpen(false);
   };
 
   const openModalSendBulk = () => {
@@ -984,12 +1100,44 @@ const MyRequestsPage = () => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     try {
       await sendRequest(selectedRequest.id);
       fetchData();
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
+      Notify.failure('Сталася помилка, спробуйте ще раз');
+      console.error('Error: ', error);
+    }
+  };
+
+  const handleReturnToRevision = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
+    const comment = selectedRequest?.comment?.trim();
+    const payload = comment ? { comment } : undefined;
+
+    try {
+      const response = await returnRequestToRevision(selectedRequest.id, payload);
+      await fetchData();
+      closeModalReturnConfirm();
+      Notify.success(
+        response?.message || 'Заявку повернуто в статус "Потребує виправлень"'
+      );
+    } catch (error) {
+      if (error?.response?.status === 400) {
+        Notify.failure(
+          getApiErrorMessage(error) ||
+            'Повернення доступне тільки для статусу "Очікує затвердження"'
+        );
+        return;
+      }
       Notify.failure('Сталася помилка, спробуйте ще раз');
       console.error('Error: ', error);
     }
@@ -1004,7 +1152,7 @@ const MyRequestsPage = () => {
     const ids = Array.from(selectedIds);
     const payload = {
       ids: ids.map(id => Number(id)),
-      status_id: 2,
+      status_id: FinancialRequestStatus.PENDING_APPROVAL,
     };
 
     try {
@@ -1037,7 +1185,7 @@ const MyRequestsPage = () => {
               />
               <div className={style.btnsContainer}>
                 <button className={style.newBtn} onClick={openModal}>
-                  Створити заявку <span>+</span>
+                  {t('common.createRequest')} <span>+</span>
                 </button>
                 <button
                   className={style.csvBtn}
@@ -1049,10 +1197,10 @@ const MyRequestsPage = () => {
                     })
                   }
                 >
-                  Експорт у CSV
+                  {t('common.exportCsv')}
                 </button>
                 <button className={style.csvBtn} onClick={openModalImport}>
-                  Імпорт з Google Sheets
+                  {t('common.importGoogleSheets')}
                 </button>
               </div>
             </div>
@@ -1063,7 +1211,7 @@ const MyRequestsPage = () => {
                 onClick={() => setShowAllFilters(prev => !prev)}
               >
                 <Icon id="filter_list" className={style.filterIcon} />
-                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+                {showAllFilters ? t('common.hideFilters') : t('common.allFilters')}
               </button>
             </div>
             <div className={style.formsContainer}>
@@ -1072,7 +1220,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: 'Підрозділ',
+                    label: t('labels.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -1086,7 +1234,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: 'Стаття витрат',
+                    label: t('labels.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1101,7 +1249,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'contractor',
-                    label: 'Контрагент',
+                    label: t('labels.contractor'),
                     options: contractorsOptions,
                     onChange: option =>
                       setSelectedContractor(option?.value || ''),
@@ -1116,7 +1264,7 @@ const MyRequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'payment_form',
-                    label: 'Форма оплати',
+                    label: t('labels.paymentForm'),
                     options: paymentFormOptions,
                     onChange: option =>
                       setSelectedPaymentForm(option?.value || ''),
@@ -1136,7 +1284,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="request_id"
                         className={style.inputContainer}
-                        placeholder="ID заявки"
+                        placeholder={t('labels.id') + ' заявки'}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1147,7 +1295,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="payment_date_await"
                         className={style.inputContainer}
-                        placeholder="Кінцева дата оплати"
+                        placeholder={t('labels.paymentDeadline')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1158,7 +1306,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="purpose"
                         className={style.inputContainer}
-                        placeholder="Призначення"
+                        placeholder={t('labels.purpose')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1170,7 +1318,7 @@ const MyRequestsPage = () => {
                       {
                         type: 'select',
                         name: 'currency',
-                        label: 'Валюта',
+                        label: t('labels.currency'),
                         options: currenciesOptions,
                         onChange: value => setSelectedCurrency(value),
                       },
@@ -1185,7 +1333,7 @@ const MyRequestsPage = () => {
                         type="text"
                         name="payment_details"
                         className={style.inputContainer}
-                        placeholder="Реквізити"
+                        placeholder={t('labels.paymentDetails')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1195,7 +1343,7 @@ const MyRequestsPage = () => {
             )}
             <div className={style.statusRow}>
               <ul className={style.statuscontainer}>
-                {statusSelectorUser.map(status => (
+                {translateOptions(statusSelectorUser, t).map(status => (
                   <li key={status.value}>
                     <button
                       className={`${style.statusBtn} ${
@@ -1214,7 +1362,7 @@ const MyRequestsPage = () => {
                     className={style.bulkEditButton}
                     onClick={openModalSendBulk}
                   >
-                    Відправити всі
+                    {t('common.sendAll')}
                   </button>
                 </div>
               )}
@@ -1222,7 +1370,7 @@ const MyRequestsPage = () => {
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
-                Фільтр колонок
+                {t('common.columnsFilter')}
               </button>
             </div>
           </div>
@@ -1231,8 +1379,7 @@ const MyRequestsPage = () => {
           ) : requestsRows.length === 0 ? (
             <div className={style.noDataContainer}>
               <p className={style.noDataText}>
-                Заявок за обраний період немає. Перегляньте, будь ласка, обрану
-                дату періоду.
+                {t('messages.noRequestsForPeriod')}
               </p>
             </div>
           ) : (
@@ -1252,7 +1399,7 @@ const MyRequestsPage = () => {
               {totals && (
                 <div className={style.totalsContainer}>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього валюти:</p>
+                    <p className={style.totalTitle}>{t('common.totalCurrency')}</p>
                     <ul className={style.totalList}>
                       {Object.entries(totals.totalsByCurrency).map(
                         ([cur, sum]) => (
@@ -1268,7 +1415,7 @@ const MyRequestsPage = () => {
                     </ul>
                   </div>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього сума в UAH:</p>
+                    <p className={style.totalTitle}>{t('common.totalAmountUah')}</p>
                     <p className={style.totalText}>
                       {totals.totalUAH.toLocaleString('uk-UA', {
                         minimumFractionDigits: 0,
@@ -1299,6 +1446,7 @@ const MyRequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModalWatch}
               onRefresh={fetchData}
+              onCopyCreated={handleCopyCreated}
               formType="request"
             />
           </ModalWindow>
@@ -1318,6 +1466,17 @@ const MyRequestsPage = () => {
               message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
               onConfirm={handleSend}
               onClose={closeModalConfirm}
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalReturnOpen}
+            onCloseModal={closeModalReturnConfirm}
+          >
+            <ConfirmModal
+              title="Повернення заявки"
+              message="Ви впевнені, що хочете повернути заявку на доопрацювання?"
+              onConfirm={handleReturnToRevision}
+              onClose={closeModalReturnConfirm}
             />
           </ModalWindow>
           <ModalWindow

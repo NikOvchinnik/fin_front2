@@ -12,8 +12,11 @@ import Icon from '../../../components/Icon/Icon';
 import { exportToCSV } from '../../../helpers/exportToCSV';
 import { getProjects } from '../../../helpers/axios/projects';
 import { monthsOptionsAll } from '../../../helpers/months';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const CurrenciesAnalyticPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [statisticsRows, setStatisticsRows] = useState([]);
   const [selectedProject, setSelectedProject] = useState('all');
@@ -36,7 +39,7 @@ const CurrenciesAnalyticPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'all', label: 'Всі' },
+        { value: 'all', label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -91,7 +94,7 @@ const CurrenciesAnalyticPage = () => {
       );
 
       const totalRow = {
-        currency: <p className={style.titleRow}>Total</p>,
+        currency: <p className={style.titleRow}>{t('common.total')}</p>,
         currency_plain: 'Total',
         paid_count: <p className={style.totalTextRow}>{totalCount}</p>,
         paid_count_plain: totalCount,
@@ -118,8 +121,8 @@ const CurrenciesAnalyticPage = () => {
       };
 
       setStatisticsRows([...rows, totalRow]);
-    } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+    } catch {
+      Notify.failure(t('notifications.genericError'));
     } finally {
       setLoading(false);
     }
@@ -147,7 +150,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -161,7 +164,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'paid_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки кількість</p>
+          <p>{t('labels.requestsCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_count')}
@@ -175,7 +178,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'paid_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки сума</p>
+          <p>{t('labels.requestsAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_sum')}
@@ -189,7 +192,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'budget_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Бюджет кількість</p>
+          <p>{t('labels.budgetCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('budget_count')}
@@ -203,7 +206,7 @@ const CurrenciesAnalyticPage = () => {
       accessorKey: 'budget_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Бюджет сума</p>
+          <p>{t('labels.budgetAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('budget_sum')}
@@ -257,7 +260,7 @@ const CurrenciesAnalyticPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>CurrencyAnalytic</DocTitle>
           <div className={style.titleContainer}>
-            <h2>Заявки по валютам</h2>
+            <h2>{t('analytics.byCurrencies')}</h2>
             <button
               className={style.csvBtn}
               onClick={() =>
@@ -268,7 +271,7 @@ const CurrenciesAnalyticPage = () => {
                 })
               }
             >
-              Експорт у CSV
+              {t('common.exportCsv')}
             </button>
           </div>
           <div className={style.formSelectorContainer}>
@@ -277,7 +280,7 @@ const CurrenciesAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'project',
-                  label: 'Підрозділ',
+                  label: t('labels.department'),
                   options: projectOptions,
                   onChange: value => setSelectedProject(value),
                 },
@@ -291,8 +294,8 @@ const CurrenciesAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'month',
-                  label: 'Місяць',
-                  options: monthsOptionsAll,
+                  label: t('labels.month'),
+                  options: translateOptions(monthsOptionsAll, t),
                   onChange: value => setSelectedMonth(value),
                 },
               ]}
@@ -305,7 +308,7 @@ const CurrenciesAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'year',
-                  label: 'Рік',
+                  label: t('labels.year'),
                   options: yearsOptions(),
                   onChange: value => setSelectedYear(value),
                 },

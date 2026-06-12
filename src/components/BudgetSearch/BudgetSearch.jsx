@@ -1,7 +1,6 @@
 import { useState, useMemo } from 'react';
 import style from './BudgetSearch.module.css';
 import { Notify } from 'notiflix';
-import { sendRequest } from '../../helpers/axios/requests';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../../components/Icon/Icon';
 import Table from '../../components/Table/Table';
@@ -13,14 +12,17 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import {
   getBudgetingStatusStyle,
-  getShortBudgetingStatus,
 } from '../../helpers/budgetingStatuses';
 import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
 import { sendBudgeting } from '../../helpers/axios/budgeting';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
+import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateBudgetingStatus } from '../../helpers/i18nOptions';
 
-const BudgetSearch = ({ dataRequests, onRefresh }) => {
+const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
+  const { t } = useTranslation();
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
@@ -58,6 +60,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
     if (!dataRequests) return [];
 
     return dataRequests.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -68,18 +71,8 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
-      week: request.week
-        ? request.week
-            .split('_')
-            .map(d => dayjs(d).format('DD.MM.YYYY'))
-            .join(' - ')
-        : '',
-      week_plain: request.week
-        ? request.week
-            .split('_')
-            .map(d => dayjs(d).format('DD.MM.YYYY'))
-            .join(' - ')
-        : '',
+      week: request.week || '',
+      week_plain: request.week || '',
       purpose: (
         <p className={style.breakText}>
           <ExpandableText text={request.purpose || ''} limit={20} />
@@ -131,7 +124,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
             color: getBudgetingStatusStyle(request.status?.id).color,
           }}
         >
-          {getShortBudgetingStatus(request.status?.name)}
+          {translateBudgetingStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status?.name || '',
@@ -155,7 +148,8 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status?.id === 1 || request.status?.id === 4) && (
+          {!isDeletedRecord(request) &&
+            (request.status?.id === 1 || request.status?.id === 4) && (
             <button
               className={style.sendBtn}
               onClick={() => {
@@ -178,7 +172,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
         </div>
       ),
     },
@@ -186,7 +180,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
         </div>
       ),
     },
@@ -194,7 +188,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
         </div>
       ),
     },
@@ -202,7 +196,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'week',
       header: (
         <div className={style.sortContainer}>
-          <p>Тиждень</p>
+          <p>{t('labels.week')}</p>
         </div>
       ),
     },
@@ -210,7 +204,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
         </div>
       ),
     },
@@ -218,7 +212,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'amount_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума оптимістична</p>
+          <p>{t('labels.optimisticAmount')}</p>
         </div>
       ),
     },
@@ -226,7 +220,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'amount_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума песимістична</p>
+          <p>{t('labels.pessimisticAmount')}</p>
         </div>
       ),
     },
@@ -234,7 +228,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
         </div>
       ),
     },
@@ -242,7 +236,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'amount_uah_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH оптимістична</p>
+          <p>{t('labels.amountUahOptimistic')}</p>
         </div>
       ),
     },
@@ -250,7 +244,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'amount_uah_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума в UAH песимістична</p>
+          <p>{t('labels.amountUahPessimistic')}</p>
         </div>
       ),
     },
@@ -258,7 +252,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
         </div>
       ),
     },
@@ -266,7 +260,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'applicant',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявник</p>
+          <p>{t('labels.applicant')}</p>
         </div>
       ),
     },
@@ -274,7 +268,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
-          <p>Період</p>
+          <p>{t('labels.period')}</p>
         </div>
       ),
     },
@@ -282,13 +276,13 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
         </div>
       ),
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
@@ -328,13 +322,17 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning(t('notifications.deletedBudgetCannotChange'));
+      return;
+    }
     try {
       await sendBudgeting(selectedRequest.id);
-      onRefresh(selectedRequest.id, 'budgeting');
+      onRefresh(selectedRequest.id, 'budgeting', deletedFilter);
       closeModalConfirm();
-      Notify.success('Заявку відправлено!');
+      Notify.success(t('notifications.budgetSent'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -344,7 +342,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       <div className={style.filterContainer}>
         <button className={style.filterBtn} onClick={openModalColumns}>
           <Icon id="filter_list" className={style.filterIcon} />
-          Фільтр колонок
+          {t('common.columnsFilter')}
         </button>
         <button
           className={style.csvBtn}
@@ -356,7 +354,7 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
             })
           }
         >
-          Експорт у CSV
+          {t('common.exportCsv')}
         </button>
       </div>
       <Table
@@ -381,9 +379,12 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
       </ModalWindow>
       <ModalWindow isModalOpen={isModalEditOpen} onCloseModal={closeModalEdit}>
         <BudgetEditForm
+          key={`budget-search-edit-${selectedRequest?.id || 'empty'}`}
           request={selectedRequest}
           closeModal={closeModalEdit}
-          onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'budgeting', deletedFilter)
+          }
         />
       </ModalWindow>
       <ModalWindow
@@ -391,9 +392,12 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
         onCloseModal={closeModalWatch}
       >
         <BudgetWatchForm
+          key={`budget-search-watch-${selectedRequest?.id || 'empty'}`}
           request={selectedRequest}
           closeModal={closeModalWatch}
-          onRefresh={() => onRefresh(selectedRequest.id, 'budgeting')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'budgeting', deletedFilter)
+          }
           formType={'all'}
         />
       </ModalWindow>
@@ -402,8 +406,10 @@ const BudgetSearch = ({ dataRequests, onRefresh }) => {
         onCloseModal={closeModalConfirm}
       >
         <ConfirmModal
-          title="Відправити бюджет"
-          message={`Ви впевнені, що хочете відправити бюджет на затвердження ${selectedRequest?.purpose}?`}
+          title={t('modals.sendBudgetTitle')}
+          message={t('modals.sendBudgetMessage', {
+            name: selectedRequest?.purpose,
+          })}
           onConfirm={handleSend}
           onClose={closeModalConfirm}
         />

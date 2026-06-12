@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import style from './RequestSearch.module.css';
 import { Notify } from 'notiflix';
 import { sendRequest } from '../../helpers/axios/requests';
@@ -8,7 +8,11 @@ import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
-import { getShortStatus, getStatusStyle } from '../../helpers/status';
+import {
+  FinancialStatusFilter,
+  getActiveStatus,
+  getStatusStyle,
+} from '../../helpers/status';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -18,8 +22,13 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import { isDeletedRecord } from '../../helpers/softDelete';
+import { FinancialRequestStatus } from '../../helpers/enums';
+import { useTranslation } from 'react-i18next';
+import { translateFinancialStatus } from '../../helpers/i18nOptions';
 
-const RequestSearch = ({ dataRequests, onRefresh }) => {
+const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
+  const { t } = useTranslation();
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
@@ -31,6 +40,27 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+
+  const canSendRequestStatus = useCallback(request => {
+    if (isDeletedRecord(request)) return false;
+    const statusId = Number(request?.status_id ?? request?.status?.id);
+    if (
+      statusId === FinancialRequestStatus.DRAFT ||
+      statusId === FinancialRequestStatus.NEEDS_REVISION
+    ) {
+      return true;
+    }
+
+    return [FinancialStatusFilter.DRAFT, FinancialStatusFilter.NEEDS_REVISION].includes(
+      getActiveStatus(request?.status_id, request?.status)
+    );
+  }, []);
+
+  const canSendFilesForStatus = useCallback(request =>
+    !isDeletedRecord(request) &&
+    getActiveStatus(request?.status_id, request?.status) ===
+      FinancialStatusFilter.AWAITING_DOCUMENTS,
+  []);
 
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
@@ -59,6 +89,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
     if (!dataRequests) return [];
 
     return dataRequests.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -107,7 +138,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
             className={style.copyText}
             onClick={() => {
               navigator.clipboard.writeText(request.payment_details || '');
-              Notify.success('Текст скопійовано!');
+              Notify.success(t('notifications.copied'));
             }}
           >
             <Icon id="copy" className={style.sortIcon} />
@@ -171,7 +202,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {getShortStatus(request.status)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status || '',
@@ -195,15 +226,11 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status === 'Чернетка' ||
-            request.status === 'Потребує виправлень') && (
+          {canSendRequestStatus(request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status === 'Чернетка' ||
-                  request.status === 'Потребує виправлень'
-                ) {
+                if (canSendRequestStatus(request)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -212,16 +239,11 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
-            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+          {canSendFilesForStatus(request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status ===
-                    'Фінанси: Сплачено, очікуються документи' ||
-                  request.status === 'Бухгалтер: Сплачено, очікуються документи'
-                ) {
+                if (canSendFilesForStatus(request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -233,14 +255,14 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         </div>
       ),
     }));
-  }, [dataRequests]);
+  }, [dataRequests, canSendRequestStatus, canSendFilesForStatus]);
 
   const columns = [
     {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
         </div>
       ),
     },
@@ -248,7 +270,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
         </div>
       ),
     },
@@ -256,7 +278,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'payment_date_await',
       header: (
         <div className={style.sortContainer}>
-          <p>Кінцева дата оплати</p>
+          <p>{t('labels.paymentDeadline')}</p>
         </div>
       ),
     },
@@ -264,7 +286,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
         </div>
       ),
     },
@@ -272,7 +294,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
-          <p>Форма оплати</p>
+          <p>{t('labels.paymentForm')}</p>
         </div>
       ),
     },
@@ -280,7 +302,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
-          <p>Контрагент</p>
+          <p>{t('labels.contractor')}</p>
         </div>
       ),
     },
@@ -288,7 +310,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'payment_details',
       header: (
         <div className={style.sortContainer}>
-          <p>Реквізити</p>
+          <p>{t('labels.paymentDetails')}</p>
         </div>
       ),
     },
@@ -296,7 +318,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
         </div>
       ),
     },
@@ -304,7 +326,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'payment_period',
       header: (
         <div className={style.sortContainer}>
-          <p>Період оплати</p>
+          <p>{t('labels.paymentPeriod')}</p>
         </div>
       ),
     },
@@ -312,7 +334,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'amount',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума</p>
+          <p>{t('labels.amount')}</p>
         </div>
       ),
     },
@@ -320,7 +342,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
         </div>
       ),
     },
@@ -328,7 +350,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'amount_uah',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума UAH</p>
+          <p>{t('labels.amountUah')}</p>
         </div>
       ),
     },
@@ -336,7 +358,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
         </div>
       ),
     },
@@ -344,7 +366,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'applicant',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявник</p>
+          <p>{t('labels.applicant')}</p>
         </div>
       ),
     },
@@ -352,7 +374,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'payer',
       header: (
         <div className={style.sortContainer}>
-          <p>Платник</p>
+          <p>{t('labels.payer')}</p>
         </div>
       ),
     },
@@ -360,7 +382,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'beneficiary',
       header: (
         <div className={style.sortContainer}>
-          <p>Вигодонабувач</p>
+          <p>{t('labels.beneficiary')}</p>
         </div>
       ),
     },
@@ -368,7 +390,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс оптимістичний (залишок)</p>
+          <p>{t('labels.optimisticBalance')}</p>
         </div>
       ),
     },
@@ -376,7 +398,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'planned_balance_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс песимістичний (залишок)</p>
+          <p>{t('labels.pessimisticBalance')}</p>
         </div>
       ),
     },
@@ -384,25 +406,25 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
-          <p>Період</p>
+          <p>{t('labels.period')}</p>
         </div>
       ),
     },
     {
       accessorKey: 'files',
-      header: 'Файли',
+      header: t('labels.files'),
     },
     {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
         </div>
       ),
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
@@ -446,13 +468,17 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning(t('notifications.deletedRequestCannotChange'));
+      return;
+    }
     try {
       await sendRequest(selectedRequest.id);
-      onRefresh(selectedRequest.id, 'request');
+      onRefresh(selectedRequest.id, 'request', deletedFilter);
       closeModalConfirm();
-      Notify.success('Заявку відправлено!');
+      Notify.success(t('notifications.requestSent'));
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(t('notifications.genericError'));
       console.error('Error: ', error);
     }
   };
@@ -462,7 +488,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
       <div className={style.filterContainer}>
         <button className={style.filterBtn} onClick={openModalColumns}>
           <Icon id="filter_list" className={style.filterIcon} />
-          Фільтр колонок
+          {t('common.columnsFilter')}
         </button>
         <button
           className={style.csvBtn}
@@ -474,7 +500,7 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
             })
           }
         >
-          Експорт у CSV
+          {t('common.exportCsv')}
         </button>
       </div>
       <Table
@@ -490,7 +516,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <EditRequestForm
           request={selectedRequest}
           closeModal={closeModalEdit}
-          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'request', deletedFilter)
+          }
           formType="all"
           userRole={userRole}
         />
@@ -502,7 +530,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <WatchRequestForm
           request={selectedRequest}
           closeModal={closeModalWatch}
-          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'request', deletedFilter)
+          }
           formType="all"
         />
       </ModalWindow>
@@ -511,8 +541,10 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         onCloseModal={closeModalConfirm}
       >
         <ConfirmModal
-          title="Відправити заявку"
-          message={`Ви впевнені, що хочете відправити заявку на оплату ${selectedRequest?.contractor}?`}
+          title={t('modals.sendRequestTitle')}
+          message={t('modals.sendRequestMessage', {
+            name: selectedRequest?.contractor,
+          })}
           onConfirm={handleSend}
           onClose={closeModalConfirm}
         />
@@ -535,7 +567,9 @@ const RequestSearch = ({ dataRequests, onRefresh }) => {
         <SendFilesForm
           request={selectedRequest}
           closeModal={closeModalSendFiles}
-          onRefresh={() => onRefresh(selectedRequest.id, 'request')}
+          onRefresh={() =>
+            onRefresh(selectedRequest.id, 'request', deletedFilter)
+          }
           formType="myRequest"
           userRole={userRole}
         />

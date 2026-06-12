@@ -12,8 +12,10 @@ import UserNewForm from '../../components/Forms/UserNewForm/UserNewForm';
 import { getRoles } from '../../helpers/axios/roles';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 const UsersPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setModalIsOpen] = useState(false);
   const [dataUsers, setDataUsers] = useState([]);
@@ -40,8 +42,8 @@ const UsersPage = () => {
           return acc;
         }, {})
       );
-    } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+    } catch {
+      Notify.failure(t('notifications.genericError'));
     } finally {
       setLoading(false);
     }
@@ -118,7 +120,7 @@ const UsersPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>Users</DocTitle>
           <button onClick={openModal} className={style.addUserBtn}>
-            Add new user <span>+</span>
+            {t('forms.addNewUser')} <span>+</span>
           </button>
           <Table
             data={filteredUsers}

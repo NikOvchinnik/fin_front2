@@ -1,24 +1,57 @@
+import { FinancialRequestStatus } from './enums';
+
+export const FILTER_ALL = 'all';
+export const FILTER_DELETED = 'deleted';
+
+export const FinancialStatusFilter = Object.freeze({
+  ALL: FILTER_ALL,
+  DRAFT: 'draft',
+  PENDING_APPROVAL: 'pending_approval',
+  PENDING_EXECUTIVE_APPROVAL: 'pending_executive_approval',
+  SENT_TO_PAYMENT: 'sent_to_payment',
+  PAID: 'paid',
+  AWAITING_DOCUMENTS: 'awaiting_documents',
+  NEEDS_REVISION: 'needs_revision',
+  CANCELED: 'canceled',
+  DELETED: FILTER_DELETED,
+});
+
 export const getStatusStyle = status => {
-  switch (status) {
+  const statusId =
+    typeof status === 'object' ? Number(status?.id ?? status?.status_id) : Number(status);
+  const statusName = typeof status === 'object' ? status?.name : status;
+
+  switch (statusId || statusName) {
+    case FinancialRequestStatus.DRAFT:
     case 'Чернетка':
       return { color: '#c74736' };
+    case FinancialRequestStatus.PENDING_APPROVAL:
     case 'Очікує затвердження':
       return { color: '#c79a1b' };
+    case FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL:
+    case 'Потребує затвердження CEO/COO/CFO':
+      return { color: '#c79a1b' };
+    case FinancialRequestStatus.SENT_TO_PAYMENT:
     case 'Передано на оплату':
       return { color: '#378a9e' };
+    case FinancialRequestStatus.FINANCE_PAID:
+    case FinancialRequestStatus.ACCOUNTANT_PAID:
     case 'Фінанси: Сплачено':
-      return { color: '#6b9429' };
-    case 'Фінанси: Сплачено, очікуються документи':
-      return { color: '#6b9429' };
     case 'Бухгалтер: Сплачено':
       return { color: '#6b9429' };
+    case FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS:
+    case FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS:
+    case 'Фінанси: Сплачено, очікуються документи':
     case 'Бухгалтер: Сплачено, очікуються документи':
       return { color: '#6b9429' };
+    case FinancialRequestStatus.NEEDS_REVISION:
     case 'Потребує виправлень':
-      return { color: '#c74736' };
+    case FinancialRequestStatus.FINANCE_CANCELED:
+    case FinancialRequestStatus.ACCOUNTANT_CANCELED:
+    case FinancialRequestStatus.EXECUTIVE_CANCELED:
     case 'Фінанси: Скасовано':
-      return { color: '#c74736' };
     case 'Бухгалтер: Скасовано':
+    case 'CEO/COO/CFO: Скасовано':
       return { color: '#c74736' };
     default:
       return { color: '#6c757d' };
@@ -26,106 +59,288 @@ export const getStatusStyle = status => {
 };
 
 export const statusSelectorFin = [
-  { value: 'Всі', label: 'Всі' },
-  { value: 'Очікує затвердження', label: 'Очікує затвердження' },
-  { value: 'Передано на оплату', label: 'Передано на оплату' },
-  { value: 'Сплачено', label: 'Сплачено' },
-  { value: 'Очікуються документи', label: 'Очікуються документи' },
+  { value: FinancialStatusFilter.ALL, label: 'Всі', labelKey: 'filters.all' },
   {
-    value: 'Потребує виправлень',
-    label: 'Потребує виправлень',
+    value: FinancialStatusFilter.PENDING_APPROVAL,
+    label: 'Очікує затвердження',
+    labelKey: 'financialStatus.pendingApproval',
   },
-  { value: 'Скасовано', label: 'Скасовано' },
+  {
+    value: FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
+  {
+    value: FinancialStatusFilter.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
+  },
+  {
+    value: FinancialStatusFilter.PAID,
+    label: 'Сплачено',
+    labelKey: 'financialStatus.paid',
+  },
+  {
+    value: FinancialStatusFilter.AWAITING_DOCUMENTS,
+    label: 'Очікуються документи',
+    labelKey: 'financialStatus.awaitingDocuments',
+  },
+  {
+    value: FinancialStatusFilter.NEEDS_REVISION,
+    label: 'Потребує виправлень',
+    labelKey: 'financialStatus.needsRevision',
+  },
+  {
+    value: FinancialStatusFilter.CANCELED,
+    label: 'Скасовано',
+    labelKey: 'financialStatus.canceled',
+  },
+  {
+    value: FinancialStatusFilter.DELETED,
+    label: 'Видалені',
+    labelKey: 'filters.deleted',
+  },
 ];
 
 export const statusSelectorBuh = [
-  { value: 'Всі', label: 'Всі' },
-  { value: 'Передано на оплату', label: 'Передано на оплату' },
-  { value: 'Сплачено', label: 'Сплачено' },
-  { value: 'Очікуються документи', label: 'Очікуються документи' },
-  { value: 'Скасовано', label: 'Скасовано' },
+  { value: FinancialStatusFilter.ALL, label: 'Всі', labelKey: 'filters.all' },
+  {
+    value: FinancialStatusFilter.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
+  },
+  {
+    value: FinancialStatusFilter.PAID,
+    label: 'Сплачено',
+    labelKey: 'financialStatus.paid',
+  },
+  {
+    value: FinancialStatusFilter.AWAITING_DOCUMENTS,
+    label: 'Очікуються документи',
+    labelKey: 'financialStatus.awaitingDocuments',
+  },
+  {
+    value: FinancialStatusFilter.CANCELED,
+    label: 'Скасовано',
+    labelKey: 'financialStatus.canceled',
+  },
+  {
+    value: FinancialStatusFilter.DELETED,
+    label: 'Видалені',
+    labelKey: 'filters.deleted',
+  },
 ];
 
 export const statusSelectorUser = [
-  { value: 'Всі', label: 'Всі' },
-  { value: 'Чернетка', label: 'Чернетка' },
-  { value: 'Очікує затвердження', label: 'Очікує затвердження' },
-  { value: 'Передано на оплату', label: 'Передано на оплату' },
-  { value: 'Сплачено', label: 'Сплачено' },
-  { value: 'Очікуються документи', label: 'Очікуються документи' },
+  { value: FinancialStatusFilter.ALL, label: 'Всі', labelKey: 'filters.all' },
   {
-    value: 'Потребує виправлень',
-    label: 'Потребує виправлень',
+    value: FinancialStatusFilter.DRAFT,
+    label: 'Чернетка',
+    labelKey: 'financialStatus.draft',
   },
-  { value: 'Скасовано', label: 'Скасовано' },
+  {
+    value: FinancialStatusFilter.PENDING_APPROVAL,
+    label: 'Очікує затвердження',
+    labelKey: 'financialStatus.pendingApproval',
+  },
+  {
+    value: FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
+  {
+    value: FinancialStatusFilter.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
+  },
+  {
+    value: FinancialStatusFilter.PAID,
+    label: 'Сплачено',
+    labelKey: 'financialStatus.paid',
+  },
+  {
+    value: FinancialStatusFilter.AWAITING_DOCUMENTS,
+    label: 'Очікуються документи',
+    labelKey: 'financialStatus.awaitingDocuments',
+  },
+  {
+    value: FinancialStatusFilter.NEEDS_REVISION,
+    label: 'Потребує виправлень',
+    labelKey: 'financialStatus.needsRevision',
+  },
+  {
+    value: FinancialStatusFilter.CANCELED,
+    label: 'Скасовано',
+    labelKey: 'financialStatus.canceled',
+  },
+  {
+    value: FinancialStatusFilter.DELETED,
+    label: 'Видалені',
+    labelKey: 'filters.deleted',
+  },
 ];
 
 export const approveStatus = [
   {
-    value: '1',
+    value: FinancialRequestStatus.DRAFT,
     label: 'Чернетка',
+    labelKey: 'financialStatus.draft',
   },
   {
-    value: '2',
+    value: FinancialRequestStatus.PENDING_APPROVAL,
     label: 'Очікує затвердження',
+    labelKey: 'financialStatus.pendingApproval',
   },
   {
-    value: '3',
+    value: FinancialRequestStatus.NEEDS_REVISION,
     label: 'Потребує виправлень',
+    labelKey: 'financialStatus.needsRevision',
   },
-  { value: '4', label: 'Передано на оплату' },
-  { value: '5', label: 'Бухгалтер: Сплачено' },
   {
-    value: '6',
-    label: 'Бухгалтер: Сплачено, очікуються документи',
+    value: FinancialRequestStatus.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
   },
-  { value: '14', label: 'Фінанси: Скасовано' },
-  { value: '20', label: 'Бухгалтер: Скасовано' },
-  { value: '21', label: 'Фінанси: Сплачено' },
-  { value: '22', label: 'Фінанси: Сплачено, очікуються документи' },
+  {
+    value: FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
+  {
+    value: FinancialRequestStatus.ACCOUNTANT_PAID,
+    label: 'Бухгалтер: Сплачено',
+    labelKey: 'financialStatus.accountantPaid',
+  },
+  {
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
+    label: 'Бухгалтер: Сплачено, очікуються документи',
+    labelKey: 'financialStatus.accountantPaidAwaitingDocuments',
+  },
+  {
+    value: FinancialRequestStatus.FINANCE_CANCELED,
+    label: 'Фінанси: Скасовано',
+    labelKey: 'financialStatus.financeCanceled',
+  },
+  {
+    value: FinancialRequestStatus.ACCOUNTANT_CANCELED,
+    label: 'Бухгалтер: Скасовано',
+    labelKey: 'financialStatus.accountantCanceled',
+  },
+  {
+    value: FinancialRequestStatus.FINANCE_PAID,
+    label: 'Фінанси: Сплачено',
+    labelKey: 'financialStatus.financePaid',
+  },
+  {
+    value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
+    label: 'Фінанси: Сплачено, очікуються документи',
+    labelKey: 'financialStatus.financePaidAwaitingDocuments',
+  },
+  {
+    value: FinancialRequestStatus.EXECUTIVE_CANCELED,
+    label: 'CEO/COO/CFO: Скасовано',
+    labelKey: 'financialStatus.executiveCanceled',
+  },
 ];
 
 export const approveFilesFin = [
-  { value: '21', label: 'Всі документи додано' }, //Фінанси: Сплачено
-  { value: '22', label: 'Очікуються ще документи' }, //Фінанси: Сплачено, очікуються документи
+  {
+    value: FinancialRequestStatus.FINANCE_PAID,
+    label: 'Всі документи додано',
+    labelKey: 'financialStatus.allDocumentsAdded',
+  }, //Фінанси: Сплачено
+  {
+    value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
+    label: 'Очікуються ще документи',
+    labelKey: 'financialStatus.awaitingMoreDocuments',
+  }, //Фінанси: Сплачено, очікуються документи
 ];
 
 export const approveFilesBuh = [
-  { value: '5', label: 'Всі документи додано' }, //Бухгалтер: Сплачено
   {
-    value: '6',
+    value: FinancialRequestStatus.ACCOUNTANT_PAID,
+    label: 'Всі документи додано',
+    labelKey: 'financialStatus.allDocumentsAdded',
+  }, //Бухгалтер: Сплачено
+  {
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
     label: 'Очікуються ще документи',
+    labelKey: 'financialStatus.awaitingMoreDocuments',
   }, //Бухгалтер: Сплачено, очікуються документи
 ];
 
 export const approveStatusFin = [
-  { value: '4', label: 'Передано на оплату' },
   {
-    value: '3',
+    value: FinancialRequestStatus.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
+  },
+  {
+    value: FinancialRequestStatus.NEEDS_REVISION,
     label: 'Потребує виправлень',
+    labelKey: 'financialStatus.needsRevision',
   },
   {
-    value: '21',
+    value: FinancialRequestStatus.FINANCE_PAID,
     label: 'Фінанси: Сплачено',
+    labelKey: 'financialStatus.financePaid',
   },
   {
-    value: '22',
+    value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
     label: 'Фінанси: Сплачено, очікуються документи',
+    labelKey: 'financialStatus.financePaidAwaitingDocuments',
   },
-  { value: '14', label: 'Фінанси: Скасовано' },
+  {
+    value: FinancialRequestStatus.FINANCE_CANCELED,
+    label: 'Фінанси: Скасовано',
+    labelKey: 'financialStatus.financeCanceled',
+  },
+  {
+    value: FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL,
+    label: 'Потребує затвердження CEO/COO/CFO',
+    labelKey: 'financialStatus.pendingExecutiveApproval',
+  },
 ];
 
 export const approveStatusBuh = [
-  { value: '5', label: 'Бухгалтер: Сплачено' },
   {
-    value: '6',
+    value: FinancialRequestStatus.ACCOUNTANT_PAID,
+    label: 'Бухгалтер: Сплачено',
+    labelKey: 'financialStatus.accountantPaid',
+  },
+  {
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
     label: 'Бухгалтер: Сплачено, очікуються документи',
+    labelKey: 'financialStatus.accountantPaidAwaitingDocuments',
   },
   {
-    value: '3',
+    value: FinancialRequestStatus.NEEDS_REVISION,
     label: 'Потребує виправлень',
+    labelKey: 'financialStatus.needsRevision',
   },
-  { value: '20', label: 'Бухгалтер: Скасовано' },
+  {
+    value: FinancialRequestStatus.ACCOUNTANT_CANCELED,
+    label: 'Бухгалтер: Скасовано',
+    labelKey: 'financialStatus.accountantCanceled',
+  },
+];
+
+export const approveStatusCeo = [
+  {
+    value: FinancialRequestStatus.SENT_TO_PAYMENT,
+    label: 'Передано на оплату',
+    labelKey: 'financialStatus.sentToPayment',
+  },
+  {
+    value: FinancialRequestStatus.NEEDS_REVISION,
+    label: 'Повернути на допрацювання',
+    labelKey: 'financialStatus.needsRevision',
+  },
+  {
+    value: FinancialRequestStatus.EXECUTIVE_CANCELED,
+    label: 'CEO/COO/CFO: Скасовано',
+    labelKey: 'financialStatus.executiveCanceled',
+  },
 ];
 
 export const getShortStatus = statusName => {
@@ -138,8 +353,37 @@ export const getShortStatus = statusName => {
   return statusName;
 };
 
-export const getActiveStatus = statusName => {
-  if (!statusName) return '';
+export const getActiveStatus = (statusIdOrName, statusName) => {
+  if (!statusIdOrName && !statusName) return '';
+
+  const statusId = Number(statusIdOrName);
+
+  switch (statusId) {
+    case FinancialRequestStatus.DRAFT:
+      return FinancialStatusFilter.DRAFT;
+    case FinancialRequestStatus.PENDING_APPROVAL:
+      return FinancialStatusFilter.PENDING_APPROVAL;
+    case FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL:
+      return FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL;
+    case FinancialRequestStatus.SENT_TO_PAYMENT:
+      return FinancialStatusFilter.SENT_TO_PAYMENT;
+    case FinancialRequestStatus.FINANCE_PAID:
+    case FinancialRequestStatus.ACCOUNTANT_PAID:
+      return FinancialStatusFilter.PAID;
+    case FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS:
+    case FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS:
+      return FinancialStatusFilter.AWAITING_DOCUMENTS;
+    case FinancialRequestStatus.NEEDS_REVISION:
+      return FinancialStatusFilter.NEEDS_REVISION;
+    case FinancialRequestStatus.FINANCE_CANCELED:
+    case FinancialRequestStatus.ACCOUNTANT_CANCELED:
+    case FinancialRequestStatus.EXECUTIVE_CANCELED:
+      return FinancialStatusFilter.CANCELED;
+    default:
+      break;
+  }
+
+  const fallbackStatusName = statusName || statusIdOrName;
 
   const paidStatuses = ['Фінанси: Сплачено', 'Бухгалтер: Сплачено'];
 
@@ -148,19 +392,43 @@ export const getActiveStatus = statusName => {
     'Бухгалтер: Сплачено, очікуються документи',
   ];
 
-  const canceledStatuses = ['Фінанси: Скасовано', 'Бухгалтер: Скасовано'];
+  const canceledStatuses = [
+    'Фінанси: Скасовано',
+    'Бухгалтер: Скасовано',
+    'CEO/COO/CFO: Скасовано',
+  ];
 
-  if (paidStatuses.includes(statusName)) {
-    return 'Сплачено';
+  if (paidStatuses.includes(fallbackStatusName)) {
+    return FinancialStatusFilter.PAID;
   }
 
-  if (awaitStatuses.includes(statusName)) {
-    return 'Очікуються документи';
+  if (awaitStatuses.includes(fallbackStatusName)) {
+    return FinancialStatusFilter.AWAITING_DOCUMENTS;
   }
 
-  if (canceledStatuses.includes(statusName)) {
-    return 'Скасовано';
+  if (canceledStatuses.includes(fallbackStatusName)) {
+    return FinancialStatusFilter.CANCELED;
   }
 
-  return statusName;
+  if (fallbackStatusName === 'Чернетка') {
+    return FinancialStatusFilter.DRAFT;
+  }
+
+  if (fallbackStatusName === 'Очікує затвердження') {
+    return FinancialStatusFilter.PENDING_APPROVAL;
+  }
+
+  if (fallbackStatusName === 'Потребує затвердження CEO/COO/CFO') {
+    return FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL;
+  }
+
+  if (fallbackStatusName === 'Передано на оплату') {
+    return FinancialStatusFilter.SENT_TO_PAYMENT;
+  }
+
+  if (fallbackStatusName === 'Потребує виправлень') {
+    return FinancialStatusFilter.NEEDS_REVISION;
+  }
+
+  return fallbackStatusName;
 };

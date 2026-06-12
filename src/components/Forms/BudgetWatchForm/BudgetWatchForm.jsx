@@ -11,8 +11,22 @@ import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
+import {
+  ensureCurrentWeekOption,
+  getWeeksOfMonth,
+  resolveWeekRangeValue,
+  resolveWeekValue,
+} from '../../../helpers/budgetingWeekOptions';
+import { useTranslation } from 'react-i18next';
 
-const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
+const BudgetWatchForm = ({
+  request,
+  closeModal,
+  onRefresh,
+  onCopyCreated,
+  formType,
+}) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -20,8 +34,10 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
   const [weeksOptions, setWeeksOptions] = useState([]);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
+  const requestPeriod = request?.plan_period || '';
+  const requestWeekValue = request?.week || '';
 
-  const savedPeriod = request?.plan_period || null;
+  const savedPeriod = requestPeriod || null;
 
   const periods = generateDefaultPeriods(12);
 
@@ -32,79 +48,9 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
     });
   }
 
-  const getWeeksOfMonth = period => {
-    if (!period) return [];
-
-    const [month, year] = period.split('.');
-    const startOfMonth = dayjs(`${year}-${month}-01`);
-    const endOfMonth = startOfMonth.endOf('month');
-
-    const weeks = [];
-    let currentStart = startOfMonth;
-
-    if (currentStart.day() !== 1) {
-      const offset = currentStart.day() === 0 ? 6 : currentStart.day() - 1;
-      currentStart = currentStart.subtract(offset, 'day');
-      if (currentStart.isBefore(startOfMonth)) currentStart = startOfMonth;
-    }
-
-    while (
-      currentStart.isBefore(endOfMonth) ||
-      currentStart.isSame(endOfMonth, 'day')
-    ) {
-      let weekStart = currentStart;
-      let weekEnd = weekStart.add(6 - weekStart.day() + 1, 'day');
-      if (weekEnd.isAfter(endOfMonth)) weekEnd = endOfMonth;
-
-      weeks.push({ start: weekStart, end: weekEnd });
-
-      currentStart = weekEnd.add(1, 'day');
-    }
-
-    const hasTueOrThu = week => {
-      for (
-        let d = week.start;
-        d.isBefore(week.end) || d.isSame(week.end, 'day');
-        d = d.add(1, 'day')
-      ) {
-        const dow = d.day();
-        if (dow === 2 || dow === 4) return true;
-      }
-      return false;
-    };
-
-    const adjusted = [];
-    for (let i = 0; i < weeks.length; i++) {
-      const week = weeks[i];
-      if (!hasTueOrThu(week)) {
-        if (i > 0) {
-          adjusted[adjusted.length - 1].end = week.end;
-        } else if (weeks[i + 1]) {
-          weeks[i + 1].start = week.start;
-        }
-      } else {
-        adjusted.push(week);
-      }
-    }
-
-    return adjusted.map(week => ({
-      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
-        'YYYY-MM-DD'
-      )}`,
-      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
-    }));
-  };
-
-  const defaultWeeks = getWeeksOfMonth(request.plan_period || defaultPeriod);
-
-  const defaultWeek =
-    defaultWeeks.find(week => {
-      const [start, end] = week.value.split('_');
-      return (
-        dayjs().isAfter(dayjs(start).subtract(1, 'day')) &&
-        dayjs().isBefore(dayjs(end).add(1, 'day'))
-      );
-    })?.value || '';
+  const periodWeeks = getWeeksOfMonth(requestPeriod || defaultPeriod);
+  const resolvedRequestWeekValue = resolveWeekValue(periodWeeks, requestWeekValue);
+  const defaultWeeks = ensureCurrentWeekOption(periodWeeks, resolvedRequestWeekValue);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -138,8 +84,8 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
         setExpenseCategoryOptions(options);
 
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       } finally {
         setLoading(false);
       }
@@ -151,84 +97,92 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
     {
       type: 'text',
       name: 'applicant',
-      label: 'Заявник',
-      validation: { required: 'This field is required' },
+      label: t('labels.applicant'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'project',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'select',
       name: 'period',
-      label: 'Плановий період',
+      label: t('labels.plannedPeriod'),
       options: periods,
-      validation: { required: 'This field is required' },
-      onChange: value => setWeeksOptions(getWeeksOfMonth(value)),
+      validation: { required: t('validation.required') },
+      onChange: (value, setValue) => {
+        setWeeksOptions(getWeeksOfMonth(value));
+        setValue('week', '', { shouldValidate: true });
+      },
       readOnly: true,
     },
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('labels.week'),
       options: weeksOptions,
-      validation: { required: 'This field is required' },
+      validation: {
+        required: t('validation.required'),
+        validate: value =>
+          weeksOptions.some(option => option.value === value) ||
+          t('validation.selectWeekForPeriod'),
+      },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'number-number-group',
       number1: {
         name: 'amount_opt',
-        label: 'Оптимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.optimisticAmount'),
+        validation: { required: t('validation.required') },
         readOnly: true,
       },
       number2: {
         name: 'amount_pes',
-        label: 'Песимістична сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.pessimisticAmount'),
+        validation: { required: t('validation.required') },
         readOnly: true,
       },
     },
     {
       type: 'select',
       name: 'currency',
-      label: 'Валюта',
+      label: t('labels.currency'),
       options: currencyOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
+      label: t('labels.comment'),
       readOnly: true,
     },
   ];
 
   const buttons = [
     {
-      label: 'Зробити копію',
+      label: t('actions.copy'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -243,30 +197,34 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
           <ul className={style.commentsList}>
             {request.applicant_comment && (
               <li className={style.commentApplicant}>
-                Коментар заявника: {request.applicant_comment}
+                {t('labels.applicantComment')}: {request.applicant_comment}
               </li>
             )}
             {request.finance_comment && (
               <li className={style.commentFinance}>
-                Коментар фінанси: {request.finance_comment}
+                {t('labels.financeComment')}: {request.finance_comment}
               </li>
             )}
             {request.ceo_comment && (
               <li className={style.commentCeo}>
-                Коментар CEO/COO/CFO: {request.ceo_comment}
+                {t('labels.ceoComment')}: {request.ceo_comment}
               </li>
             )}
           </ul>
           <Form
-            title="Перегляд бюджету"
+            title={t('forms.watchBudget')}
             fields={fields}
             buttons={formType === 'all' ? [] : buttons}
             onSubmit={async data => {
               try {
                 setLoading(true);
                 const formData = new FormData();
+                const submitData = {
+                  ...data,
+                  week: resolveWeekRangeValue(weeksOptions, data.week),
+                };
 
-                Object.entries(data).forEach(([key, value]) => {
+                Object.entries(submitData).forEach(([key, value]) => {
                   if (typeof value === 'string') {
                     value = value.trim();
                   }
@@ -277,12 +235,18 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
                   }
                 });
 
-                await postMyBudgeting(formData);
-                onRefresh();
-                closeModal();
-                Notify.success('Бюджет створено!');
+                const response = await postMyBudgeting(formData);
+                const createdBudgetingId = response?.budgeting_id ?? null;
+
+                if (onCopyCreated && createdBudgetingId != null) {
+                  await onCopyCreated(createdBudgetingId);
+                } else {
+                  await onRefresh();
+                  closeModal();
+                }
+                Notify.success(t('notifications.budgetCreated'));
               } catch (error) {
-                Notify.failure('Сталася помилка, спробуйте ще раз');
+                Notify.failure(t('notifications.genericError'));
                 console.error('Error: ', error);
               } finally {
                 setLoading(false);
@@ -292,8 +256,8 @@ const BudgetWatchForm = ({ request, closeModal, onRefresh, formType }) => {
               applicant: request.applicant || '',
               project: request.project_id || '',
               expense_category_id: request.expense_category?.id || '',
-              period: request.plan_period || '',
-              week: request.week || '',
+              period: requestPeriod || '',
+              week: resolvedRequestWeekValue || '',
               purpose: request.purpose || '',
               amount_opt: request.amount_optimistic ?? 0,
               amount_pes: request.amount_pessimistic ?? 0,

@@ -3,88 +3,36 @@ import { approveBudgetingStatus } from '../../../helpers/budgetingStatuses';
 import Form from '../../Form/Form';
 import style from './ApproveBudgetingWatchForm.module.css';
 import dayjs from 'dayjs';
+import { Notify } from 'notiflix';
+import {
+  ensureCurrentWeekOption,
+  getWeeksOfMonth,
+  resolveWeekValue,
+} from '../../../helpers/budgetingWeekOptions';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const ApproveBudgetingWatchForm = ({
   request,
-  closeModal,
-  onRefresh,
   userRole,
 }) => {
+  const { t } = useTranslation();
   const [weeksOptions, setWeeksOptions] = useState([]);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
+  const requestPeriod = request?.plan_period || '';
+  const requestWeekValue = request?.week || '';
 
-  const getWeeksOfMonth = period => {
-    if (!period) return [];
-
-    const [month, year] = period.split('.');
-    const startOfMonth = dayjs(`${year}-${month}-01`);
-    const endOfMonth = startOfMonth.endOf('month');
-
-    const weeks = [];
-    let currentStart = startOfMonth;
-
-    if (currentStart.day() !== 1) {
-      const offset = currentStart.day() === 0 ? 6 : currentStart.day() - 1;
-      currentStart = currentStart.subtract(offset, 'day');
-      if (currentStart.isBefore(startOfMonth)) currentStart = startOfMonth;
-    }
-
-    while (
-      currentStart.isBefore(endOfMonth) ||
-      currentStart.isSame(endOfMonth, 'day')
-    ) {
-      let weekStart = currentStart;
-      let weekEnd = weekStart.add(6 - weekStart.day() + 1, 'day');
-      if (weekEnd.isAfter(endOfMonth)) weekEnd = endOfMonth;
-
-      weeks.push({ start: weekStart, end: weekEnd });
-
-      currentStart = weekEnd.add(1, 'day');
-    }
-
-    const hasTueOrThu = week => {
-      for (
-        let d = week.start;
-        d.isBefore(week.end) || d.isSame(week.end, 'day');
-        d = d.add(1, 'day')
-      ) {
-        const dow = d.day();
-        if (dow === 2 || dow === 4) return true;
-      }
-      return false;
-    };
-
-    const adjusted = [];
-    for (let i = 0; i < weeks.length; i++) {
-      const week = weeks[i];
-      if (!hasTueOrThu(week)) {
-        if (i > 0) {
-          adjusted[adjusted.length - 1].end = week.end;
-        } else if (weeks[i + 1]) {
-          weeks[i + 1].start = week.start;
-        }
-      } else {
-        adjusted.push(week);
-      }
-    }
-
-    return adjusted.map(week => ({
-      value: `${week.start.format('YYYY-MM-DD')}_${week.end.format(
-        'YYYY-MM-DD'
-      )}`,
-      label: `${week.start.format('DD.MM')} - ${week.end.format('DD.MM')}`,
-    }));
-  };
-
-  const defaultWeeks = getWeeksOfMonth(request.plan_period || defaultPeriod);
+  const periodWeeks = getWeeksOfMonth(requestPeriod || defaultPeriod);
+  const resolvedRequestWeekValue = resolveWeekValue(periodWeeks, requestWeekValue);
+  const defaultWeeks = ensureCurrentWeekOption(periodWeeks, resolvedRequestWeekValue);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setWeeksOptions(defaultWeeks);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
@@ -94,24 +42,24 @@ const ApproveBudgetingWatchForm = ({
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
-      options: approveBudgetingStatus,
-      validation: { required: 'This field is required' },
+      label: t('labels.status'),
+      options: translateOptions(approveBudgetingStatus, t),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'select',
       name: 'week',
-      label: 'Тиждень',
+      label: t('labels.week'),
       options: weeksOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
-      validation: { required: 'This field is required' },
+      label: t('labels.comment'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
   ];
@@ -121,22 +69,22 @@ const ApproveBudgetingWatchForm = ({
       <ul className={style.commentsList}>
         {request.applicant_comment && (
           <li className={style.commentApplicant}>
-            Коментар заявника: {request.applicant_comment}
+            {t('labels.applicantComment')}: {request.applicant_comment}
           </li>
         )}
         {request.finance_comment && (
           <li className={style.commentFinance}>
-            Коментар фінанси: {request.finance_comment}
+            {t('labels.financeComment')}: {request.finance_comment}
           </li>
         )}
         {request.ceo_comment && (
           <li className={style.commentCeo}>
-            Коментар CEO/COO/CFO: {request.ceo_comment}
+            {t('labels.ceoComment')}: {request.ceo_comment}
           </li>
         )}
       </ul>
       <Form
-        title="Перегляд заявки"
+        title={t('forms.watchBudget')}
         fields={fields}
         defaultValues={{
           status: request.status?.id,
@@ -148,7 +96,7 @@ const ApproveBudgetingWatchForm = ({
               : userRole === 2
               ? request.applicant_comment || ''
               : '',
-          week: request.week || '',
+          week: resolvedRequestWeekValue || '',
         }}
       />
     </div>

@@ -12,15 +12,17 @@ import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import {
   getActiveStatus,
-  getShortStatus,
   getStatusStyle,
   statusSelectorUser,
+  FILTER_ALL,
+  FILTER_DELETED,
+  FinancialStatusFilter,
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import { selectUserId, selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
@@ -36,8 +38,16 @@ import {
 import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import {
+  translateFinancialStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
+import { FinancialRequestStatus } from '../../helpers/enums';
 
 const MyRefundsPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
@@ -45,12 +55,12 @@ const MyRefundsPage = () => {
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
-  const [selectedContractor, setSelectedContractor] = useState('Всі');
-  const [selectedPaymentForm, setSelectedPaymentForm] = useState('Всі');
+  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
+  const [selectedContractor, setSelectedContractor] = useState(FILTER_ALL);
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
-    useState('Всі');
+    useState(FILTER_ALL);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -73,16 +83,37 @@ const MyRefundsPage = () => {
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
-  const [activeStatus, setActiveStatus] = useState('Всі');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyRefundsColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
-  const { userId } = useParams();
   const userSelectorId = useSelector(selectUserId);
+  const userId = userSelectorId;
   const navigate = useNavigate();
+
+  const canSendRequestStatus = useCallback(request => {
+    if (isDeletedRecord(request)) return false;
+    const statusId = Number(request?.status_id ?? request?.status?.id);
+    if (
+      statusId === FinancialRequestStatus.DRAFT ||
+      statusId === FinancialRequestStatus.NEEDS_REVISION
+    ) {
+      return true;
+    }
+
+    return [FinancialStatusFilter.DRAFT, FinancialStatusFilter.NEEDS_REVISION].includes(
+      getActiveStatus(request?.status_id, request?.status)
+    );
+  }, []);
+
+  const canSendFilesForStatus = useCallback(request =>
+    !isDeletedRecord(request) &&
+    getActiveStatus(request?.status_id, request?.status) ===
+      FinancialStatusFilter.AWAITING_DOCUMENTS,
+  []);
 
   const fetchData = useCallback(async () => {
     try {
@@ -91,12 +122,13 @@ const MyRefundsPage = () => {
         userId,
         startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
         endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+        deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
       });
       setDataRequests(requests);
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -106,7 +138,7 @@ const MyRefundsPage = () => {
 
       const currencies = await getCurrencies();
       const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(currencies || []).map(c => ({
           value: c.id,
           label: c.name,
@@ -116,7 +148,7 @@ const MyRefundsPage = () => {
 
       const contractors = await getContractors();
       const contractorSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(contractors || []).map(e => ({
           value: e.id,
           label: e.name,
@@ -126,7 +158,7 @@ const MyRefundsPage = () => {
 
       const paymentForms = await getPaymentForms();
       const paymentFormSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(paymentForms || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -136,7 +168,7 @@ const MyRefundsPage = () => {
 
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(expenseCategories || [])
           .filter(c => c.is_active)
           .map(c => ({
@@ -145,21 +177,21 @@ const MyRefundsPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
-    } catch (err) {
+    } catch {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [userId, startDate, endDate, activeStatus, t]);
 
   useEffect(() => {
-    if (userRole !== 1 && String(userSelectorId) !== String(userId)) {
+    if (!userSelectorId) {
       navigate('/');
     } else {
       fetchData();
     }
-  }, [fetchData]);
+  }, [fetchData, navigate, userSelectorId]);
 
   const handleSort = key => {
     setSortConfig(prev => {
@@ -207,19 +239,19 @@ const MyRefundsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
+    if (selectedProject && selectedProject !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.project_id === selectedProject
       );
     }
 
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
+    if (selectedCurrency && selectedCurrency !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.currency?.id === selectedCurrency
       );
     }
 
-    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.expense_category_id === selectedExpenseCategorie
       );
@@ -231,19 +263,23 @@ const MyRefundsPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== FILTER_ALL &&
+      activeStatus !== FILTER_DELETED
+    ) {
       filteredRows = filteredRows.filter(
-        row => getActiveStatus(row.status) === activeStatus
+        row => getActiveStatus(row.status_id, row.status) === activeStatus
       );
     }
 
-    if (selectedContractor && selectedContractor !== 'Всі') {
+    if (selectedContractor && selectedContractor !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.contractor_id === selectedContractor
       );
     }
 
-    if (selectedPaymentForm && selectedPaymentForm !== 'Всі') {
+    if (selectedPaymentForm && selectedPaymentForm !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.payment_form_id === selectedPaymentForm
       );
@@ -373,7 +409,16 @@ const MyRefundsPage = () => {
       });
     }
 
+    if (activeStatus === FILTER_DELETED) {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -474,7 +519,7 @@ const MyRefundsPage = () => {
             color: getStatusStyle(request.status).color,
           }}
         >
-          {getShortStatus(request.status)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status || '',
@@ -483,10 +528,13 @@ const MyRefundsPage = () => {
           <button
             className={style.editBtn}
             onClick={() => {
-              if (
-                request.status === 'Чернетка' ||
-                request.status === 'Потребує виправлень'
-              ) {
+              const isDeleted = isDeletedRecord(request);
+              if (isDeleted) {
+                setSelectedRequest(request);
+                openModalEdit();
+                return;
+              }
+              if (canSendRequestStatus(request)) {
                 setSelectedRequest(request);
                 openModalEdit();
               } else {
@@ -507,15 +555,11 @@ const MyRefundsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {(request.status === 'Чернетка' ||
-            request.status === 'Потребує виправлень') && (
+          {canSendRequestStatus(request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status === 'Чернетка' ||
-                  request.status === 'Потребує виправлень'
-                ) {
+                if (canSendRequestStatus(request)) {
                   setSelectedRequest(request);
                   setModalSendIsOpen(true);
                 }
@@ -524,16 +568,11 @@ const MyRefundsPage = () => {
               <Icon id="paper-plane" className={style.editIcon} />
             </button>
           )}
-          {(request.status === 'Фінанси: Сплачено, очікуються документи' ||
-            request.status === 'Бухгалтер: Сплачено, очікуються документи') && (
+          {canSendFilesForStatus(request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (
-                  request.status ===
-                    'Фінанси: Сплачено, очікуються документи' ||
-                  request.status === 'Бухгалтер: Сплачено, очікуються документи'
-                ) {
+                if (canSendFilesForStatus(request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -555,6 +594,8 @@ const MyRefundsPage = () => {
     selectedPaymentForm,
     filters,
     selectedExpenseCategorie,
+    canSendRequestStatus,
+    canSendFilesForStatus,
   ]);
 
   const totals = useMemo(() => {
@@ -585,7 +626,7 @@ const MyRefundsPage = () => {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('request_id')}
@@ -599,7 +640,7 @@ const MyRefundsPage = () => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('created_at')}
@@ -613,7 +654,7 @@ const MyRefundsPage = () => {
       accessorKey: 'payment_date_await',
       header: (
         <div className={style.sortContainer}>
-          <p>Кінцева дата оплати</p>
+          <p>{t('labels.paymentDeadline')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_date_await')}
@@ -627,7 +668,7 @@ const MyRefundsPage = () => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
@@ -641,7 +682,7 @@ const MyRefundsPage = () => {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
-          <p>Форма оплати</p>
+          <p>{t('labels.paymentForm')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_form')}
@@ -655,7 +696,7 @@ const MyRefundsPage = () => {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
-          <p>Контрагент</p>
+          <p>{t('labels.contractor')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('contractor')}
@@ -669,7 +710,7 @@ const MyRefundsPage = () => {
       accessorKey: 'payment_details',
       header: (
         <div className={style.sortContainer}>
-          <p>Реквізити</p>
+          <p>{t('labels.paymentDetails')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_details')}
@@ -683,7 +724,7 @@ const MyRefundsPage = () => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('purpose')}
@@ -697,7 +738,7 @@ const MyRefundsPage = () => {
       accessorKey: 'payment_period',
       header: (
         <div className={style.sortContainer}>
-          <p>Період оплати</p>
+          <p>{t('labels.paymentPeriod')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_period')}
@@ -711,7 +752,7 @@ const MyRefundsPage = () => {
       accessorKey: 'amount',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума</p>
+          <p>{t('labels.amount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount')}
@@ -725,7 +766,7 @@ const MyRefundsPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -739,7 +780,7 @@ const MyRefundsPage = () => {
       accessorKey: 'amount_uah',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума UAH</p>
+          <p>{t('labels.amountUah')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah')}
@@ -753,7 +794,7 @@ const MyRefundsPage = () => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
@@ -767,7 +808,7 @@ const MyRefundsPage = () => {
       accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс оптимістичний (залишок)</p>
+          <p>{t('labels.optimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_optimistic')}
@@ -781,7 +822,7 @@ const MyRefundsPage = () => {
       accessorKey: 'planned_balance_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс песимістичний (залишок)</p>
+          <p>{t('labels.pessimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_pessimistic')}
@@ -793,13 +834,13 @@ const MyRefundsPage = () => {
     },
     {
       accessorKey: 'files',
-      header: 'Файли',
+      header: t('labels.files'),
     },
     {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('status')}
@@ -811,7 +852,7 @@ const MyRefundsPage = () => {
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
@@ -863,6 +904,10 @@ const MyRefundsPage = () => {
   };
 
   const handleSend = async () => {
+    if (isDeletedRecord(selectedRequest)) {
+      Notify.warning('Видалену заявку не можна змінювати');
+      return;
+    }
     try {
       await sendRequest(selectedRequest.id);
       fetchData();
@@ -892,7 +937,7 @@ const MyRefundsPage = () => {
               />
               <div className={style.btnsContainer}>
                 <button className={style.newBtn} onClick={openModal}>
-                  Заявка на повернення <span>+</span>
+                  {t('nav.refunds')} <span>+</span>
                 </button>
                 <button
                   className={style.csvBtn}
@@ -904,7 +949,7 @@ const MyRefundsPage = () => {
                     })
                   }
                 >
-                  Експорт у CSV
+                  {t('common.exportCsv')}
                 </button>
               </div>
             </div>
@@ -915,7 +960,7 @@ const MyRefundsPage = () => {
                 onClick={() => setShowAllFilters(prev => !prev)}
               >
                 <Icon id="filter_list" className={style.filterIcon} />
-                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+                {showAllFilters ? t('common.hideFilters') : t('common.allFilters')}
               </button>
             </div>
             <div className={style.formsContainer}>
@@ -924,7 +969,7 @@ const MyRefundsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: 'Підрозділ',
+                    label: t('labels.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -938,7 +983,7 @@ const MyRefundsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: 'Стаття витрат',
+                    label: t('labels.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -953,7 +998,7 @@ const MyRefundsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'contractor',
-                    label: 'Контрагент',
+                    label: t('labels.contractor'),
                     options: contractorsOptions,
                     onChange: option =>
                       setSelectedContractor(option?.value || ''),
@@ -968,7 +1013,7 @@ const MyRefundsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'payment_form',
-                    label: 'Форма оплати',
+                    label: t('labels.paymentForm'),
                     options: paymentFormOptions,
                     onChange: option =>
                       setSelectedPaymentForm(option?.value || ''),
@@ -988,7 +1033,7 @@ const MyRefundsPage = () => {
                         type="text"
                         name="request_id"
                         className={style.inputContainer}
-                        placeholder="ID заявки"
+                        placeholder={t('labels.id') + ' заявки'}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -999,7 +1044,7 @@ const MyRefundsPage = () => {
                         type="text"
                         name="payment_date_await"
                         className={style.inputContainer}
-                        placeholder="Кінцева дата оплати"
+                        placeholder={t('labels.paymentDeadline')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1010,7 +1055,7 @@ const MyRefundsPage = () => {
                         type="text"
                         name="purpose"
                         className={style.inputContainer}
-                        placeholder="Призначення"
+                        placeholder={t('labels.purpose')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1022,7 +1067,7 @@ const MyRefundsPage = () => {
                       {
                         type: 'select',
                         name: 'currency',
-                        label: 'Валюта',
+                        label: t('labels.currency'),
                         options: currenciesOptions,
                         onChange: value => setSelectedCurrency(value),
                       },
@@ -1037,7 +1082,7 @@ const MyRefundsPage = () => {
                         type="text"
                         name="payment_details"
                         className={style.inputContainer}
-                        placeholder="Реквізити"
+                        placeholder={t('labels.paymentDetails')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1046,7 +1091,7 @@ const MyRefundsPage = () => {
               </>
             )}
             <ul className={style.statuscontainer}>
-              {statusSelectorUser.map(status => (
+              {translateOptions(statusSelectorUser, t).map(status => (
                 <li key={status.value}>
                   <button
                     className={`${style.statusBtn} ${
@@ -1062,7 +1107,7 @@ const MyRefundsPage = () => {
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
-                Фільтр колонок
+                {t('common.columnsFilter')}
               </button>
             </div>
           </div>
@@ -1071,8 +1116,7 @@ const MyRefundsPage = () => {
           ) : requestsRows.length === 0 ? (
             <div className={style.noDataContainer}>
               <p className={style.noDataText}>
-                Заявок за обраний період немає. Перегляньте, будь ласка, обрану
-                дату періоду.
+                {t('messages.noRequestsForPeriod')}
               </p>
             </div>
           ) : (
@@ -1090,7 +1134,7 @@ const MyRefundsPage = () => {
               {totals && (
                 <div className={style.totalsContainer}>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього валюти:</p>
+                    <p className={style.totalTitle}>{t('common.totalCurrency')}</p>
                     <ul className={style.totalList}>
                       {Object.entries(totals.totalsByCurrency).map(
                         ([cur, sum]) => (
@@ -1106,7 +1150,7 @@ const MyRefundsPage = () => {
                     </ul>
                   </div>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього сума в UAH:</p>
+                    <p className={style.totalTitle}>{t('common.totalAmountUah')}</p>
                     <p className={style.totalText}>
                       {totals.totalUAH.toLocaleString('uk-UA', {
                         minimumFractionDigits: 0,

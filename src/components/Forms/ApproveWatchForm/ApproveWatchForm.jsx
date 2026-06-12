@@ -2,29 +2,32 @@ import dayjs from 'dayjs';
 import { approveStatus } from '../../../helpers/status';
 import Form from '../../Form/Form';
 import style from './ApproveWatchForm.module.css';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
-const ApproveWatchForm = ({ request, closeModal, onRefresh, userRole }) => {
+const ApproveWatchForm = ({ request }) => {
+  const { t } = useTranslation();
   const fields = [
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
-      options: approveStatus,
+      label: t('labels.status'),
+      options: translateOptions(approveStatus, t),
       readOnly: true,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати',
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentDeadline'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
-      validation: { required: 'This field is required' },
+      label: t('labels.comment'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
   ];
@@ -34,22 +37,27 @@ const ApproveWatchForm = ({ request, closeModal, onRefresh, userRole }) => {
       <ul className={style.commentsList}>
         {request.comment && (
           <li className={style.commentApplicant}>
-            Коментар заявника: {request.comment}
+            {t('labels.applicantComment')}: {request.comment}
           </li>
         )}
         {request.finance_comment && (
           <li className={style.commentFinance}>
-            Коментар фінанси: {request.finance_comment}
+            {t('labels.financeComment')}: {request.finance_comment}
           </li>
         )}
         {request.accounting_comment && (
           <li className={style.commentBuh}>
-            Коментар бухгалтерія: {request.accounting_comment}
+            {t('labels.accountingComment')}: {request.accounting_comment}
+          </li>
+        )}
+        {request.ceo_comment && (
+          <li className={style.commentFinance}>
+            {t('labels.ceoComment')}: {request.ceo_comment}
           </li>
         )}
       </ul>
       <Form
-        title="Перегляд заявки"
+        title={t('forms.watchRequest')}
         fields={fields}
         defaultValues={{
           status: request.status?.id || '',

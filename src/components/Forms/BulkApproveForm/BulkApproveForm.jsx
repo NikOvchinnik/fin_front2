@@ -1,5 +1,6 @@
 import Form from '../../Form/Form';
 import style from './BulkApproveForm.module.css';
+import { useTranslation } from 'react-i18next';
 
 const BulkApproveForm = ({
   title,
@@ -7,25 +8,26 @@ const BulkApproveForm = ({
   statusOptions,
   onSubmit,
 }) => {
+  const { t } = useTranslation();
   const fields = [
     {
       type: 'select',
       name: 'status',
-      label: 'Статус',
+      label: t('labels.status'),
       options: statusOptions || [],
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
     },
     {
       type: 'textarea',
       name: 'comment',
-      label: 'Коментар',
-      validation: { required: 'This field is required' },
+      label: t('labels.comment'),
+      validation: { required: t('validation.required') },
     },
   ];
 
   const buttons = [
     {
-      label: 'Відправити',
+      label: t('actions.send'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -34,7 +36,7 @@ const BulkApproveForm = ({
   return (
     <div className={style.editContainer}>
       <p className={style.countText}>
-        Обрано рядків: <span>{selectedCount}</span>
+        {t('forms.selectedRows', { count: selectedCount })}
       </p>
       <Form
         title={title}

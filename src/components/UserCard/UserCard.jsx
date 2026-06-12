@@ -5,8 +5,11 @@ import style from './UserCard.module.css';
 import { Link } from 'react-router-dom';
 import UserEditForm from '../Forms/UserEditForm/UserEditForm';
 import { Notify } from 'notiflix';
+import { UserRole } from '../../helpers/enums';
+import { useTranslation } from 'react-i18next';
 
 const UserCard = ({ user, onRefresh, userRole }) => {
+  const { t } = useTranslation();
   const [isModalOpen, setModalIsOpen] = useState(false);
 
   const openModal = () => {
@@ -17,31 +20,20 @@ const UserCard = ({ user, onRefresh, userRole }) => {
     setModalIsOpen(false);
   };
 
-  const getUserPath = (role, id) => {
-    switch (role) {
-      case 1:
-        return `/my_requests/${user.user_id}`;
-      case 2:
-        return `/my_requests/${user.user_id}`;
-      case 3:
-        return `/my_requests/${user.user_id}`;
-      case 4:
-        return `/my_requests/${user.user_id}`;
-      case 5:
-        return `/my_requests/${user.user_id}`;
-      default:
-        return `/my_requests/${user.user_id}`;
-    }
-  };
-
+  const getUserPath = () => '/my-requests';
 
   const handleClick = () => {
-    if (userRole === 1) {
+    if (
+      [UserRole.CEO, UserRole.FINANCE].includes(Number(userRole))
+    ) {
       openModal();
-    } else if (userRole === 2 && user?.user_role_id === 3) {
+    } else if (
+      Number(userRole) === UserRole.HEAD_OF_DEPARTMENT &&
+      Number(user?.user_role_id) === UserRole.APPLICANT
+    ) {
       openModal();
     } else {
-      Notify.warning('Ви не можете редагувати користувача');
+      Notify.warning(t('notifications.cannotEditUser'));
     }
   };
 
@@ -49,7 +41,7 @@ const UserCard = ({ user, onRefresh, userRole }) => {
     <>
       <div className={style.userContainer}>
         <Link
-          to={getUserPath(user.user_role_id, user.user_id)}
+          to={getUserPath()}
           className={style.userText}
         >
           {user.user_last_name} {user.user_first_name} ({user.user_id})

@@ -9,16 +9,24 @@ import Form from '../../components/Form/Form';
 import { getBudgetingById } from '../../helpers/axios/budgeting';
 import RequestSearch from '../../components/RequestSearch/RequestSearch';
 import BudgetSearch from '../../components/BudgetSearch/BudgetSearch';
+import {
+  deletedFilterTabs,
+  getDeletedFilterParam,
+} from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../helpers/i18nOptions';
 
 const SearchPage = () => {
+  const { t } = useTranslation();
   const [loadingTable, setLoadingTable] = useState(false);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequestType, setSelectedRequestType] = useState('request');
+  const [selectedDeletedFilter, setSelectedDeletedFilter] = useState('false');
   const [submitted, setSubmitted] = useState(false);
 
-  const fetchData = useCallback(async (id, type) => {
+  const fetchData = useCallback(async (id, type, deleted = selectedDeletedFilter) => {
     if (!id) {
-      Notify.failure('Введіть ID заявки');
+      Notify.failure(t('notifications.enterRequestId'));
       return;
     }
     try {
@@ -27,12 +35,18 @@ const SearchPage = () => {
       setSubmitted(false);
 
       if (type === 'request') {
-        const res = await getRequestById({ id });
+        const res = await getRequestById({
+          id,
+          deleted: getDeletedFilterParam(deleted),
+        });
         setDataRequests([res]);
         setSelectedRequestType('request');
         setSubmitted(true);
       } else if (type === 'budgeting') {
-        const res = await getBudgetingById({ id });
+        const res = await getBudgetingById({
+          id,
+          deleted: getDeletedFilterParam(deleted),
+        });
         setDataRequests([res]);
         setSelectedRequestType('budgeting');
         setSubmitted(true);
@@ -41,9 +55,9 @@ const SearchPage = () => {
       const message = err.response?.data?.message;
 
       if (err.response?.status === 404 || /not found/i.test(message)) {
-        Notify.failure('Заявку не знайдено');
+        Notify.failure(t('notifications.requestNotFound'));
       } else {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure(t('notifications.genericError'));
       }
 
       setSubmitted(false);
@@ -51,7 +65,7 @@ const SearchPage = () => {
     } finally {
       setLoadingTable(false);
     }
-  }, []);
+  }, [selectedDeletedFilter]);
 
   return (
     <section className={style.mainContainer}>
@@ -62,15 +76,22 @@ const SearchPage = () => {
             {
               type: 'select',
               name: 'type',
-              label: 'Тип заявки',
-              options: searchType,
+              label: t('labels.requestType'),
+              options: translateOptions(searchType, t),
+            },
+            {
+              type: 'select',
+              name: 'deleted_filter',
+              label: t('labels.show'),
+              options: translateOptions(deletedFilterTabs, t),
+              onChange: value => setSelectedDeletedFilter(value),
             },
             {
               type: 'text',
               name: 'id',
-              label: 'ID заявки',
+              label: t('labels.requestId'),
               button: {
-                label: 'Search',
+                label: t('common.search'),
                 className: 'searchBtn',
                 type: 'submit',
               },
@@ -78,11 +99,12 @@ const SearchPage = () => {
           ]}
           styleForm="formRowContainer"
           onSubmit={data => {
-            fetchData(data.id.trim(), data.type);
+            fetchData(data.id.trim(), data.type, data.deleted_filter);
           }}
           defaultValues={{
             id: '',
             type: selectedRequestType || 'request',
+            deleted_filter: selectedDeletedFilter,
           }}
         />
       </div>
@@ -90,9 +112,17 @@ const SearchPage = () => {
         (loadingTable ? (
           <Loader />
         ) : selectedRequestType === 'budgeting' ? (
-          <BudgetSearch dataRequests={dataRequests} onRefresh={fetchData} />
+          <BudgetSearch
+            dataRequests={dataRequests}
+            onRefresh={fetchData}
+            deletedFilter={selectedDeletedFilter}
+          />
         ) : (
-          <RequestSearch dataRequests={dataRequests} onRefresh={fetchData} />
+          <RequestSearch
+            dataRequests={dataRequests}
+            onRefresh={fetchData}
+            deletedFilter={selectedDeletedFilter}
+          />
         ))}
     </section>
   );

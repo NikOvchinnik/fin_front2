@@ -9,8 +9,10 @@ import Form from '../../../components/Form/Form';
 import Icon from '../../../components/Icon/Icon';
 import { exportToCSV } from '../../../helpers/exportToCSV';
 import { getProjects } from '../../../helpers/axios/projects';
+import { useTranslation } from 'react-i18next';
 
 const RequestsAnalyticPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [statisticsRows, setStatisticsRows] = useState([]);
   const [selectedProject, setSelectedProject] = useState('all');
@@ -29,7 +31,7 @@ const RequestsAnalyticPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'all', label: 'Всі' },
+        { value: 'all', label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -84,7 +86,7 @@ const RequestsAnalyticPage = () => {
       );
 
       const totalRow = {
-        date: <p className={style.titleRow}>Total</p>,
+        date: <p className={style.titleRow}>{t('common.total')}</p>,
         date_plain: 'Total',
         paid_count: <p className={style.totalTextRow}>{totalCount}</p>,
         paid_count_plain: totalCount,
@@ -111,8 +113,8 @@ const RequestsAnalyticPage = () => {
       };
 
       setStatisticsRows([...rows, totalRow]);
-    } catch (err) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+    } catch {
+      Notify.failure(t('notifications.genericError'));
     } finally {
       setLoading(false);
     }
@@ -140,7 +142,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'date',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата</p>
+          <p>{t('labels.date')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('date')}
@@ -154,7 +156,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'paid_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки кількість</p>
+          <p>{t('labels.requestsCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_count')}
@@ -168,7 +170,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'paid_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявки сума</p>
+          <p>{t('labels.requestsAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('paid_sum')}
@@ -182,7 +184,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'budget_count',
       header: (
         <div className={style.sortContainer}>
-          <p>Бюджет кількість</p>
+          <p>{t('labels.budgetCount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('budget_count')}
@@ -196,7 +198,7 @@ const RequestsAnalyticPage = () => {
       accessorKey: 'budget_sum',
       header: (
         <div className={style.sortContainer}>
-          <p>Бюджет сума</p>
+          <p>{t('labels.budgetAmount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('budget_sum')}
@@ -250,7 +252,7 @@ const RequestsAnalyticPage = () => {
         <section className={style.mainContainer}>
           <DocTitle>RequestsAnalytic</DocTitle>
           <div className={style.titleContainer}>
-            <h2>Загальна аналітика</h2>
+            <h2>{t('analytics.total')}</h2>
             <button
               className={style.csvBtn}
               onClick={() =>
@@ -261,7 +263,7 @@ const RequestsAnalyticPage = () => {
                 })
               }
             >
-              Експорт у CSV
+              {t('common.exportCsv')}
             </button>
           </div>
           <div className={style.formSelectorContainer}>
@@ -270,7 +272,7 @@ const RequestsAnalyticPage = () => {
                 {
                   type: 'select',
                   name: 'project',
-                  label: 'Підрозділ',
+                  label: t('labels.department'),
                   options: projectOptions,
                   onChange: value => setSelectedProject(value),
                 },

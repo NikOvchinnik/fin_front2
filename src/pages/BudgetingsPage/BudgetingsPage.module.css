@@ -167,13 +167,18 @@
 }
 
 .statuscontainer {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
+  display: inline-flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
   gap: 4px;
   border-radius: 12px;
   padding: 4px;
   background: var(--toggle-lang-background);
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: fit-content;
+  max-width: 100%;
+  scrollbar-width: thin;
 }
 
 .statusBtn {
@@ -183,6 +188,8 @@
   border-radius: 8px;
   padding: 8px 28px;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .activeBtn {

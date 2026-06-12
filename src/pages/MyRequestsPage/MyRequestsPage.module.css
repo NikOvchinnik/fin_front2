@@ -145,15 +145,37 @@
   border: 1px solid #66bb6a;
 }
 
-.statuscontainer {
-  max-width: 1450px;
+.returnBtn {
   display: flex;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  border: 1px solid #f0a130;
+  border-radius: 4px;
+  fill: #f0a130;
+  transition: all 0.3s ease;
+  width: 24px;
+  height: 24px;
+}
+
+.returnBtn:hover,
+.returnBtn:focus {
+  fill: #d88916;
+  border: 1px solid #d88916;
+}
+
+.statuscontainer {
+  display: inline-flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
   gap: 4px;
   border-radius: 12px;
   padding: 4px;
   background: var(--toggle-lang-background);
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: fit-content;
+  max-width: 100%;
+  scrollbar-width: thin;
 }
 
 .statusBtn {
@@ -163,6 +185,8 @@
   border-radius: 8px;
   padding: 8px 28px;
   transition: all 0.3s ease;
+  white-space: nowrap;
+  flex: 0 0 auto;
 }
 
 .activeBtn {

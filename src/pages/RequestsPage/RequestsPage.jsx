@@ -3,7 +3,11 @@ import DocTitle from '../../components/DocTitle/DocTitle';
 import style from './RequestsPage.module.css';
 import { Notify } from 'notiflix';
 import Loader from '../../components/Loader/Loader';
-import { getBuhRequests, getFinRequests } from '../../helpers/axios/requests';
+import {
+  getBuhRequests,
+  getCeoRequests,
+  getFinRequests,
+} from '../../helpers/axios/requests';
 import {
   getCurrencies,
   getExpenseCategories,
@@ -17,12 +21,14 @@ import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import {
   getActiveStatus,
-  getShortStatus,
   getStatusStyle,
+  FinancialStatusFilter,
   statusSelectorBuh,
   statusSelectorFin,
   approveStatusFin,
   approveStatusBuh,
+  FILTER_ALL,
+  FILTER_DELETED,
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import Form from '../../components/Form/Form';
@@ -36,10 +42,19 @@ import { exportToCSV } from '../../helpers/exportToCSV';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
 import { getContractors } from '../../helpers/axios/contractors';
 import BulkApproveForm from '../../components/Forms/BulkApproveForm/BulkApproveForm';
-import { changeFinStatusBulk } from '../../helpers/axios/statuses';
+import { changeFinStatusBulk } from '../../helpers/axios/requests';
 import { formatMoney, getRequestAmountUah } from '../../helpers/amounts';
+import { FinancialRequestStatus, UserRole } from '../../helpers/enums';
+import { isDeletedRecord } from '../../helpers/softDelete';
+import { useTranslation } from 'react-i18next';
+import {
+  translateFinancialStatus,
+  translateOptions,
+} from '../../helpers/i18nOptions';
+import { isExecutiveRole } from '../../helpers/roles';
 
 const RequestsPage = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
   const [projectOptions, setProjectOptions] = useState([]);
@@ -47,12 +62,12 @@ const RequestsPage = () => {
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('Всі');
-  const [selectedCurrency, setSelectedCurrency] = useState('Всі');
-  const [selectedContractor, setSelectedContractor] = useState('Всі');
-  const [selectedPaymentForm, setSelectedPaymentForm] = useState('Всі');
+  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
+  const [selectedContractor, setSelectedContractor] = useState(FILTER_ALL);
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
-    useState('Всі');
+    useState(FILTER_ALL);
   const [dataRequests, setDataRequests] = useState([]);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [filters, setFilters] = useState({
@@ -74,13 +89,20 @@ const RequestsPage = () => {
   const [isModalBulkOpen, setModalBulkIsOpen] = useState(false);
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
-  const [activeStatus, setActiveStatus] = useState('Всі');
+  const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
   const userRole = useSelector(selectUserRole);
+  const isExecutiveUser = isExecutiveRole(userRole);
+  const isExecutiveApprovalMode =
+    isExecutiveUser &&
+    activeStatus === FinancialStatusFilter.PENDING_EXECUTIVE_APPROVAL;
+  const canBulkEditRequests =
+    !isExecutiveApprovalMode &&
+    [UserRole.FINANCE, UserRole.ACCOUNTANT].includes(userRole);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
@@ -92,24 +114,46 @@ const RequestsPage = () => {
     [dataRequests]
   );
 
-  const canEditRequestStatus = (statusId, role) => {
-    if (role === 4) return statusId === 2;
-    if (role === 5) return statusId === 4;
-    return false;
-  };
+  const canEditRequestStatus = useCallback(
+    (statusId, role, request) => {
+      if (isDeletedRecord(request)) return false;
+      if (isExecutiveApprovalMode) {
+        return statusId === FinancialRequestStatus.PENDING_EXECUTIVE_APPROVAL;
+      }
+      if (role === UserRole.FINANCE) {
+        return statusId === FinancialRequestStatus.PENDING_APPROVAL;
+      }
+      if (role === UserRole.ACCOUNTANT) {
+        return statusId === FinancialRequestStatus.SENT_TO_PAYMENT;
+      }
+      return false;
+    },
+    [isExecutiveApprovalMode]
+  );
 
-  const canSendFilesForStatus = statusId => statusId === 22 || statusId === 6;
+  const canSendFilesForStatus = (statusId, request) =>
+    !isDeletedRecord(request) &&
+    (statusId === FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS ||
+      statusId === FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS);
 
   const hasBulkRestrictedSelection = useMemo(() => {
+    if (!canBulkEditRequests) return false;
     if (!selectedIds.size) return false;
 
     for (const id of selectedIds) {
       const request = requestById.get(String(id));
-      if (!canEditRequestStatus(request?.status?.id, userRole)) return true;
+      if (!canEditRequestStatus(request?.status?.id, userRole, request))
+        return true;
     }
 
     return false;
-  }, [selectedIds, requestById, userRole]);
+  }, [
+    canBulkEditRequests,
+    selectedIds,
+    requestById,
+    userRole,
+    canEditRequestStatus,
+  ]);
 
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
@@ -138,48 +182,73 @@ const RequestsPage = () => {
 
   const toggleRow = useCallback(id => {
     setSelectedIds(prev => {
+      const request = requestById.get(String(id));
+      if (isDeletedRecord(request)) return prev;
       const next = new Set(prev);
       next.has(id) ? next.delete(id) : next.add(id);
       return next;
     });
-  }, []);
+  }, [requestById]);
+
+  const selectablePageIds = useMemo(
+    () =>
+      pageRowIds.filter(id => {
+        const request = requestById.get(String(id));
+        return !isDeletedRecord(request);
+      }),
+    [pageRowIds, requestById]
+  );
 
   const isAllSelectedOnPage = useMemo(() => {
-    return pageRowIds.length > 0 && pageRowIds.every(id => selectedIds.has(id));
-  }, [pageRowIds, selectedIds]);
+    return (
+      selectablePageIds.length > 0 &&
+      selectablePageIds.every(id => selectedIds.has(id))
+    );
+  }, [selectablePageIds, selectedIds]);
 
   const isSomeSelectedOnPage = useMemo(() => {
-    return pageRowIds.some(id => selectedIds.has(id)) && !isAllSelectedOnPage;
-  }, [pageRowIds, selectedIds, isAllSelectedOnPage]);
+    return (
+      selectablePageIds.some(id => selectedIds.has(id)) && !isAllSelectedOnPage
+    );
+  }, [selectablePageIds, selectedIds, isAllSelectedOnPage]);
 
   const toggleAllOnPage = useCallback(() => {
     setSelectedIds(prev => {
       const next = new Set(prev);
       const allSelected =
-        pageRowIds.length > 0 && pageRowIds.every(id => next.has(id));
+        selectablePageIds.length > 0 &&
+        selectablePageIds.every(id => next.has(id));
 
-      pageRowIds.forEach(id => {
+      selectablePageIds.forEach(id => {
         if (allSelected) next.delete(id);
         else next.add(id);
       });
 
       return next;
     });
-  }, [pageRowIds]);
+  }, [selectablePageIds]);
 
   const fetchData = useCallback(async () => {
     try {
       setLoadingTable(true);
       let requests;
-      if (userRole === 5) {
+      if (isExecutiveApprovalMode) {
+        requests = await getCeoRequests({
+          startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
+          endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
+        });
+      } else if (userRole === UserRole.ACCOUNTANT) {
         requests = await getBuhRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       } else {
         requests = await getFinRequests({
           startDate: startDate ? startDate.format('YYYY-MM-DD') : null,
           endDate: endDate ? endDate.format('YYYY-MM-DD') : null,
+          deleted: activeStatus === FILTER_DELETED ? 'true' : 'false',
         });
       }
 
@@ -187,7 +256,7 @@ const RequestsPage = () => {
 
       const projects = await getProjects();
       const projectSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(projects || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -197,7 +266,7 @@ const RequestsPage = () => {
 
       const currencies = await getCurrencies();
       const currencySelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(currencies || []).map(c => ({
           value: c.id,
           label: c.name,
@@ -207,7 +276,7 @@ const RequestsPage = () => {
 
       const contractors = await getContractors();
       const contractorSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(contractors || []).map(e => ({
           value: e.id,
           label: e.name,
@@ -217,7 +286,7 @@ const RequestsPage = () => {
 
       const paymentForms = await getPaymentForms();
       const paymentFormSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(paymentForms || []).map(p => ({
           value: p.id,
           label: p.name,
@@ -227,7 +296,7 @@ const RequestsPage = () => {
 
       const expenseCategories = await getExpenseCategories();
       const expenseCategoriesSelector = [
-        { value: 'Всі', label: 'Всі' },
+        { value: FILTER_ALL, label: t('filters.all') },
         ...(expenseCategories || [])
           .filter(c => c.is_active)
           .map(c => ({
@@ -236,13 +305,20 @@ const RequestsPage = () => {
           })),
       ];
       setExpenseCategoriesOptions(expenseCategoriesSelector);
-    } catch (err) {
+    } catch {
       Notify.failure('Сталася помилка, спробуйте ще раз');
     } finally {
       setLoadingTable(false);
       setLoading(false);
     }
-  }, [startDate, endDate]);
+  }, [
+    userRole,
+    isExecutiveApprovalMode,
+    startDate,
+    endDate,
+    activeStatus,
+    t,
+  ]);
 
   useEffect(() => {
     fetchData();
@@ -294,13 +370,13 @@ const RequestsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== 'Всі') {
+    if (selectedProject && selectedProject !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.project?.id === selectedProject
       );
     }
 
-    if (selectedCurrency && selectedCurrency !== 'Всі') {
+    if (selectedCurrency && selectedCurrency !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.currency?.id === selectedCurrency
       );
@@ -314,7 +390,7 @@ const RequestsPage = () => {
       );
     }
 
-    if (selectedExpenseCategorie && selectedExpenseCategorie !== 'Всі') {
+    if (selectedExpenseCategorie && selectedExpenseCategorie !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.expense_category?.id === selectedExpenseCategorie
       );
@@ -332,19 +408,23 @@ const RequestsPage = () => {
       );
     }
 
-    if (activeStatus && activeStatus !== 'Всі') {
+    if (
+      activeStatus &&
+      activeStatus !== FILTER_ALL &&
+      activeStatus !== FILTER_DELETED
+    ) {
       filteredRows = filteredRows.filter(
-        row => getActiveStatus(row.status?.name) === activeStatus
+        row => getActiveStatus(row.status?.id, row.status?.name) === activeStatus
       );
     }
 
-    if (selectedContractor && selectedContractor !== 'Всі') {
+    if (selectedContractor && selectedContractor !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.contractor_id === selectedContractor
       );
     }
 
-    if (selectedPaymentForm && selectedPaymentForm !== 'Всі') {
+    if (selectedPaymentForm && selectedPaymentForm !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
         row => row.payment_form?.id === selectedPaymentForm
       );
@@ -486,7 +566,16 @@ const RequestsPage = () => {
       });
     }
 
+    if (activeStatus === FILTER_DELETED) {
+      sortedRows.sort((a, b) => {
+        const aTs = a.deleted_at ? dayjs(a.deleted_at).valueOf() : 0;
+        const bTs = b.deleted_at ? dayjs(b.deleted_at).valueOf() : 0;
+        return bTs - aTs;
+      });
+    }
+
     return sortedRows.map(request => ({
+      is_deleted_plain: isDeletedRecord(request),
       request_id: request.id,
       request_id_plain: request.id,
       created_at: (
@@ -596,24 +685,33 @@ const RequestsPage = () => {
         <span
           style={{
             borderLeft: `4px solid ${
-              getStatusStyle(request.status?.name).color
+              getStatusStyle(request.status).color
             }`,
             paddingLeft: '6px',
             fontWeight: '700',
-            color: getStatusStyle(request.status?.name).color,
+            color: getStatusStyle(request.status).color,
           }}
         >
-          {getShortStatus(request.status?.name)}
+          {translateFinancialStatus(request.status, t)}
         </span>
       ),
       status_plain: request.status?.name || '',
       action: (
         <div className={style.actionContainer}>
-          {(userRole === 4 || userRole === 5) && (
+          {!isDeletedRecord(request) &&
+            (userRole === UserRole.FINANCE ||
+              userRole === UserRole.ACCOUNTANT ||
+              isExecutiveApprovalMode) && (
             <button
               className={style.editBtn}
               onClick={() => {
-                if (canEditRequestStatus(request.status?.id, userRole)) {
+                if (
+                  canEditRequestStatus(
+                    request.status?.id ?? request.status_id,
+                    userRole,
+                    request
+                  )
+                ) {
                   setSelectedRequest(request);
                   openModal();
                 } else {
@@ -635,11 +733,11 @@ const RequestsPage = () => {
           >
             <Icon id="eye" className={style.editIcon} />
           </button>
-          {canSendFilesForStatus(request.status?.id) && (
+          {canSendFilesForStatus(request.status?.id, request) && (
             <button
               className={style.sendBtn}
               onClick={() => {
-                if (canSendFilesForStatus(request.status?.id)) {
+                if (canSendFilesForStatus(request.status?.id, request)) {
                   setSelectedRequest(request);
                   setModalSendFilesIsOpen(true);
                 }
@@ -661,6 +759,10 @@ const RequestsPage = () => {
     filters,
     sortConfig,
     selectedExpenseCategorie,
+    userRole,
+    isExecutiveApprovalMode,
+    canEditRequestStatus,
+    t,
   ]);
 
   const totals = useMemo(() => {
@@ -686,30 +788,33 @@ const RequestsPage = () => {
     return { totalsByCurrency, totalUAH };
   }, [requestsRows]);
 
+  const selectColumn = {
+    accessorKey: 'select',
+    header: (
+      <Checkbox
+        checked={isAllSelectedOnPage}
+        indeterminate={isSomeSelectedOnPage}
+        onChange={toggleAllOnPage}
+        onClick={e => e.stopPropagation()}
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={selectedIds.has(row.original.request_id_plain)}
+        disabled={row.original.is_deleted_plain}
+        onChange={() => toggleRow(row.original.request_id_plain)}
+        onClick={e => e.stopPropagation()}
+      />
+    ),
+  };
+
   const columns = [
-    {
-      accessorKey: 'select',
-      header: (
-        <Checkbox
-          checked={isAllSelectedOnPage}
-          indeterminate={isSomeSelectedOnPage}
-          onChange={toggleAllOnPage}
-          onClick={e => e.stopPropagation()}
-        />
-      ),
-      cell: ({ row }) => (
-        <Checkbox
-          checked={selectedIds.has(row.original.request_id_plain)}
-          onChange={() => toggleRow(row.original.request_id_plain)}
-          onClick={e => e.stopPropagation()}
-        />
-      ),
-    },
+    ...(canBulkEditRequests ? [selectColumn] : []),
     {
       accessorKey: 'request_id',
       header: (
         <div className={style.sortContainer}>
-          <p>ID</p>
+          <p>{t('labels.id')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('request_id')}
@@ -723,7 +828,7 @@ const RequestsPage = () => {
       accessorKey: 'created_at',
       header: (
         <div className={style.sortContainer}>
-          <p>Дата заявки</p>
+          <p>{t('labels.requestDate')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('created_at')}
@@ -737,7 +842,7 @@ const RequestsPage = () => {
       accessorKey: 'payment_date_await',
       header: (
         <div className={style.sortContainer}>
-          <p>Кінцева дата оплати</p>
+          <p>{t('labels.paymentDeadline')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_date_await')}
@@ -751,7 +856,7 @@ const RequestsPage = () => {
       accessorKey: 'project',
       header: (
         <div className={style.sortContainer}>
-          <p>Підрозділ</p>
+          <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
@@ -765,7 +870,7 @@ const RequestsPage = () => {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
-          <p>Форма оплати</p>
+          <p>{t('labels.paymentForm')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_form')}
@@ -779,7 +884,7 @@ const RequestsPage = () => {
       accessorKey: 'contractor',
       header: (
         <div className={style.sortContainer}>
-          <p>Контрагент</p>
+          <p>{t('labels.contractor')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('contractor')}
@@ -793,7 +898,7 @@ const RequestsPage = () => {
       accessorKey: 'payment_details',
       header: (
         <div className={style.sortContainer}>
-          <p>Реквізити</p>
+          <p>{t('labels.paymentDetails')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_details')}
@@ -807,7 +912,7 @@ const RequestsPage = () => {
       accessorKey: 'purpose',
       header: (
         <div className={style.sortContainer}>
-          <p>Призначення</p>
+          <p>{t('labels.purpose')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('purpose')}
@@ -821,7 +926,7 @@ const RequestsPage = () => {
       accessorKey: 'payment_period',
       header: (
         <div className={style.sortContainer}>
-          <p>Період оплати</p>
+          <p>{t('labels.paymentPeriod')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payment_period')}
@@ -835,7 +940,7 @@ const RequestsPage = () => {
       accessorKey: 'amount',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума</p>
+          <p>{t('labels.amount')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount')}
@@ -849,7 +954,7 @@ const RequestsPage = () => {
       accessorKey: 'currency',
       header: (
         <div className={style.sortContainer}>
-          <p>Валюта</p>
+          <p>{t('labels.currency')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('currency')}
@@ -863,7 +968,7 @@ const RequestsPage = () => {
       accessorKey: 'amount_uah',
       header: (
         <div className={style.sortContainer}>
-          <p>Сума UAH</p>
+          <p>{t('labels.amountUah')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('amount_uah')}
@@ -877,7 +982,7 @@ const RequestsPage = () => {
       accessorKey: 'expense_category',
       header: (
         <div className={style.sortContainer}>
-          <p>Стаття витрат</p>
+          <p>{t('labels.expenseCategory')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('expense_category')}
@@ -891,7 +996,7 @@ const RequestsPage = () => {
       accessorKey: 'applicant',
       header: (
         <div className={style.sortContainer}>
-          <p>Заявник</p>
+          <p>{t('labels.applicant')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('applicant')}
@@ -905,7 +1010,7 @@ const RequestsPage = () => {
       accessorKey: 'payer',
       header: (
         <div className={style.sortContainer}>
-          <p>Платник</p>
+          <p>{t('labels.payer')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('payer')}
@@ -919,7 +1024,7 @@ const RequestsPage = () => {
       accessorKey: 'beneficiary',
       header: (
         <div className={style.sortContainer}>
-          <p>Вигодонабувач</p>
+          <p>{t('labels.beneficiary')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('beneficiary')}
@@ -933,7 +1038,7 @@ const RequestsPage = () => {
       accessorKey: 'planned_balance_optimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс оптимістичний (залишок)</p>
+          <p>{t('labels.optimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_optimistic')}
@@ -947,7 +1052,7 @@ const RequestsPage = () => {
       accessorKey: 'planned_balance_pessimistic',
       header: (
         <div className={style.sortContainer}>
-          <p>Баланс песимістичний (залишок)</p>
+          <p>{t('labels.pessimisticBalance')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('planned_balance_pessimistic')}
@@ -961,7 +1066,7 @@ const RequestsPage = () => {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
-          <p>Період</p>
+          <p>{t('labels.period')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('tech')}
@@ -973,13 +1078,13 @@ const RequestsPage = () => {
     },
     {
       accessorKey: 'files',
-      header: 'Файли',
+      header: t('labels.files'),
     },
     {
       accessorKey: 'status',
       header: (
         <div className={style.sortContainer}>
-          <p>Статус</p>
+          <p>{t('labels.status')}</p>
           <button
             className={style.btnContainer}
             onClick={() => handleSort('status')}
@@ -991,7 +1096,7 @@ const RequestsPage = () => {
     },
     {
       accessorKey: 'action',
-      header: 'Дія',
+      header: t('labels.action'),
     },
   ];
 
@@ -1066,8 +1171,16 @@ const RequestsPage = () => {
     }
   };
 
-  const bulkStatusOptions =
-    userRole === 4 ? approveStatusFin : userRole === 5 ? approveStatusBuh : [];
+  const bulkStatusOptions = translateOptions(
+    !canBulkEditRequests
+      ? []
+      : userRole === UserRole.FINANCE
+      ? approveStatusFin
+      : userRole === UserRole.ACCOUNTANT
+      ? approveStatusBuh
+      : [],
+    t
+  );
 
   const closeModalSendFiles = () => {
     setModalSendFilesIsOpen(false);
@@ -1099,7 +1212,7 @@ const RequestsPage = () => {
                   })
                 }
               >
-                Експорт у CSV
+                {t('common.exportCsv')}
               </button>
             </div>
             <div>
@@ -1109,7 +1222,7 @@ const RequestsPage = () => {
                 onClick={() => setShowAllFilters(prev => !prev)}
               >
                 <Icon id="filter_list" className={style.filterIcon} />
-                {showAllFilters ? 'Сховати фільтри' : 'Всі фільтри'}
+                {showAllFilters ? t('common.hideFilters') : t('common.allFilters')}
               </button>
             </div>
             <div className={style.formsContainer}>
@@ -1118,7 +1231,7 @@ const RequestsPage = () => {
                   {
                     type: 'select',
                     name: 'project',
-                    label: 'Підрозділ',
+                    label: t('labels.department'),
                     options: projectOptions,
                     onChange: value => setSelectedProject(value),
                   },
@@ -1133,7 +1246,7 @@ const RequestsPage = () => {
                     type="text"
                     name="applicant"
                     className={style.inputContainer}
-                    placeholder="Заявник"
+                    placeholder={t('labels.applicant')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -1144,7 +1257,7 @@ const RequestsPage = () => {
                     type="text"
                     name="payer"
                     className={style.inputContainer}
-                    placeholder="Платник"
+                    placeholder={t('labels.payer')}
                     onChange={handleSearchChange}
                   />
                 </label>
@@ -1154,7 +1267,7 @@ const RequestsPage = () => {
                   {
                     type: 'autocomplete-select',
                     name: 'expense_category',
-                    label: 'Стаття витрат',
+                    label: t('labels.expenseCategory'),
                     options: expenseCategoriesOptions,
                     onChange: option =>
                       setSelectedExpenseCategorie(option?.value || ''),
@@ -1174,7 +1287,7 @@ const RequestsPage = () => {
                         type="text"
                         name="request_id"
                         className={style.inputContainer}
-                        placeholder="ID заявки"
+                        placeholder={t('labels.id') + ' заявки'}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1185,7 +1298,7 @@ const RequestsPage = () => {
                         type="text"
                         name="payment_date_await"
                         className={style.inputContainer}
-                        placeholder="Кінцева дата оплати"
+                        placeholder={t('labels.paymentDeadline')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1196,7 +1309,7 @@ const RequestsPage = () => {
                         type="text"
                         name="purpose"
                         className={style.inputContainer}
-                        placeholder="Призначення"
+                        placeholder={t('labels.purpose')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1206,7 +1319,7 @@ const RequestsPage = () => {
                       {
                         type: 'select',
                         name: 'currency',
-                        label: 'Валюта',
+                        label: t('labels.currency'),
                         options: currenciesOptions,
                         onChange: value => setSelectedCurrency(value),
                       },
@@ -1223,7 +1336,7 @@ const RequestsPage = () => {
                         type="text"
                         name="payment_details"
                         className={style.inputContainer}
-                        placeholder="Реквізити"
+                        placeholder={t('labels.paymentDetails')}
                         onChange={handleSearchChange}
                       />
                     </label>
@@ -1233,7 +1346,7 @@ const RequestsPage = () => {
                       {
                         type: 'autocomplete-select',
                         name: 'contractor',
-                        label: 'Контрагент',
+                        label: t('labels.contractor'),
                         options: contractorsOptions,
                         onChange: option =>
                           setSelectedContractor(option?.value || ''),
@@ -1248,7 +1361,7 @@ const RequestsPage = () => {
                       {
                         type: 'autocomplete-select',
                         name: 'payment_form',
-                        label: 'Форма оплати',
+                        label: t('labels.paymentForm'),
                         options: paymentFormOptions,
                         onChange: option =>
                           setSelectedPaymentForm(option?.value || ''),
@@ -1262,34 +1375,31 @@ const RequestsPage = () => {
               </>
             )}
             <div className={style.statusRow}>
-              <ul
-                className={style.statuscontainer}
-                style={{
-                  maxWidth: userRole === 5 ? '860px' : '1300px',
-                }}
-              >
-                {(userRole === 5 ? statusSelectorBuh : statusSelectorFin).map(
-                  status => (
-                    <li key={status.value}>
-                      <button
-                        className={`${style.statusBtn} ${
-                          activeStatus === status.value ? style.activeBtn : ''
-                        }`}
-                        onClick={() => setActiveStatus(status.value)}
-                      >
-                        {status.label}
-                      </button>
-                    </li>
-                  )
-                )}
+              <ul className={style.statuscontainer}>
+                {(
+                  userRole === UserRole.ACCOUNTANT
+                    ? translateOptions(statusSelectorBuh, t)
+                    : translateOptions(statusSelectorFin, t)
+                ).map(status => (
+                  <li key={status.value}>
+                    <button
+                      className={`${style.statusBtn} ${
+                        activeStatus === status.value ? style.activeBtn : ''
+                      }`}
+                      onClick={() => setActiveStatus(status.value)}
+                    >
+                      {status.label}
+                    </button>
+                  </li>
+                ))}
               </ul>
-              {selectedIds.size > 0 && (
+              {canBulkEditRequests && selectedIds.size > 0 && (
                 <div className={style.bulkActionsInline}>
                   <button
                     className={style.bulkEditButton}
                     onClick={openModalBulk}
                   >
-                    Редагувати обрані
+                    {t('common.editSelected')}
                   </button>
                 </div>
               )}
@@ -1297,7 +1407,7 @@ const RequestsPage = () => {
             <div>
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
-                Фільтр колонок
+                {t('common.columnsFilter')}
               </button>
             </div>
           </div>
@@ -1306,8 +1416,7 @@ const RequestsPage = () => {
           ) : requestsRows.length === 0 ? (
             <div className={style.noDataContainer}>
               <p className={style.noDataText}>
-                Заявок за обраний період немає. Перегляньте, будь ласка, обрану
-                дату періоду.
+                {t('messages.noRequestsForPeriod')}
               </p>
             </div>
           ) : (
@@ -1327,7 +1436,7 @@ const RequestsPage = () => {
               {totals && (
                 <div className={style.totalsContainer}>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього валюти:</p>
+                    <p className={style.totalTitle}>{t('common.totalCurrency')}</p>
                     <ul className={style.totalList}>
                       {Object.entries(totals.totalsByCurrency).map(
                         ([cur, sum]) => (
@@ -1343,7 +1452,7 @@ const RequestsPage = () => {
                     </ul>
                   </div>
                   <div className={style.totalContainer}>
-                    <p className={style.totalTitle}>Всього сума в UAH:</p>
+                    <p className={style.totalTitle}>{t('common.totalAmountUah')}</p>
                     <p className={style.totalText}>
                       {totals.totalUAH.toLocaleString('uk-UA', {
                         minimumFractionDigits: 0,
@@ -1360,7 +1469,7 @@ const RequestsPage = () => {
               request={selectedRequest}
               closeModal={closeModal}
               onRefresh={fetchData}
-              userRole={userRole}
+              userRole={isExecutiveApprovalMode ? UserRole.CEO : userRole}
             />
           </ModalWindow>
           <ModalWindow

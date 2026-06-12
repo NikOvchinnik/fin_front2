@@ -9,12 +9,12 @@ import {
   selectUserRole,
 } from '../../redux/auth/selectors';
 import { useDispatch, useSelector } from 'react-redux';
-import { Notify } from 'notiflix';
 import { logout } from '../../redux/auth/slice';
+import { useTranslation } from 'react-i18next';
 
 const SideBar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [language, setLanguage] = useState('EN');
+  const { t, i18n } = useTranslation();
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const storedValue = localStorage.getItem('sidebarCollapsed');
     return storedValue === 'true';
@@ -47,11 +47,11 @@ const SideBar = () => {
   };
 
   const handleLanguageChange = lang => {
-    setLanguage(lang);
-    Notify.info('Терпіння, фіча ще не працює');
+    i18n.changeLanguage(lang);
+    localStorage.setItem('language', lang);
   };
 
-  const filteredPages = getNavSideBar(userId, userName)
+  const filteredPages = getNavSideBar(userId)
     .filter(item => item.roles.includes(userRole))
     .flatMap(item => item.pages);
 
@@ -70,12 +70,12 @@ const SideBar = () => {
             className={`${style.btnMenu} ${style.btnMenuClose}`}
           >
             <Icon id="close" className={style.iconMenuClose} />
-            Меню
+            {t('common.menu')}
           </button>
         ) : (
           <button onClick={openMenu} className={style.btnMenu}>
             <Icon id="menu" className={style.iconMenu} />
-            Меню
+            {t('common.menu')}
           </button>
         )}
       </div>
@@ -107,7 +107,7 @@ const SideBar = () => {
           </button>
         </div>
         <ul className={style.navList}>
-          {filteredPages.map(({ page, link, icon, children }, index) => {
+          {filteredPages.map(({ page, pageKey, link, icon, children }, index) => {
             const isChildActive = children?.some(
               child => location.pathname === child.link
             );
@@ -128,7 +128,7 @@ const SideBar = () => {
                           isCollapsed ? style.navTextCollapsed : ''
                         }`}
                       >
-                        {page}
+                        {pageKey ? t(pageKey) : page}
                       </p>
                     </button>
                     {openChildrenMenus[index] && (
@@ -157,7 +157,7 @@ const SideBar = () => {
                                     : style.navChildrenLink
                                 }
                               >
-                                {child.page}
+                                {child.pageKey ? t(child.pageKey) : child.page}
                               </NavLink>
                             </li>
                           ))}
@@ -178,7 +178,7 @@ const SideBar = () => {
                   >
                     <Icon id={icon} className={style.iconNav} />
                     <p className={isCollapsed ? style.navTextCollapsed : ''}>
-                      {page}
+                      {pageKey ? t(pageKey) : page}
                     </p>
                   </a>
                 ) : (
@@ -196,7 +196,7 @@ const SideBar = () => {
                   >
                     <Icon id={icon} className={style.iconNav} />
                     <p className={isCollapsed ? style.navTextCollapsed : ''}>
-                      {page}
+                      {pageKey ? t(pageKey) : page}
                     </p>
                   </NavLink>
                 )}
@@ -212,17 +212,17 @@ const SideBar = () => {
           <div className={style.languageSwitcher}>
             <button
               className={`${style.languageBtn} ${
-                language === 'EN' ? `${style.languageBtnActive}` : ''
+                i18n.language === 'en' ? `${style.languageBtnActive}` : ''
               }`}
-              onClick={() => handleLanguageChange('EN')}
+              onClick={() => handleLanguageChange('en')}
             >
               ENG
             </button>
             <button
               className={`${style.languageBtn} ${
-                language === 'UA' ? `${style.languageBtnActive}` : ''
+                i18n.language === 'uk' ? `${style.languageBtnActive}` : ''
               }`}
-              onClick={() => handleLanguageChange('UA')}
+              onClick={() => handleLanguageChange('uk')}
             >
               UA
             </button>

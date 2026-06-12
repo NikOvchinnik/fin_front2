@@ -10,12 +10,21 @@ import {
 } from '../../../helpers/axios/payments';
 import { periodOptions } from '../../../helpers/paymentPeriods';
 import dayjs from 'dayjs';
-import { postRequest } from '../../../helpers/axios/requests';
+import { createRequest } from '../../../helpers/axios/requests';
 import { getContractors } from '../../../helpers/axios/contractors';
+import { useTranslation } from 'react-i18next';
+import { translateOptions } from '../../../helpers/i18nOptions';
 
 const refundIds = [15, 16, 17, 18, 19];
 
-const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
+const WatchRequestForm = ({
+  request,
+  closeModal,
+  onRefresh,
+  onCopyCreated,
+  formType,
+}) => {
+  const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -82,8 +91,8 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
           label: e.name,
         }));
         setContractorsOptions(contractorSelector);
-      } catch (err) {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+      } catch {
+        Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
@@ -93,77 +102,77 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
     {
       type: 'autocomplete-select',
       name: 'project_id',
-      label: 'Підрозділ',
+      label: t('labels.department'),
       options: projectOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
-      label: 'Стаття витрат',
+      label: t('labels.expenseCategory'),
       options: expenseCategoryOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'payment_form_id',
-      label: 'Форма оплати',
+      label: t('labels.paymentForm'),
       options: paymentFormOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-input',
       name: 'contractor_id',
-      label: 'Контрагент',
+      label: t('labels.contractor'),
       options: contractorsOptions,
-      validation: { required: 'This field is required' },
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'text',
       name: 'payment_details',
-      label: 'Реквізити',
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentDetails'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'textarea',
       name: 'purpose',
-      label: 'Призначення',
-      validation: { required: 'This field is required' },
+      label: t('labels.purpose'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'date',
       name: 'payment_date_await',
-      label: 'Дата оплати',
-      validation: { required: 'This field is required' },
+      label: t('labels.date'),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'autocomplete-select',
       name: 'payment_period',
-      label: 'Період оплати',
-      options: periodOptions,
-      validation: { required: 'This field is required' },
+      label: t('labels.paymentPeriod'),
+      options: translateOptions(periodOptions, t),
+      validation: { required: t('validation.required') },
       readOnly: true,
     },
     {
       type: 'number-select-group',
       number: {
         name: 'amount',
-        label: 'Сума',
-        validation: { required: 'This field is required' },
+        label: t('labels.amount'),
+        validation: { required: t('validation.required') },
         readOnly: true,
       },
       select: {
         name: 'currency_id',
-        label: 'Валюта',
+        label: t('labels.currency'),
         options: currencyOptions,
-        validation: { required: 'This field is required' },
+        validation: { required: t('validation.required') },
         readOnly: true,
       },
     },
@@ -177,7 +186,7 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
 
   const buttons = [
     {
-      label: 'Зробити копію',
+      label: t('actions.copy'),
       className: 'submitBtn',
       type: 'submit',
     },
@@ -199,22 +208,22 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       <ul className={style.commentsList}>
         {request.comment && (
           <li className={style.commentApplicant}>
-            Коментар заявника: {request.comment}
+            {t('labels.applicantComment')}: {request.comment}
           </li>
         )}
         {request.finance_comment && (
           <li className={style.commentFinance}>
-            Коментар фінанси: {request.finance_comment}
+            {t('labels.financeComment')}: {request.finance_comment}
           </li>
         )}
         {request.accounting_comment && (
           <li className={style.commentBuh}>
-            Коментар бухгалтерія: {request.accounting_comment}
+            {t('labels.accountingComment')}: {request.accounting_comment}
           </li>
         )}
       </ul>
       <Form
-        title="Перегляд заявки"
+        title={t('forms.watchRequest')}
         fields={fields}
         buttons={formType === 'all' ? [] : buttons}
         onSubmit={async data => {
@@ -231,12 +240,18 @@ const WatchRequestForm = ({ request, closeModal, onRefresh, formType }) => {
               }
             });
 
-            await postRequest(formData);
-            onRefresh();
-            closeModal();
-            Notify.success('Нову заявку створено!');
+            const response = await createRequest(formData);
+            const createdRequestId = response?.financial_request_id ?? null;
+
+            if (onCopyCreated && createdRequestId != null) {
+              await onCopyCreated(createdRequestId);
+            } else {
+              await onRefresh();
+              closeModal();
+            }
+            Notify.success(t('notifications.requestCreated'));
           } catch (error) {
-            Notify.failure('Сталася помилка, спробуйте ще раз');
+            Notify.failure(t('notifications.genericError'));
             console.error('Error: ', error);
           }
         }}

@@ -16,6 +16,7 @@ import {
   Tooltip,
   Autocomplete,
 } from '@mui/material';
+import { useTranslation } from 'react-i18next';
 
 const Form = ({
   title = null,
@@ -26,6 +27,7 @@ const Form = ({
   styleForm = 'formContainer',
   fontSize = 16,
 }) => {
+  const { t } = useTranslation();
   const {
     control,
     handleSubmit,
@@ -213,7 +215,7 @@ const Form = ({
               ...field.validation,
               pattern: {
                 value: /^\d+$/,
-                message: 'Only numbers',
+                message: t('validation.onlyNumbers'),
               },
             }}
             render={({ field: input }) => (
@@ -422,7 +424,8 @@ const Form = ({
                     disabled={field.disabled || field.readOnly || false}
                     onChange={e => {
                       input.onChange(e);
-                      field.onChange && field.onChange(e.target.value);
+                      field.onChange &&
+                        field.onChange(e.target.value, setValue);
                     }}
                   >
                     {field.options.map((option, index) => (
@@ -668,16 +671,37 @@ const Form = ({
             rules={field.validation}
             render={({ field: input }) => (
               <InputWrapper field={field}>
-                <input
-                  type="file"
-                  multiple
-                  disabled={field.readOnly || false}
-                  onChange={e => {
-                    const files = Array.from(e.target.files);
-                    input.onChange(files);
-                    field.onChange && field.onChange(files);
-                  }}
-                />
+                <div className={style.fileInputWrapper}>
+                  <input
+                    id={`${field.name}-file-input`}
+                    type="file"
+                    multiple
+                    className={style.fileInputHidden}
+                    disabled={field.readOnly || false}
+                    onChange={e => {
+                      const files = Array.from(e.target.files);
+                      input.onChange(files);
+                      field.onChange && field.onChange(files);
+                    }}
+                  />
+                  <label
+                    htmlFor={`${field.name}-file-input`}
+                    className={`${style.fileUploadButton} ${
+                      field.readOnly ? style.fileUploadButtonDisabled : ''
+                    }`}
+                  >
+                    {t('common.selectFile')}
+                  </label>
+                  <span className={style.fileUploadName}>
+                    {Array.isArray(input.value) && input.value.length > 0
+                      ? input.value.length === 1
+                        ? input.value[0]?.name
+                        : t('common.selectedFiles', {
+                            count: input.value.length,
+                          })
+                      : t('common.noFileSelected')}
+                  </span>
+                </div>
                 {errors[field.name] && (
                   <p className={style.errorText}>
                     {errors[field.name]?.message}
