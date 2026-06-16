@@ -27,6 +27,7 @@ const Form = ({
   defaultValues,
   styleForm = 'formContainer',
   fontSize = 16,
+  formError = null,
 }) => {
   const { t } = useTranslation();
   const {
@@ -816,7 +817,16 @@ const Form = ({
 
   return (
     <ThemeProvider theme={theme}>
-      {title && <h2 className={style.title}>{title}</h2>}
+      {title && (
+        <h2
+          className={`${style.title} ${
+            formError ? style.titleWithFormError : ''
+          }`}
+        >
+          {title}
+        </h2>
+      )}
+      {formError}
       <form
         className={style[styleForm]}
         onSubmit={handleSubmit(onSubmit, onInvalid)}

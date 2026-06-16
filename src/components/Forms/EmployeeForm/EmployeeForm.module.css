@@ -5,6 +5,33 @@
   width: min(92vw, 520px);
 }
 
+.errorBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #f2b8b5;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 20px;
+  background-color: #fff8f7;
+  color: #8f1d18;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.errorTitle {
+  font-weight: 600;
+  color: #7a1612;
+}
+
+.errorList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding-left: 18px;
+  list-style: disc;
+}
+
 @media screen and (min-width: 1024px) {
   .container {
     width: 760px;

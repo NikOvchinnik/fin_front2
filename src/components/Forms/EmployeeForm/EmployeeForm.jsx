@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Notify } from 'notiflix';
 import Form from '../../Form/Form';
 import {
@@ -23,6 +24,46 @@ const getFieldType = key => {
   return 'text';
 };
 
+const fieldLabels = employeeFields.reduce((acc, field) => {
+  acc[field.key] = field.label;
+  return acc;
+}, {});
+
+const normalizeBackendErrorMessage = (message, fieldKey) => {
+  const text = String(message ?? '').trim();
+  const label = fieldLabels[fieldKey] || fieldKey;
+
+  if (!text) return `${label}: помилка валідації.`;
+  if (/required/i.test(text)) return `${label}: обов'язкове поле.`;
+
+  return `${label}: ${text}`;
+};
+
+const getEmployeeErrorDetails = error => {
+  const responseData = error?.response?.data ?? {};
+  const details = [];
+
+  if (responseData.errors && typeof responseData.errors === 'object') {
+    Object.entries(responseData.errors).forEach(([fieldKey, value]) => {
+      if (Array.isArray(value)) {
+        value.forEach(item =>
+          details.push(normalizeBackendErrorMessage(item, fieldKey))
+        );
+        return;
+      }
+
+      details.push(normalizeBackendErrorMessage(value, fieldKey));
+    });
+  }
+
+  if (details.length > 0) return [...new Set(details)];
+
+  if (responseData.message) return [responseData.message];
+  if (responseData.error) return [responseData.error];
+
+  return ['Сталася помилка, спробуйте ще раз.'];
+};
+
 const EmployeeForm = ({
   closeModal,
   employee = null,
@@ -30,6 +71,7 @@ const EmployeeForm = ({
   onRefresh,
   mode = 'create',
 }) => {
+  const [submitErrors, setSubmitErrors] = useState([]);
   const normalizedEmployee = employee ? normalizeEmployee(employee) : null;
   const employeeId = getEmployeeId(normalizedEmployee);
 
@@ -56,14 +98,17 @@ const EmployeeForm = ({
   ];
 
   const handleSubmit = async data => {
+    setSubmitErrors([]);
     const duplicate = findEmployeeDuplicate(employees, data, employeeId);
 
     if (duplicate?.type === 'error') {
-      Notify.failure(
+      const message =
         duplicate.reason === 'tax_id'
           ? 'Співробітник з таким ІПН вже існує.'
-          : 'Співробітник з таким ІПН і ПІБ 1С вже існує.'
-      );
+          : 'Співробітник з таким ІПН і ПІБ 1С вже існує.';
+
+      setSubmitErrors([message]);
+      Notify.failure(message);
       return;
     }
 
@@ -88,13 +133,28 @@ const EmployeeForm = ({
       await onRefresh();
       closeModal();
     } catch (error) {
+      const details = getEmployeeErrorDetails(error);
+      setSubmitErrors(details);
+
       if (error?.response?.status === 409) {
         Notify.failure('Співробітник з такими даними вже існує.');
       } else {
-        Notify.failure('Сталася помилка, спробуйте ще раз');
+        Notify.failure('Перевірте помилки у формі.');
       }
     }
   };
+
+  const formError =
+    submitErrors.length > 0 ? (
+      <div className={style.errorBlock} role="alert">
+        <p className={style.errorTitle}>Не вдалося зберегти співробітника</p>
+        <ul className={style.errorList}>
+          {submitErrors.map(error => (
+            <li key={error}>{error}</li>
+          ))}
+        </ul>
+      </div>
+    ) : null;
 
   return (
     <div className={style.container}>
@@ -110,6 +170,7 @@ const EmployeeForm = ({
         onInvalid={() => Notify.failure(EMPLOYEE_REQUIRED_MESSAGE)}
         defaultValues={normalizedEmployee ?? emptyEmployee}
         styleForm="employeeFormContainer"
+        formError={formError}
       />
     </div>
   );
