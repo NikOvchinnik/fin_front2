@@ -38,6 +38,10 @@ const EmployeeForm = ({
     name: field.key,
     label: field.label,
     rows: field.key === 'contacts' || field.key === 'payment_details' ? 3 : 2,
+    containerClassName:
+      field.key === 'contacts' || field.key === 'payment_details'
+        ? 'fullWidth'
+        : undefined,
     validation: requiredEmployeeFields.includes(field.key)
       ? { required: EMPLOYEE_REQUIRED_MESSAGE }
       : undefined,
@@ -105,10 +109,10 @@ const EmployeeForm = ({
         onSubmit={handleSubmit}
         onInvalid={() => Notify.failure(EMPLOYEE_REQUIRED_MESSAGE)}
         defaultValues={normalizedEmployee ?? emptyEmployee}
+        styleForm="employeeFormContainer"
       />
     </div>
   );
 };
 
 export default EmployeeForm;
-

@@ -5,6 +5,13 @@
   width: 100%;
 }
 
+.employeeFormContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
 .formRowContainer {
   display: flex;
   flex-direction: column;
@@ -225,6 +232,17 @@
 @media screen and (min-width: 1024px) {
   .formContainer {
     gap: 26px;
+  }
+
+  .employeeFormContainer {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 20px;
+  }
+
+  .employeeFormContainer .fullWidth,
+  .employeeFormContainer .buttonContainer {
+    grid-column: 1 / -1;
   }
 
   .formRowContainer {

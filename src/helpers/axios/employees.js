@@ -23,12 +23,3 @@ export const patchEmployee = async (id, payload) => {
     throw error;
   }
 };
-
-export const importEmployees = async payload => {
-  try {
-    return await axios.post('/api/employees/import', payload);
-  } catch (error) {
-    throw error;
-  }
-};
-

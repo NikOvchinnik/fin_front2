@@ -268,6 +268,9 @@ const Form = ({
                     field.onChange && field.onChange(e.target.value);
                   }}
                   slotProps={{
+                    inputLabel: {
+                      shrink: true,
+                    },
                     input: {
                       min: field.min || '',
                       max: field.max || '',
@@ -819,7 +822,12 @@ const Form = ({
         onSubmit={handleSubmit(onSubmit, onInvalid)}
       >
         {fields.map((field, index) => (
-          <div key={index} className={style.inputContainer}>
+          <div
+            key={index}
+            className={`${style.inputContainer} ${
+              field.containerClassName ? style[field.containerClassName] || '' : ''
+            }`}
+          >
             {renderField(field)}
           </div>
         ))}

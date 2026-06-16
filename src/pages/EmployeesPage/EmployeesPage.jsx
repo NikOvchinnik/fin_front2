@@ -6,7 +6,7 @@ import Loader from '../../components/Loader/Loader';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import Table from '../../components/Table/Table';
 import EmployeeForm from '../../components/Forms/EmployeeForm/EmployeeForm';
-import EmployeeImportForm from '../../components/Forms/EmployeeImportForm/EmployeeImportForm';
+import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 import { getEmployees } from '../../helpers/axios/employees';
 import {
   employeeFields,
@@ -116,7 +116,7 @@ const EmployeesPage = () => {
                 onClick={() => setModalType('import')}
               >
                 <Icon id="upload" className={style.btnIcon} />
-                Імпорт з таблиці
+                Імпорт з Google Sheets
               </button>
               <button
                 type="button"
@@ -199,10 +199,11 @@ const EmployeesPage = () => {
             onCloseModal={closeModal}
             customStyles={{ maxWidth: '96vw' }}
           >
-            <EmployeeImportForm
+            <GoogleSheetImportForm
+              title="Імпорт співробітників з Google Sheets"
+              importType="employees"
               closeModal={closeModal}
-              onRefresh={fetchData}
-              employees={employees}
+              onImported={fetchData}
             />
           </ModalWindow>
 
@@ -250,4 +251,3 @@ const EmployeesPage = () => {
 };
 
 export default EmployeesPage;
-
