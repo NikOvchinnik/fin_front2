@@ -3,9 +3,9 @@ import { Notify } from 'notiflix';
 import Form from '../../Form/Form';
 import {
   EMPLOYEE_REQUIRED_MESSAGE,
-  buildEmployeeFieldOptions,
   buildEmployeePayload,
   employeeFields,
+  employeeLookupFieldIds,
   emptyEmployee,
   findEmployeeDuplicate,
   getEmployeeId,
@@ -14,25 +14,22 @@ import {
   requiredEmployeeFields,
 } from '../../../helpers/employees';
 import {
+  getEmployeeLookups,
   patchEmployee,
   postEmployee,
 } from '../../../helpers/axios/employees';
-import { getDepartments } from '../../../helpers/axios/departments';
-import { getPaymentForms } from '../../../helpers/axios/payments';
-import { getUnits } from '../../../helpers/axios/units';
 import style from './EmployeeForm.module.css';
 
-const autocompleteFields = [
-  'unit',
-  'department',
-  'subdivision',
-  'position',
-  'payment_form',
-  'manager',
-];
+const lookupOptionKeys = {
+  unit: 'units',
+  department: 'departments',
+  subdivision: 'subdivisions',
+  payment_form: 'payment_forms',
+  manager: 'managers',
+};
 
 const getFieldType = key => {
-  if (autocompleteFields.includes(key)) return 'autocomplete-input';
+  if (employeeLookupFieldIds[key]) return 'autocomplete-select';
   if (key === 'tax_id') return 'number';
   if (key === 'hire_date' || key === 'termination_date') return 'date';
   if (key === 'payment_details' || key === 'contacts') return 'textarea';
@@ -90,7 +87,9 @@ const EmployeeForm = ({
   const [dictionaryValues, setDictionaryValues] = useState({
     units: [],
     departments: [],
-    paymentForms: [],
+    subdivisions: [],
+    payment_forms: [],
+    managers: [],
   });
   const normalizedEmployee = useMemo(
     () => (employee ? normalizeEmployee(employee) : null),
@@ -100,89 +99,47 @@ const EmployeeForm = ({
 
   useEffect(() => {
     const fetchDictionaries = async () => {
-      const [unitsResult, departmentsResult, paymentFormsResult] =
-        await Promise.allSettled([
-          getUnits(),
-          getDepartments(),
-          getPaymentForms(),
-        ]);
+      const result = await getEmployeeLookups();
 
       setDictionaryValues({
-        units:
-          unitsResult.status === 'fulfilled'
-            ? extractList(unitsResult.value)
-            : [],
-        departments:
-          departmentsResult.status === 'fulfilled'
-            ? extractList(departmentsResult.value)
-            : [],
-        paymentForms:
-          paymentFormsResult.status === 'fulfilled'
-            ? extractList(paymentFormsResult.value)
-            : [],
+        units: extractLookupOptions(result?.units),
+        departments: extractLookupOptions(result?.departments),
+        subdivisions: extractLookupOptions(result?.subdivisions),
+        payment_forms: extractLookupOptions(result?.payment_forms),
+        managers: extractLookupOptions(result?.managers),
       });
     };
 
-    fetchDictionaries();
+    fetchDictionaries().catch(() => {
+      Notify.failure('Не вдалося завантажити довідники співробітника.');
+    });
   }, []);
 
   const optionsByField = useMemo(() => {
-    const currentValues = key =>
-      normalizedEmployee?.[key] ? [normalizedEmployee[key]] : [];
-    const employeeNameValues = employees.flatMap(item => {
-      const normalized = normalizeEmployee(item);
+    return Object.entries(lookupOptionKeys).reduce((acc, [field, key]) => {
+      acc[field] = dictionaryValues[key] || [];
+      return acc;
+    }, {});
+  }, [dictionaryValues]);
 
-      return [
-        normalized.local_full_name,
-        normalized.accounting_full_name,
-        normalized.full_name,
-      ];
-    });
+  const fields = employeeFields.map(field => {
+    const name = employeeLookupFieldIds[field.key] || field.key;
 
     return {
-      unit: buildEmployeeFieldOptions(employees, 'unit', [
-        ...dictionaryValues.units,
-        ...currentValues('unit'),
-      ]),
-      department: buildEmployeeFieldOptions(employees, 'department', [
-        ...dictionaryValues.departments,
-        ...currentValues('department'),
-      ]),
-      subdivision: buildEmployeeFieldOptions(
-        employees,
-        'subdivision',
-        currentValues('subdivision')
-      ),
-      position: buildEmployeeFieldOptions(
-        employees,
-        'position',
-        currentValues('position')
-      ),
-      payment_form: buildEmployeeFieldOptions(employees, 'payment_form', [
-        ...dictionaryValues.paymentForms,
-        ...currentValues('payment_form'),
-      ]),
-      manager: buildEmployeeFieldOptions(employees, 'manager', [
-        ...employeeNameValues,
-        ...currentValues('manager'),
-      ]),
-    };
-  }, [dictionaryValues, employees, normalizedEmployee]);
-
-  const fields = employeeFields.map(field => ({
-    type: getFieldType(field.key),
-    name: field.key,
-    label: field.label,
-    options: optionsByField[field.key] || [],
-    rows: field.key === 'contacts' || field.key === 'payment_details' ? 3 : 2,
-    containerClassName:
-      field.key === 'contacts' || field.key === 'payment_details'
-        ? 'fullWidth'
+      type: getFieldType(field.key),
+      name,
+      label: field.label,
+      options: optionsByField[field.key] || [],
+      rows: field.key === 'contacts' || field.key === 'payment_details' ? 3 : 2,
+      containerClassName:
+        field.key === 'contacts' || field.key === 'payment_details'
+          ? 'fullWidth'
+          : undefined,
+      validation: requiredEmployeeFields.includes(name)
+        ? { required: EMPLOYEE_REQUIRED_MESSAGE }
         : undefined,
-    validation: requiredEmployeeFields.includes(field.key)
-      ? { required: EMPLOYEE_REQUIRED_MESSAGE }
-      : undefined,
-  }));
+    };
+  });
 
   const buttons = [
     {
@@ -271,13 +228,24 @@ const EmployeeForm = ({
   );
 };
 
-const extractList = response => {
-  if (Array.isArray(response)) return response.map(toEmployeeOptionLabel);
-  if (!response || typeof response !== 'object') return [];
+const extractLookupOptions = items => {
+  if (!Array.isArray(items)) return [];
 
-  const list = Object.values(response).find(Array.isArray);
+  return items
+    .map(item => {
+      const label =
+        item?.label ??
+        item?.name ??
+        toEmployeeOptionLabel(item);
 
-  return Array.isArray(list) ? list.map(toEmployeeOptionLabel) : [];
+      if (!label || item?.id === undefined || item?.id === null) return null;
+
+      return {
+        value: item.id,
+        label,
+      };
+    })
+    .filter(Boolean);
 };
 
 export default EmployeeForm;

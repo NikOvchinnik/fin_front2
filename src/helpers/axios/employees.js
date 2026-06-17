@@ -8,6 +8,14 @@ export const getEmployees = async () => {
   }
 };
 
+export const getEmployeeLookups = async () => {
+  try {
+    return await axios.get('/api/employees/lookups');
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const postEmployee = async payload => {
   try {
     return await axios.post('/api/employees', payload);

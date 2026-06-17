@@ -18,11 +18,19 @@ export const employeeFields = [
   { key: 'termination_date', label: 'Дата звільнення' },
 ];
 
+export const employeeLookupFieldIds = {
+  unit: 'unit_id',
+  department: 'department_id',
+  subdivision: 'subdivision_id',
+  payment_form: 'payment_form_id',
+  manager: 'manager_id',
+};
+
 export const requiredEmployeeFields = [
   'tax_id',
   'accounting_full_name',
   'local_full_name',
-  'payment_form',
+  'payment_form_id',
   'hire_date',
 ];
 
@@ -47,6 +55,10 @@ export const emptyEmployee = employeeFields.reduce((acc, field) => {
   acc[field.key] = '';
   return acc;
 }, {});
+
+Object.values(employeeLookupFieldIds).forEach(field => {
+  emptyEmployee[field] = '';
+});
 
 export const normalizeEmployeeValue = value =>
   String(value ?? '')
@@ -92,6 +104,14 @@ export const normalizeEmployee = employee => ({
   ...emptyEmployee,
   ...employee,
   id: getEmployeeId(employee),
+  unit_id: employee?.unit_id ?? employee?.unit_details?.id ?? '',
+  department_id:
+    employee?.department_id ?? employee?.department_details?.id ?? '',
+  subdivision_id:
+    employee?.subdivision_id ?? employee?.subdivision_details?.id ?? '',
+  payment_form_id:
+    employee?.payment_form_id ?? employee?.payment_form_details?.id ?? '',
+  manager_id: employee?.manager_id ?? employee?.manager_user?.id ?? '',
   tax_id: normalizeEmployeeValue(employee?.tax_id ?? employee?.ipn),
   accounting_full_name: normalizeEmployeeValue(
     employee?.accounting_full_name ?? employee?.pib_1c
@@ -108,6 +128,13 @@ export const normalizeEmployee = employee => ({
 
 export const buildEmployeePayload = (data, creationSource = undefined) => {
   const payload = employeeFields.reduce((acc, field) => {
+    const lookupIdField = employeeLookupFieldIds[field.key];
+
+    if (lookupIdField) {
+      acc[lookupIdField] = data[lookupIdField] || null;
+      return acc;
+    }
+
     acc[field.key] = normalizeEmployeeValue(data[field.key]);
     return acc;
   }, {});
