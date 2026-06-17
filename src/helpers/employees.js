@@ -56,6 +56,35 @@ export const normalizeEmployeeValue = value =>
 export const normalizeComparableValue = value =>
   normalizeEmployeeValue(value).toLowerCase();
 
+export const toEmployeeOptionLabel = value =>
+  normalizeEmployeeValue(
+    value?.name ?? value?.label ?? value?.title ?? value?.value ?? value
+  );
+
+export const buildEmployeeOptions = values => {
+  const labels = values.map(toEmployeeOptionLabel).filter(Boolean);
+  const uniqueLabels = [...new Set(labels)];
+
+  return uniqueLabels
+    .sort((a, b) =>
+      a.localeCompare(b, 'uk', { numeric: true, sensitivity: 'base' })
+    )
+    .map(label => ({
+      value: label,
+      label,
+    }));
+};
+
+export const buildEmployeeFieldOptions = (
+  employees,
+  fieldKey,
+  extraValues = []
+) =>
+  buildEmployeeOptions([
+    ...extraValues,
+    ...(employees || []).map(employee => employee?.[fieldKey]),
+  ]);
+
 export const getEmployeeId = employee =>
   employee?.id ?? employee?.employee_id ?? employee?.profile_id;
 

@@ -111,6 +111,113 @@
   color: var(--heading-text);
 }
 
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.filterActionsRow,
+.formsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  min-height: 56px;
+  width: 100%;
+  font-weight: 500;
+  color: var(--main-text);
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  fill: var(--main-text);
+  min-height: 40px;
+  color: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: #333333;
+  color: #333333;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.csvBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--button);
+  border-radius: 8px;
+  padding: 6px 12px;
+  min-height: 40px;
+  color: var(--white);
+  transition: all 0.3s ease;
+}
+
+.csvBtn:hover,
+.csvBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.statuscontainer {
+  display: inline-flex;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  background: var(--toggle-lang-background);
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: fit-content;
+  max-width: 100%;
+  scrollbar-width: thin;
+}
+
+.statusBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  padding: 8px 28px;
+  transition: all 0.3s ease;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.activeBtn {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.statusBtn:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
 .actionsCell {
   display: flex;
   align-items: center;
@@ -217,6 +324,12 @@
     flex-direction: row;
     align-items: center;
   }
+
+  .filterActionsRow {
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+  }
 }
 
 @media screen and (min-width: 1024px) {
@@ -226,5 +339,10 @@
 
   .title {
     font-size: 32px;
+  }
+
+  .formsContainer {
+    flex-direction: row;
+    gap: 20px;
   }
 }
