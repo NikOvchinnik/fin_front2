@@ -139,6 +139,10 @@ export const buildEmployeePayload = (data, creationSource = undefined) => {
     return acc;
   }, {});
 
+  if (!payload.termination_date) {
+    payload.termination_date = null;
+  }
+
   if (creationSource) {
     payload.creation_source = creationSource;
   }
