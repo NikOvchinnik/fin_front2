@@ -23,6 +23,7 @@ import style from './EmployeesPage.module.css';
 
 const EMPLOYEE_STATUS_ACTIVE = 'active';
 const EMPLOYEE_STATUS_TERMINATED = 'terminated';
+const SHOW_EMPLOYEE_HISTORY_ACTION = false;
 
 const withAllOption = options => [
   { value: FILTER_ALL, label: 'Усі' },
@@ -181,13 +182,15 @@ const EmployeesPage = () => {
             >
               <Icon id="edit" className={style.actionIcon} />
             </button>
-            <button
-              type="button"
-              className={style.historyBtn}
-              onClick={() => openHistoryModal(row.original)}
-            >
-              Історія
-            </button>
+            {SHOW_EMPLOYEE_HISTORY_ACTION && (
+              <button
+                type="button"
+                className={style.historyBtn}
+                onClick={() => openHistoryModal(row.original)}
+              >
+                Історія
+              </button>
+            )}
           </div>
         ),
       },
