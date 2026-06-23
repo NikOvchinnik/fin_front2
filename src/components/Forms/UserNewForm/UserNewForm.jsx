@@ -5,7 +5,8 @@ import style from './UserNewForm.module.css';
 import { Notify } from 'notiflix';
 import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
+import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import { UserRole } from '../../../helpers/enums';
 import { useTranslation } from 'react-i18next';
 
@@ -13,7 +14,8 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
-  const [projectsOptions, setProjectsOptions] = useState([]);
+  const [unitOptions, setUnitOptions] = useState([]);
+  const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const canManageUserRoles = [UserRole.CEO, UserRole.FINANCE].includes(
     Number(userRole)
   );
@@ -35,18 +37,29 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
         }));
         setDepartmentsOptions(departmentSelector);
 
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
-          value: p.id,
-          label: p.name,
+        const units = await getUnits();
+        const unitSelector = units.map(u => ({
+          value: u.id,
+          label: u.name,
         }));
-        setProjectsOptions(projectSelector);
+        setUnitOptions(unitSelector);
+
+        try {
+          const subdivisions = await getSubdivisions();
+          const subdivisionSelector = subdivisions.map(s => ({
+            value: s.id,
+            label: s.name,
+          }));
+          setSubdivisionOptions(subdivisionSelector);
+        } catch {
+          setSubdivisionOptions([]);
+        }
       } catch {
         Notify.failure(t('notifications.genericError'));
       }
     };
     fetchData();
-  }, []);
+  }, [t]);
 
   const fields = [
     {
@@ -83,14 +96,20 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
     {
       type: 'select',
       name: 'project_id',
-      label: t('labels.department'),
-      options: projectsOptions,
+      label: t('labels.unit'),
+      options: unitOptions,
     },
     {
       type: 'select',
       name: 'department_id',
       label: t('nav.departments'),
       options: departmentsOptions,
+    },
+    {
+      type: 'select',
+      name: 'subdivision_id',
+      label: t('labels.subdivision'),
+      options: subdivisionOptions,
     },
   ];
 
@@ -140,6 +159,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
           role_id: 3,
           department_id: 1,
           project_id: 6,
+          subdivision_id: '',
         }}
       />
     </div>
