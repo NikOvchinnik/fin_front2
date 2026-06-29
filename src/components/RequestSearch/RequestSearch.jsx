@@ -26,6 +26,7 @@ import { isDeletedRecord } from '../../helpers/softDelete';
 import { FinancialRequestStatus } from '../../helpers/enums';
 import { useTranslation } from 'react-i18next';
 import { translateFinancialStatus } from '../../helpers/i18nOptions';
+import { getDepartmentName } from '../../helpers/departmentField';
 
 const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const { t } = useTranslation();
@@ -37,7 +38,14 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleSearchRequestColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('department')) {
+      return [...parsed, 'department'];
+    }
+
+    return parsed;
   });
   const userRole = useSelector(selectUserRole);
 
@@ -108,6 +116,8 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project || '',
       project_plain: request.project || '',
+      department: getDepartmentName(request),
+      department_plain: getDepartmentName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -287,6 +297,14 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'department',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.departmentName')}</p>
         </div>
       ),
     },

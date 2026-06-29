@@ -52,6 +52,7 @@ import {
   translateOptions,
 } from '../../helpers/i18nOptions';
 import { isExecutiveRole } from '../../helpers/roles';
+import { getDepartmentName } from '../../helpers/departmentField';
 
 const RequestsPage = () => {
   const { t } = useTranslation();
@@ -93,7 +94,14 @@ const RequestsPage = () => {
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('department')) {
+      return [...parsed, 'department'];
+    }
+
+    return parsed;
   });
   const userRole = useSelector(selectUserRole);
   const isExecutiveUser = isExecutiveRole(userRole);
@@ -463,6 +471,8 @@ const RequestsPage = () => {
             return req.payment_date_await || '';
           case 'project':
             return req.project?.name || '';
+          case 'department':
+            return getDepartmentName(req);
           case 'contractor':
             return req.contractor || '';
           case 'purpose':
@@ -592,6 +602,8 @@ const RequestsPage = () => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project?.name || '',
       project_plain: request.project?.name || '',
+      department: getDepartmentName(request),
+      department_plain: getDepartmentName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -860,6 +872,20 @@ const RequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'department',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.departmentName')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('department')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>

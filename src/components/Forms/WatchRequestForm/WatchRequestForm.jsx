@@ -14,6 +14,11 @@ import { createRequest } from '../../../helpers/axios/requests';
 import { getContractors } from '../../../helpers/axios/contractors';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { getDepartments } from '../../../helpers/axios/departments';
+import {
+  getDepartmentId,
+  mapDepartmentOptions,
+} from '../../../helpers/departmentField';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -27,6 +32,7 @@ const WatchRequestForm = ({
   const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
@@ -47,6 +53,9 @@ const WatchRequestForm = ({
           label: p.name,
         }));
         setPaymentFormOptions(paymentFormSelector);
+
+        const departments = await getDepartments();
+        setDepartmentOptions(mapDepartmentOptions(departments));
 
         const currencies = await getCurrencies();
         const currencySelector = currencies.map(c => ({
@@ -121,6 +130,13 @@ const WatchRequestForm = ({
       label: t('labels.paymentForm'),
       options: paymentFormOptions,
       validation: { required: t('validation.required') },
+      readOnly: true,
+    },
+    {
+      type: 'autocomplete-select',
+      name: 'department_id',
+      label: t('labels.departmentName'),
+      options: departmentOptions,
       readOnly: true,
     },
     {
@@ -259,6 +275,7 @@ const WatchRequestForm = ({
           project_id: request.project_id || '',
           expense_category_id: request.expense_category_id || '',
           payment_form_id: request.payment_form_id || '',
+          department_id: getDepartmentId(request),
           contractor_id: request.contractor_id || '',
           payment_details: request.payment_details || '',
           purpose: request.purpose || '',

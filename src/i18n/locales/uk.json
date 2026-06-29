@@ -35,6 +35,7 @@
     "date": "Дата",
     "requestId": "ID заявки",
     "department": "Unit",
+    "departmentName": "Департамент",
     "unit": "Unit",
     "subdivision": "Підрозділ",
     "editor": "Редактор",

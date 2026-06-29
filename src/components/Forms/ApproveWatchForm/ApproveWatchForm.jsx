@@ -4,10 +4,17 @@ import Form from '../../Form/Form';
 import style from './ApproveWatchForm.module.css';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { getDepartmentName } from '../../../helpers/departmentField';
 
 const ApproveWatchForm = ({ request }) => {
   const { t } = useTranslation();
   const fields = [
+    {
+      type: 'text',
+      name: 'department',
+      label: t('labels.departmentName'),
+      readOnly: true,
+    },
     {
       type: 'select',
       name: 'status',
@@ -60,6 +67,7 @@ const ApproveWatchForm = ({ request }) => {
         title={t('forms.watchRequest')}
         fields={fields}
         defaultValues={{
+          department: getDepartmentName(request),
           status: request.status?.id || '',
           comment: '',
           payment_date_await:

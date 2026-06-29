@@ -25,10 +25,16 @@ import {
 } from '../../../helpers/budgetingWeekOptions';
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
+import { getDepartments } from '../../../helpers/axios/departments';
+import {
+  getDepartmentId,
+  mapDepartmentOptions,
+} from '../../../helpers/departmentField';
 
 const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,6 +71,9 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
           label: p.name,
         }));
         setProjectOptions(projectSelector);
+
+        const departments = await getDepartments();
+        setDepartmentOptions(mapDepartmentOptions(departments));
 
         const currencies = await getCurrencies();
         setCurrencyOptions(
@@ -139,6 +148,12 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       label: t('labels.department'),
       options: projectOptions,
       validation: { required: t('validation.required') },
+    },
+    {
+      type: 'autocomplete-select',
+      name: 'department_id',
+      label: t('labels.departmentName'),
+      options: departmentOptions,
     },
     {
       type: 'autocomplete-select',
@@ -304,6 +319,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
             defaultValues={{
               applicant: request.applicant || '',
               project: request.project_id || '',
+              department_id: getDepartmentId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',
               week: resolvedRequestWeekValue || '',

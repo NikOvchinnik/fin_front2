@@ -18,6 +18,8 @@ import {
 import Loader from '../../Loader/Loader';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { getDepartments } from '../../../helpers/axios/departments';
+import { mapDepartmentOptions } from '../../../helpers/departmentField';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -25,6 +27,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -47,6 +50,9 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
           label: p.name,
         }));
         setPaymentFormOptions(paymentFormSelector);
+
+        const departments = await getDepartments();
+        setDepartmentOptions(mapDepartmentOptions(departments));
 
         const currencies = await getCurrencies();
         const currencySelector = currencies.map(c => ({
@@ -122,6 +128,12 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       label: t('labels.paymentForm'),
       options: paymentFormOptions,
       validation: { required: t('validation.required') },
+    },
+    {
+      type: 'autocomplete-select',
+      name: 'department_id',
+      label: t('labels.departmentName'),
+      options: departmentOptions,
     },
     {
       type: 'autocomplete-input',
@@ -268,6 +280,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
             defaultValues={{
               project_id: '',
               payment_form_id: '',
+              department_id: '',
               contractor_id: '',
               payment_details: '',
               purpose: '',

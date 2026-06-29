@@ -18,6 +18,7 @@ import {
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { getDepartmentName } from '../../../helpers/departmentField';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
@@ -44,6 +45,12 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   }, []);
 
   const fields = [
+    {
+      type: 'text',
+      name: 'department',
+      label: t('labels.departmentName'),
+      readOnly: true,
+    },
     {
       type: 'select',
       name: 'status',
@@ -132,6 +139,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           }
         }}
         defaultValues={{
+          department: getDepartmentName(request),
           status:
             userRole === 4 ? 7 : userRole === 1 ? 9 : userRole === 2 ? 5 : '',
           comment: '',

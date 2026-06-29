@@ -16,6 +16,7 @@ import { Notify } from 'notiflix';
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { getDepartmentName } from '../../../helpers/departmentField';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
@@ -30,6 +31,12 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
     : [];
 
   const fields = [
+    {
+      type: 'text',
+      name: 'department',
+      label: t('labels.departmentName'),
+      readOnly: true,
+    },
     {
       type: 'select',
       name: 'status',
@@ -138,6 +145,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
           }
         }}
         defaultValues={{
+          department: getDepartmentName(request),
           status: isCeoFlow
             ? FinancialRequestStatus.SENT_TO_PAYMENT
             : userRole === UserRole.FINANCE

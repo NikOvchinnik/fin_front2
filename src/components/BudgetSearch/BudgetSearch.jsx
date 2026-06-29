@@ -20,6 +20,7 @@ import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateBudgetingStatus } from '../../helpers/i18nOptions';
+import { getDepartmentName } from '../../helpers/departmentField';
 
 const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const { t } = useTranslation();
@@ -30,7 +31,14 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleSearchBudgetingColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('department')) {
+      return [...parsed, 'department'];
+    }
+
+    return parsed;
   });
 
   const handleColumnToggle = accessorKey => {
@@ -71,6 +79,8 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
+      department: getDepartmentName(request),
+      department_plain: getDepartmentName(request),
       week: request.week || '',
       week_plain: request.week || '',
       purpose: (
@@ -189,6 +199,14 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'department',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.departmentName')}</p>
         </div>
       ),
     },

@@ -11,6 +11,7 @@ import {
 } from '../../../helpers/budgetingWeekOptions';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { getDepartmentName } from '../../../helpers/departmentField';
 
 const ApproveBudgetingWatchForm = ({
   request,
@@ -39,6 +40,12 @@ const ApproveBudgetingWatchForm = ({
   }, []);
 
   const fields = [
+    {
+      type: 'text',
+      name: 'department',
+      label: t('labels.departmentName'),
+      readOnly: true,
+    },
     {
       type: 'select',
       name: 'status',
@@ -87,6 +94,7 @@ const ApproveBudgetingWatchForm = ({
         title={t('forms.watchBudget')}
         fields={fields}
         defaultValues={{
+          department: getDepartmentName(request),
           status: request.status?.id,
           comment:
             userRole === 4

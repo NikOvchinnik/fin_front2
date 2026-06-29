@@ -18,10 +18,13 @@ import {
   resolveWeekRangeValue,
 } from '../../../helpers/budgetingWeekOptions';
 import { useTranslation } from 'react-i18next';
+import { getDepartments } from '../../../helpers/axios/departments';
+import { mapDepartmentOptions } from '../../../helpers/departmentField';
 
 const BudgetNewForm = ({ closeModal, onRefresh }) => {
   const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,6 +53,9 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
           label: p.name,
         }));
         setProjectOptions(projectSelector);
+
+        const departments = await getDepartments();
+        setDepartmentOptions(mapDepartmentOptions(departments));
 
         const currencies = await getCurrencies();
         setCurrencyOptions(
@@ -87,6 +93,12 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
       label: t('labels.department'),
       options: projectOptions,
       validation: { required: t('validation.required') },
+    },
+    {
+      type: 'autocomplete-select',
+      name: 'department_id',
+      label: t('labels.departmentName'),
+      options: departmentOptions,
     },
     {
       type: 'autocomplete-select',
@@ -203,6 +215,7 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
             defaultValues={{
               applicant: userName,
               project: '',
+              department_id: '',
               expense_category_id: '',
               period: defaultPeriod,
               week: defaultWeek,

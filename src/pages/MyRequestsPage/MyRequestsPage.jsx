@@ -48,6 +48,7 @@ import {
   translateFinancialStatus,
   translateOptions,
 } from '../../helpers/i18nOptions';
+import { getDepartmentName } from '../../helpers/departmentField';
 
 const MyRequestsPage = () => {
   const { t } = useTranslation();
@@ -96,8 +97,11 @@ const MyRequestsPage = () => {
     if (!saved) return 'All';
 
     const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && !parsed.includes('action')) {
-      return [...parsed, 'action'];
+    if (Array.isArray(parsed)) {
+      const migrated = [...parsed];
+      if (!migrated.includes('department')) migrated.push('department');
+      if (!migrated.includes('action')) migrated.push('action');
+      return migrated;
     }
 
     return parsed;
@@ -435,6 +439,8 @@ const MyRequestsPage = () => {
             return req.payment_date_await || '';
           case 'project':
             return req.project || '';
+          case 'department':
+            return getDepartmentName(req);
           case 'contractor':
             return req.contractor || '';
           case 'purpose':
@@ -557,6 +563,8 @@ const MyRequestsPage = () => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project || '',
       project_plain: request.project || '',
+      department: getDepartmentName(request),
+      department_plain: getDepartmentName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -819,6 +827,20 @@ const MyRequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
+      accessorKey: 'department',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.departmentName')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('department')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>

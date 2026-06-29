@@ -35,6 +35,7 @@
     "date": "Date",
     "requestId": "Request ID",
     "department": "Unit",
+    "departmentName": "Department",
     "unit": "Unit",
     "subdivision": "Subdivision",
     "editor": "Editor",

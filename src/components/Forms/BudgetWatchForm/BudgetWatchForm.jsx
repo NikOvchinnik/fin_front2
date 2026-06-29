@@ -18,6 +18,11 @@ import {
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
 import { useTranslation } from 'react-i18next';
+import { getDepartments } from '../../../helpers/axios/departments';
+import {
+  getDepartmentId,
+  mapDepartmentOptions,
+} from '../../../helpers/departmentField';
 
 const BudgetWatchForm = ({
   request,
@@ -28,6 +33,7 @@ const BudgetWatchForm = ({
 }) => {
   const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
+  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,6 +68,9 @@ const BudgetWatchForm = ({
           label: p.name,
         }));
         setProjectOptions(projectSelector);
+
+        const departments = await getDepartments();
+        setDepartmentOptions(mapDepartmentOptions(departments));
 
         const currencies = await getCurrencies();
         setCurrencyOptions(
@@ -107,6 +116,13 @@ const BudgetWatchForm = ({
       label: t('labels.department'),
       options: projectOptions,
       validation: { required: t('validation.required') },
+      readOnly: true,
+    },
+    {
+      type: 'autocomplete-select',
+      name: 'department_id',
+      label: t('labels.departmentName'),
+      options: departmentOptions,
       readOnly: true,
     },
     {
@@ -255,6 +271,7 @@ const BudgetWatchForm = ({
             defaultValues={{
               applicant: request.applicant || '',
               project: request.project_id || '',
+              department_id: getDepartmentId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',
               week: resolvedRequestWeekValue || '',
