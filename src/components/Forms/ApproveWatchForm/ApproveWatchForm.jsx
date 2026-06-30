@@ -10,12 +10,12 @@ import {
   getDepartmentName,
   getSubdivisionName,
 } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const ApproveWatchForm = ({ request }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
   const fields = [
     {
       type: 'text',

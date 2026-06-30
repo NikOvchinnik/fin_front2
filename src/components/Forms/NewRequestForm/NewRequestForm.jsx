@@ -22,14 +22,14 @@ import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../redux/auth/selectors';
 import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import { mapSubdivisionOptions } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const refundIds = [15, 16, 17, 18, 19];
 
 const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);

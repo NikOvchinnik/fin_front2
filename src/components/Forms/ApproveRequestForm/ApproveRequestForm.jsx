@@ -20,13 +20,13 @@ import {
   getDepartmentName,
   getSubdivisionName,
 } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
   const isDeleted = isDeletedRecord(request);
   const isCeoFlow = userRole === UserRole.CEO;
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
   const statusOptions = isCeoFlow
     ? approveStatusCeo
     : userRole === UserRole.FINANCE

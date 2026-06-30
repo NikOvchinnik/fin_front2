@@ -20,7 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import { mapSubdivisionOptions } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const BudgetNewForm = ({ closeModal, onRefresh }) => {
   const { t } = useTranslation();
@@ -32,7 +32,7 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
   const [weeksOptions, setWeeksOptions] = useState([]);
   const userName = useSelector(selectUserName);
   const userRole = useSelector(selectUserRole);
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
 

@@ -22,13 +22,13 @@ import {
   getDepartmentName,
   getSubdivisionName,
 } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
   const [weeksOptions, setWeeksOptions] = useState([]);
   const isDeleted = isDeletedRecord(request);
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
   const requestPeriod = request?.plan_period || '';

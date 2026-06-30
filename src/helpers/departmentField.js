@@ -1,4 +1,4 @@
-import { isAccountantRole } from './roles';
+import { isFinanceRole } from './roles';
 
 const DEPARTMENT_KEY = 'department';
 const SUBDIVISION_KEY = 'subdivision';
@@ -36,7 +36,7 @@ export const getSubdivisionId = record => {
 export const filterDepartmentColumns = (columns, userRole) =>
   columns.filter(({ accessorKey }) => {
     if (accessorKey === DEPARTMENT_KEY) return false;
-    if (accessorKey === SUBDIVISION_KEY) return isAccountantRole(userRole);
+    if (accessorKey === SUBDIVISION_KEY) return isFinanceRole(userRole);
     return true;
   });
 
@@ -46,7 +46,7 @@ export const normalizeDepartmentVisibleColumns = (visibleColumns, userRole) => {
 
   return visibleColumns.filter(key => {
     if (key === DEPARTMENT_KEY) return false;
-    if (key === SUBDIVISION_KEY) return isAccountantRole(userRole);
+    if (key === SUBDIVISION_KEY) return isFinanceRole(userRole);
     return true;
   });
 };

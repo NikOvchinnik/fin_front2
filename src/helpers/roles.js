@@ -10,5 +10,5 @@ export const roles = {
 
 export const isExecutiveRole = userRole => Number(userRole) === UserRole.CEO;
 
-export const isAccountantRole = userRole =>
-  Number(userRole) === UserRole.ACCOUNTANT;
+export const isFinanceRole = userRole =>
+  Number(userRole) === UserRole.FINANCE;

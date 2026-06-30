@@ -37,14 +37,14 @@ import {
   mapDepartmentOptions,
   mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const refundIds = [15, 16, 17, 18, 19];
 
 const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);

@@ -35,12 +35,12 @@ import {
   mapDepartmentOptions,
   mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
-import { isAccountantRole } from '../../../helpers/roles';
+import { isFinanceRole } from '../../../helpers/roles';
 
 const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
-  const canViewSubdivision = isAccountantRole(userRole);
+  const canViewSubdivision = isFinanceRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
