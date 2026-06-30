@@ -41,7 +41,12 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     const saved = localStorage.getItem('visibleSearchBudgetingColumns');
     if (!saved) return 'All';
 
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
+      return [...parsed, 'subdivision'];
+    }
+
+    return parsed;
   });
 
   const handleColumnToggle = accessorKey => {

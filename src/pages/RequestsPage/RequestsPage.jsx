@@ -102,7 +102,12 @@ const RequestsPage = () => {
     const saved = localStorage.getItem('visibleColumns');
     if (!saved) return 'All';
 
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
+      return [...parsed, 'subdivision'];
+    }
+
+    return parsed;
   });
   const isExecutiveUser = isExecutiveRole(userRole);
   const isExecutiveApprovalMode =

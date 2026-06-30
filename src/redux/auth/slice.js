@@ -23,7 +23,7 @@ const authSlice = createSlice({
       state.user = {
         id: user.user_id,
         name: user.user_name,
-        role: user.user_role,
+        role: user.user_role_id ?? user.user_role?.id ?? user.user_role,
         departmentId: user.user_department_id,
         projectId: user.user_project_id,
       };

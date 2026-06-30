@@ -46,7 +46,12 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     const saved = localStorage.getItem('visibleSearchRequestColumns');
     if (!saved) return 'All';
 
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
+      return [...parsed, 'subdivision'];
+    }
+
+    return parsed;
   });
 
   const canSendRequestStatus = useCallback(request => {

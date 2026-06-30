@@ -97,6 +97,7 @@ const MyBudgetingPage = () => {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed)) {
       const migrated = [...parsed];
+      if (!migrated.includes('subdivision')) migrated.push('subdivision');
       if (!migrated.includes('action')) migrated.push('action');
       return migrated;
     }

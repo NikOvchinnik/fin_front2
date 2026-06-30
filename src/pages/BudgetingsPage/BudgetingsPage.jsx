@@ -90,7 +90,12 @@ const BudgetingsPage = () => {
     const saved = localStorage.getItem('visibleBudgetColumns');
     if (!saved) return 'All';
 
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
+      return [...parsed, 'subdivision'];
+    }
+
+    return parsed;
   });
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]); // IDs поточної сторінки

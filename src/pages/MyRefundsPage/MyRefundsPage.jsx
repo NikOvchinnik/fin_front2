@@ -95,7 +95,12 @@ const MyRefundsPage = () => {
     const saved = localStorage.getItem('visibleMyRefundsColumns');
     if (!saved) return 'All';
 
-    return JSON.parse(saved);
+    const parsed = JSON.parse(saved);
+    if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
+      return [...parsed, 'subdivision'];
+    }
+
+    return parsed;
   });
   const userSelectorId = useSelector(selectUserId);
   const userId = userSelectorId;
