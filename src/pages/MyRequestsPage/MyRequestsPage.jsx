@@ -48,7 +48,12 @@ import {
   translateFinancialStatus,
   translateOptions,
 } from '../../helpers/i18nOptions';
-import { getDepartmentName } from '../../helpers/departmentField';
+import {
+  filterDepartmentColumns,
+  getDepartmentName,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const MyRequestsPage = () => {
   const { t } = useTranslation();
@@ -92,6 +97,7 @@ const MyRequestsPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyRequestsColumns');
     if (!saved) return 'All';
@@ -99,7 +105,6 @@ const MyRequestsPage = () => {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed)) {
       const migrated = [...parsed];
-      if (!migrated.includes('department')) migrated.push('department');
       if (!migrated.includes('action')) migrated.push('action');
       return migrated;
     }
@@ -109,7 +114,6 @@ const MyRequestsPage = () => {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
-  const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
   const userId = userSelectorId;
   const navigate = useNavigate();
@@ -339,7 +343,7 @@ const MyRequestsPage = () => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -348,7 +352,8 @@ const MyRequestsPage = () => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem('visibleMyRequestsColumns', JSON.stringify(updated));
       return updated;
@@ -441,6 +446,8 @@ const MyRequestsPage = () => {
             return req.project || '';
           case 'department':
             return getDepartmentName(req);
+          case 'subdivision':
+            return getSubdivisionName(req);
           case 'contractor':
             return req.contractor || '';
           case 'purpose':
@@ -565,6 +572,8 @@ const MyRequestsPage = () => {
       project_plain: request.project || '',
       department: getDepartmentName(request),
       department_plain: getDepartmentName(request),
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -848,6 +857,20 @@ const MyRequestsPage = () => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('subdivision')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
@@ -1025,13 +1048,15 @@ const MyRequestsPage = () => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(
       col =>
         col.accessorKey === 'action' || visibleColumns.includes(col.accessorKey)
     );
-  }, [columns, visibleColumns]);
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -1517,7 +1542,7 @@ const MyRequestsPage = () => {
             onCloseModal={closeModalColumns}
           >
             <ModalColumnsForm
-              columns={columns}
+              columns={tableColumns}
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}

@@ -11,7 +11,11 @@ import {
 } from '../../../helpers/budgetingWeekOptions';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
-import { getDepartmentName } from '../../../helpers/departmentField';
+import {
+  getDepartmentName,
+  getSubdivisionName,
+} from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const ApproveBudgetingWatchForm = ({
   request,
@@ -19,6 +23,7 @@ const ApproveBudgetingWatchForm = ({
 }) => {
   const { t } = useTranslation();
   const [weeksOptions, setWeeksOptions] = useState([]);
+  const canViewSubdivision = isAccountantRole(userRole);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
   const requestPeriod = request?.plan_period || '';
@@ -46,6 +51,16 @@ const ApproveBudgetingWatchForm = ({
       label: t('labels.departmentName'),
       readOnly: true,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'text',
+            name: 'subdivision',
+            label: t('labels.subdivision'),
+            readOnly: true,
+          },
+        ]
+      : []),
     {
       type: 'select',
       name: 'status',
@@ -95,6 +110,7 @@ const ApproveBudgetingWatchForm = ({
         fields={fields}
         defaultValues={{
           department: getDepartmentName(request),
+          subdivision: getSubdivisionName(request),
           status: request.status?.id,
           comment:
             userRole === 4

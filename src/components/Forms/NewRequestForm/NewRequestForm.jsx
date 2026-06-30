@@ -18,16 +18,21 @@ import {
 import Loader from '../../Loader/Loader';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
-import { getDepartments } from '../../../helpers/axios/departments';
-import { mapDepartmentOptions } from '../../../helpers/departmentField';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../../redux/auth/selectors';
+import { getSubdivisions } from '../../../helpers/axios/subdivisions';
+import { mapSubdivisionOptions } from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const refundIds = [15, 16, 17, 18, 19];
 
 const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const { t } = useTranslation();
+  const userRole = useSelector(selectUserRole);
+  const canViewSubdivision = isAccountantRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -51,8 +56,10 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
         }));
         setPaymentFormOptions(paymentFormSelector);
 
-        const departments = await getDepartments();
-        setDepartmentOptions(mapDepartmentOptions(departments));
+        if (canViewSubdivision) {
+          const subdivisions = await getSubdivisions();
+          setSubdivisionOptions(mapSubdivisionOptions(subdivisions));
+        }
 
         const currencies = await getCurrencies();
         const currencySelector = currencies.map(c => ({
@@ -89,7 +96,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       }
     };
     fetchData();
-  }, []);
+  }, [canViewSubdivision]);
 
   const getNextTuesdayOrThursday = () => {
     let date = dayjs();
@@ -129,12 +136,16 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
       options: paymentFormOptions,
       validation: { required: t('validation.required') },
     },
-    {
-      type: 'autocomplete-select',
-      name: 'department_id',
-      label: t('labels.departmentName'),
-      options: departmentOptions,
-    },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'autocomplete-select',
+            name: 'subdivision_id',
+            label: t('labels.subdivision'),
+            options: subdivisionOptions,
+          },
+        ]
+      : []),
     {
       type: 'autocomplete-input',
       name: 'contractor_id',
@@ -280,7 +291,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
             defaultValues={{
               project_id: '',
               payment_form_id: '',
-              department_id: '',
+              ...(canViewSubdivision ? { subdivision_id: '' } : {}),
               contractor_id: '',
               payment_details: '',
               purpose: '',

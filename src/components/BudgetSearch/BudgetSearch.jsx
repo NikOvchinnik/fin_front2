@@ -19,8 +19,15 @@ import { sendBudgeting } from '../../helpers/axios/budgeting';
 import { formatMoney, getBudgetingAmountUah } from '../../helpers/amounts';
 import { isDeletedRecord } from '../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../redux/auth/selectors';
 import { translateBudgetingStatus } from '../../helpers/i18nOptions';
-import { getDepartmentName } from '../../helpers/departmentField';
+import {
+  filterDepartmentColumns,
+  getDepartmentName,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const { t } = useTranslation();
@@ -29,23 +36,19 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleSearchBudgetingColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && !parsed.includes('department')) {
-      return [...parsed, 'department'];
-    }
-
-    return parsed;
+    return JSON.parse(saved);
   });
 
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -54,7 +57,8 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem(
         'visibleSearchBudgetingColumns',
@@ -81,6 +85,8 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       project_plain: request.project || '',
       department: getDepartmentName(request),
       department_plain: getDepartmentName(request),
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
       week_plain: request.week || '',
       purpose: (
@@ -211,6 +217,14 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'week',
       header: (
         <div className={style.sortContainer}>
@@ -304,10 +318,12 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
-  }, [columns, visibleColumns]);
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -389,7 +405,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         onCloseModal={closeModalColumns}
       >
         <ModalColumnsForm
-          columns={columns}
+          columns={tableColumns}
           closeModal={closeModalColumns}
           visibleColumns={visibleColumns}
           handleColumnToggle={handleColumnToggle}

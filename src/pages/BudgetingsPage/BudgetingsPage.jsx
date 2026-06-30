@@ -46,7 +46,12 @@ import {
   translateOptions,
 } from '../../helpers/i18nOptions';
 import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
-import { getDepartmentName } from '../../helpers/departmentField';
+import {
+  filterDepartmentColumns,
+  getDepartmentName,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const BudgetingsPage = () => {
   const { t } = useTranslation();
@@ -80,18 +85,13 @@ const BudgetingsPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleBudgetColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && !parsed.includes('department')) {
-      return [...parsed, 'department'];
-    }
-
-    return parsed;
+    return JSON.parse(saved);
   });
-  const userRole = useSelector(selectUserRole);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]); // IDs поточної сторінки
   const [pageIndex, setPageIndex] = useState(0);
@@ -288,7 +288,7 @@ const BudgetingsPage = () => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -297,7 +297,8 @@ const BudgetingsPage = () => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem('visibleBudgetColumns', JSON.stringify(updated));
       return updated;
@@ -375,6 +376,8 @@ const BudgetingsPage = () => {
             return req.project ?? '';
           case 'department':
             return getDepartmentName(req);
+          case 'subdivision':
+            return getSubdivisionName(req);
           case 'week':
             return req.week ?? '';
           case 'purpose':
@@ -486,6 +489,8 @@ const BudgetingsPage = () => {
       project_plain: request.project || '',
       department: getDepartmentName(request),
       department_plain: getDepartmentName(request),
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
       week_plain: request.week || '',
       purpose: (
@@ -708,6 +713,20 @@ const BudgetingsPage = () => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('subdivision')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
@@ -867,10 +886,12 @@ const BudgetingsPage = () => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
-  }, [columns, visibleColumns]);
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -1220,7 +1241,7 @@ const BudgetingsPage = () => {
             onCloseModal={closeModalColumns}
           >
             <ModalColumnsForm
-              columns={columns}
+              columns={tableColumns}
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}

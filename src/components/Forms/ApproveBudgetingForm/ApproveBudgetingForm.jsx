@@ -18,12 +18,17 @@ import {
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
-import { getDepartmentName } from '../../../helpers/departmentField';
+import {
+  getDepartmentName,
+  getSubdivisionName,
+} from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
   const [weeksOptions, setWeeksOptions] = useState([]);
   const isDeleted = isDeletedRecord(request);
+  const canViewSubdivision = isAccountantRole(userRole);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
   const requestPeriod = request?.plan_period || '';
@@ -51,6 +56,16 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
       label: t('labels.departmentName'),
       readOnly: true,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'text',
+            name: 'subdivision',
+            label: t('labels.subdivision'),
+            readOnly: true,
+          },
+        ]
+      : []),
     {
       type: 'select',
       name: 'status',
@@ -140,6 +155,7 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
         }}
         defaultValues={{
           department: getDepartmentName(request),
+          subdivision: getSubdivisionName(request),
           status:
             userRole === 4 ? 7 : userRole === 1 ? 9 : userRole === 2 ? 5 : '',
           comment: '',

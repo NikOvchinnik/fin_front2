@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import { useSelector } from 'react-redux';
-import { selectUserName } from '../../../redux/auth/selectors';
+import { selectUserName, selectUserRole } from '../../../redux/auth/selectors';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
 import { getProjects } from '../../../helpers/axios/projects';
 import {
@@ -18,18 +18,21 @@ import {
   resolveWeekRangeValue,
 } from '../../../helpers/budgetingWeekOptions';
 import { useTranslation } from 'react-i18next';
-import { getDepartments } from '../../../helpers/axios/departments';
-import { mapDepartmentOptions } from '../../../helpers/departmentField';
+import { getSubdivisions } from '../../../helpers/axios/subdivisions';
+import { mapSubdivisionOptions } from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const BudgetNewForm = ({ closeModal, onRefresh }) => {
   const { t } = useTranslation();
   const [projectOptions, setProjectOptions] = useState([]);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [weeksOptions, setWeeksOptions] = useState([]);
   const userName = useSelector(selectUserName);
+  const userRole = useSelector(selectUserRole);
+  const canViewSubdivision = isAccountantRole(userRole);
 
   const defaultPeriod = dayjs().format('MM.YYYY');
 
@@ -54,8 +57,10 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
         }));
         setProjectOptions(projectSelector);
 
-        const departments = await getDepartments();
-        setDepartmentOptions(mapDepartmentOptions(departments));
+        if (canViewSubdivision) {
+          const subdivisions = await getSubdivisions();
+          setSubdivisionOptions(mapSubdivisionOptions(subdivisions));
+        }
 
         const currencies = await getCurrencies();
         setCurrencyOptions(
@@ -77,7 +82,7 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
       }
     };
     fetchData();
-  }, []);
+  }, [canViewSubdivision]);
 
   const fields = [
     {
@@ -94,12 +99,16 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
       options: projectOptions,
       validation: { required: t('validation.required') },
     },
-    {
-      type: 'autocomplete-select',
-      name: 'department_id',
-      label: t('labels.departmentName'),
-      options: departmentOptions,
-    },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'autocomplete-select',
+            name: 'subdivision_id',
+            label: t('labels.subdivision'),
+            options: subdivisionOptions,
+          },
+        ]
+      : []),
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
@@ -215,7 +224,7 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
             defaultValues={{
               applicant: userName,
               project: '',
-              department_id: '',
+              ...(canViewSubdivision ? { subdivision_id: '' } : {}),
               expense_category_id: '',
               period: defaultPeriod,
               week: defaultWeek,

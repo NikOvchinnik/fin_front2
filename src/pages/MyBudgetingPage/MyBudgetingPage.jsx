@@ -46,7 +46,12 @@ import {
   translateOptions,
 } from '../../helpers/i18nOptions';
 import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
-import { getDepartmentName } from '../../helpers/departmentField';
+import {
+  filterDepartmentColumns,
+  getDepartmentName,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const MyBudgetingPage = () => {
   const { t } = useTranslation();
@@ -84,6 +89,7 @@ const MyBudgetingPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyBudgetColumns');
     if (!saved) return 'All';
@@ -91,7 +97,6 @@ const MyBudgetingPage = () => {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed)) {
       const migrated = [...parsed];
-      if (!migrated.includes('department')) migrated.push('department');
       if (!migrated.includes('action')) migrated.push('action');
       return migrated;
     }
@@ -101,7 +106,6 @@ const MyBudgetingPage = () => {
   const [selectedIds, setSelectedIds] = useState(() => new Set());
   const [pageRowIds, setPageRowIds] = useState([]);
   const [pageIndex, setPageIndex] = useState(0);
-  const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
   const userId = userSelectorId;
   const navigate = useNavigate();
@@ -320,7 +324,7 @@ const MyBudgetingPage = () => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -329,7 +333,8 @@ const MyBudgetingPage = () => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem('visibleMyBudgetColumns', JSON.stringify(updated));
       return updated;
@@ -409,6 +414,8 @@ const MyBudgetingPage = () => {
             return req.project ?? '';
           case 'department':
             return getDepartmentName(req);
+          case 'subdivision':
+            return getSubdivisionName(req);
           case 'week':
             return req.week ?? '';
           case 'purpose':
@@ -518,6 +525,8 @@ const MyBudgetingPage = () => {
       project_plain: request.project || '',
       department: getDepartmentName(request),
       department_plain: getDepartmentName(request),
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
       week_plain: request.week || '',
       purpose: (
@@ -763,6 +772,20 @@ const MyBudgetingPage = () => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('subdivision')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'tech',
       header: (
         <div className={style.sortContainer}>
@@ -908,13 +931,15 @@ const MyBudgetingPage = () => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(
       col =>
         col.accessorKey === 'action' || visibleColumns.includes(col.accessorKey)
     );
-  }, [columns, visibleColumns]);
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -1325,7 +1350,7 @@ const MyBudgetingPage = () => {
             onCloseModal={closeModalColumns}
           >
             <ModalColumnsForm
-              columns={columns}
+              columns={tableColumns}
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}

@@ -18,11 +18,17 @@ import {
   resolveWeekValue,
 } from '../../../helpers/budgetingWeekOptions';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../../redux/auth/selectors';
 import { getDepartments } from '../../../helpers/axios/departments';
+import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import {
   getDepartmentId,
+  getSubdivisionId,
   mapDepartmentOptions,
+  mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const BudgetWatchForm = ({
   request,
@@ -32,8 +38,11 @@ const BudgetWatchForm = ({
   formType,
 }) => {
   const { t } = useTranslation();
+  const userRole = useSelector(selectUserRole);
+  const canViewSubdivision = isAccountantRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +81,11 @@ const BudgetWatchForm = ({
         const departments = await getDepartments();
         setDepartmentOptions(mapDepartmentOptions(departments));
 
+        if (canViewSubdivision) {
+          const subdivisions = await getSubdivisions();
+          setSubdivisionOptions(mapSubdivisionOptions(subdivisions));
+        }
+
         const currencies = await getCurrencies();
         setCurrencyOptions(
           currencies.map(c => ({ value: c.id, label: c.name }))
@@ -100,7 +114,7 @@ const BudgetWatchForm = ({
       }
     };
     fetchData();
-  }, []);
+  }, [canViewSubdivision]);
 
   const fields = [
     {
@@ -125,6 +139,17 @@ const BudgetWatchForm = ({
       options: departmentOptions,
       readOnly: true,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'autocomplete-select',
+            name: 'subdivision_id',
+            label: t('labels.subdivision'),
+            options: subdivisionOptions,
+            readOnly: true,
+          },
+        ]
+      : []),
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
@@ -272,6 +297,7 @@ const BudgetWatchForm = ({
               applicant: request.applicant || '',
               project: request.project_id || '',
               department_id: getDepartmentId(request),
+              subdivision_id: getSubdivisionId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',
               week: resolvedRequestWeekValue || '',

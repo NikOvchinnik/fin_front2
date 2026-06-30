@@ -26,7 +26,12 @@ import { isDeletedRecord } from '../../helpers/softDelete';
 import { FinancialRequestStatus } from '../../helpers/enums';
 import { useTranslation } from 'react-i18next';
 import { translateFinancialStatus } from '../../helpers/i18nOptions';
-import { getDepartmentName } from '../../helpers/departmentField';
+import {
+  filterDepartmentColumns,
+  getDepartmentName,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const { t } = useTranslation();
@@ -36,18 +41,13 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
   const [isModalSendFilesOpen, setModalSendFilesIsOpen] = useState(false);
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleSearchRequestColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && !parsed.includes('department')) {
-      return [...parsed, 'department'];
-    }
-
-    return parsed;
+    return JSON.parse(saved);
   });
-  const userRole = useSelector(selectUserRole);
 
   const canSendRequestStatus = useCallback(request => {
     if (isDeletedRecord(request)) return false;
@@ -74,7 +74,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -83,7 +83,8 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem(
         'visibleSearchRequestColumns',
@@ -118,6 +119,8 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       project_plain: request.project || '',
       department: getDepartmentName(request),
       department_plain: getDepartmentName(request),
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -309,6 +312,14 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
@@ -446,10 +457,12 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
-  }, [columns, visibleColumns]);
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -572,7 +585,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         onCloseModal={closeModalColumns}
       >
         <ModalColumnsForm
-          columns={columns}
+          columns={tableColumns}
           closeModal={closeModalColumns}
           visibleColumns={visibleColumns}
           handleColumnToggle={handleColumnToggle}

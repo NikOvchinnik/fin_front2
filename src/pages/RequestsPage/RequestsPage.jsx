@@ -52,7 +52,12 @@ import {
   translateOptions,
 } from '../../helpers/i18nOptions';
 import { isExecutiveRole } from '../../helpers/roles';
-import { getDepartmentName } from '../../helpers/departmentField';
+import {
+  filterDepartmentColumns,
+  getDepartmentName,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const RequestsPage = () => {
   const { t } = useTranslation();
@@ -92,18 +97,13 @@ const RequestsPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
-    if (Array.isArray(parsed) && !parsed.includes('department')) {
-      return [...parsed, 'department'];
-    }
-
-    return parsed;
+    return JSON.parse(saved);
   });
-  const userRole = useSelector(selectUserRole);
   const isExecutiveUser = isExecutiveRole(userRole);
   const isExecutiveApprovalMode =
     isExecutiveUser &&
@@ -357,7 +357,7 @@ const RequestsPage = () => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -366,7 +366,8 @@ const RequestsPage = () => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem('visibleColumns', JSON.stringify(updated));
       return updated;
@@ -473,6 +474,8 @@ const RequestsPage = () => {
             return req.project?.name || '';
           case 'department':
             return getDepartmentName(req);
+          case 'subdivision':
+            return getSubdivisionName(req);
           case 'contractor':
             return req.contractor || '';
           case 'purpose':
@@ -604,6 +607,8 @@ const RequestsPage = () => {
       project_plain: request.project?.name || '',
       department: getDepartmentName(request),
       department_plain: getDepartmentName(request),
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -893,6 +898,20 @@ const RequestsPage = () => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('subdivision')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
@@ -1126,10 +1145,12 @@ const RequestsPage = () => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
-  }, [columns, visibleColumns]);
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -1503,7 +1524,7 @@ const RequestsPage = () => {
             onCloseModal={closeModalColumns}
           >
             <ModalColumnsForm
-              columns={columns}
+              columns={tableColumns}
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}

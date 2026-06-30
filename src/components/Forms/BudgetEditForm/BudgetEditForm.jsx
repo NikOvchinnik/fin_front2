@@ -25,16 +25,25 @@ import {
 } from '../../../helpers/budgetingWeekOptions';
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../../redux/auth/selectors';
 import { getDepartments } from '../../../helpers/axios/departments';
+import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import {
   getDepartmentId,
+  getSubdivisionId,
   mapDepartmentOptions,
+  mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const { t } = useTranslation();
+  const userRole = useSelector(selectUserRole);
+  const canViewSubdivision = isAccountantRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -75,6 +84,11 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
         const departments = await getDepartments();
         setDepartmentOptions(mapDepartmentOptions(departments));
 
+        if (canViewSubdivision) {
+          const subdivisions = await getSubdivisions();
+          setSubdivisionOptions(mapSubdivisionOptions(subdivisions));
+        }
+
         const currencies = await getCurrencies();
         setCurrencyOptions(
           currencies.map(c => ({ value: c.id, label: c.name }))
@@ -103,7 +117,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       }
     };
     fetchData();
-  }, []);
+  }, [canViewSubdivision]);
 
   const closeModalConfirm = () => {
     setModalConfirmOpen(false);
@@ -155,6 +169,16 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       label: t('labels.departmentName'),
       options: departmentOptions,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'autocomplete-select',
+            name: 'subdivision_id',
+            label: t('labels.subdivision'),
+            options: subdivisionOptions,
+          },
+        ]
+      : []),
     {
       type: 'autocomplete-select',
       name: 'expense_category_id',
@@ -320,6 +344,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
               applicant: request.applicant || '',
               project: request.project_id || '',
               department_id: getDepartmentId(request),
+              subdivision_id: getSubdivisionId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',
               week: resolvedRequestWeekValue || '',

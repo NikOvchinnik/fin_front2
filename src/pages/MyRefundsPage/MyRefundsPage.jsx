@@ -45,6 +45,11 @@ import {
   translateOptions,
 } from '../../helpers/i18nOptions';
 import { FinancialRequestStatus } from '../../helpers/enums';
+import {
+  filterDepartmentColumns,
+  getSubdivisionName,
+  normalizeDepartmentVisibleColumns,
+} from '../../helpers/departmentField';
 
 const MyRefundsPage = () => {
   const { t } = useTranslation();
@@ -85,11 +90,13 @@ const MyRefundsPage = () => {
   const [endDate, setEndDate] = useState(dayjs().endOf('month'));
   const [activeStatus, setActiveStatus] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  const userRole = useSelector(selectUserRole);
   const [visibleColumns, setVisibleColumns] = useState(() => {
     const saved = localStorage.getItem('visibleMyRefundsColumns');
-    return saved ? JSON.parse(saved) : 'All';
+    if (!saved) return 'All';
+
+    return JSON.parse(saved);
   });
-  const userRole = useSelector(selectUserRole);
   const userSelectorId = useSelector(selectUserId);
   const userId = userSelectorId;
   const navigate = useNavigate();
@@ -218,7 +225,7 @@ const MyRefundsPage = () => {
     setVisibleColumns(prev => {
       let updated;
       if (prev === 'All') {
-        updated = columns
+        updated = tableColumns
           .map(c => c.accessorKey)
           .filter(key => key !== accessorKey);
       } else {
@@ -227,7 +234,8 @@ const MyRefundsPage = () => {
         } else {
           updated = [...prev, accessorKey];
         }
-        if (updated.length === columns.length) updated = 'All';
+        updated = normalizeDepartmentVisibleColumns(updated, userRole);
+        if (updated.length === tableColumns.length) updated = 'All';
       }
       localStorage.setItem('visibleMyRefundsColumns', JSON.stringify(updated));
       return updated;
@@ -318,6 +326,8 @@ const MyRefundsPage = () => {
             return req.payment_date_await || '';
           case 'project':
             return req.project || '';
+          case 'subdivision':
+            return getSubdivisionName(req);
           case 'contractor':
             return req.contractor || '';
           case 'purpose':
@@ -437,6 +447,8 @@ const MyRefundsPage = () => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project || '',
       project_plain: request.project || '',
+      subdivision: getSubdivisionName(request),
+      subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
       contractor_plain: request.contractor || '',
       purpose: (
@@ -679,6 +691,20 @@ const MyRefundsPage = () => {
       ),
     },
     {
+      accessorKey: 'subdivision',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.subdivision')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('subdivision')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+    },
+    {
       accessorKey: 'payment_form',
       header: (
         <div className={style.sortContainer}>
@@ -856,10 +882,12 @@ const MyRefundsPage = () => {
     },
   ];
 
+  const tableColumns = filterDepartmentColumns(columns, userRole);
+
   const filteredColumns = useMemo(() => {
-    if (visibleColumns === 'All') return columns;
-    return columns.filter(col => visibleColumns.includes(col.accessorKey));
-  }, [columns, visibleColumns]);
+    if (visibleColumns === 'All') return tableColumns;
+    return tableColumns.filter(col => visibleColumns.includes(col.accessorKey));
+  }, [tableColumns, visibleColumns]);
 
   const isMobile = useMediaQuery('(max-width: 1024px)');
 
@@ -1207,7 +1235,7 @@ const MyRefundsPage = () => {
             onCloseModal={closeModalColumns}
           >
             <ModalColumnsForm
-              columns={columns}
+              columns={tableColumns}
               closeModal={closeModalColumns}
               visibleColumns={visibleColumns}
               handleColumnToggle={handleColumnToggle}

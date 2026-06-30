@@ -4,10 +4,18 @@ import Form from '../../Form/Form';
 import style from './ApproveWatchForm.module.css';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
-import { getDepartmentName } from '../../../helpers/departmentField';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../../redux/auth/selectors';
+import {
+  getDepartmentName,
+  getSubdivisionName,
+} from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const ApproveWatchForm = ({ request }) => {
   const { t } = useTranslation();
+  const userRole = useSelector(selectUserRole);
+  const canViewSubdivision = isAccountantRole(userRole);
   const fields = [
     {
       type: 'text',
@@ -15,6 +23,16 @@ const ApproveWatchForm = ({ request }) => {
       label: t('labels.departmentName'),
       readOnly: true,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'text',
+            name: 'subdivision',
+            label: t('labels.subdivision'),
+            readOnly: true,
+          },
+        ]
+      : []),
     {
       type: 'select',
       name: 'status',
@@ -68,6 +86,7 @@ const ApproveWatchForm = ({ request }) => {
         fields={fields}
         defaultValues={{
           department: getDepartmentName(request),
+          subdivision: getSubdivisionName(request),
           status: request.status?.id || '',
           comment: '',
           payment_date_await:

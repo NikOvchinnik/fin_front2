@@ -16,12 +16,17 @@ import { Notify } from 'notiflix';
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
-import { getDepartmentName } from '../../../helpers/departmentField';
+import {
+  getDepartmentName,
+  getSubdivisionName,
+} from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
   const { t } = useTranslation();
   const isDeleted = isDeletedRecord(request);
   const isCeoFlow = userRole === UserRole.CEO;
+  const canViewSubdivision = isAccountantRole(userRole);
   const statusOptions = isCeoFlow
     ? approveStatusCeo
     : userRole === UserRole.FINANCE
@@ -37,6 +42,16 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
       label: t('labels.departmentName'),
       readOnly: true,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'text',
+            name: 'subdivision',
+            label: t('labels.subdivision'),
+            readOnly: true,
+          },
+        ]
+      : []),
     {
       type: 'select',
       name: 'status',
@@ -146,6 +161,7 @@ const ApproveRequestForm = ({ request, closeModal, onRefresh, userRole }) => {
         }}
         defaultValues={{
           department: getDepartmentName(request),
+          subdivision: getSubdivisionName(request),
           status: isCeoFlow
             ? FinancialRequestStatus.SENT_TO_PAYMENT
             : userRole === UserRole.FINANCE

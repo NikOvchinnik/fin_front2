@@ -14,11 +14,17 @@ import { createRequest } from '../../../helpers/axios/requests';
 import { getContractors } from '../../../helpers/axios/contractors';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
+import { useSelector } from 'react-redux';
+import { selectUserRole } from '../../../redux/auth/selectors';
 import { getDepartments } from '../../../helpers/axios/departments';
+import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import {
   getDepartmentId,
+  getSubdivisionId,
   mapDepartmentOptions,
+  mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
+import { isAccountantRole } from '../../../helpers/roles';
 
 const refundIds = [15, 16, 17, 18, 19];
 
@@ -30,9 +36,12 @@ const WatchRequestForm = ({
   formType,
 }) => {
   const { t } = useTranslation();
+  const userRole = useSelector(selectUserRole);
+  const canViewSubdivision = isAccountantRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [departmentOptions, setDepartmentOptions] = useState([]);
+  const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
@@ -56,6 +65,11 @@ const WatchRequestForm = ({
 
         const departments = await getDepartments();
         setDepartmentOptions(mapDepartmentOptions(departments));
+
+        if (canViewSubdivision) {
+          const subdivisions = await getSubdivisions();
+          setSubdivisionOptions(mapSubdivisionOptions(subdivisions));
+        }
 
         const currencies = await getCurrencies();
         const currencySelector = currencies.map(c => ({
@@ -105,7 +119,7 @@ const WatchRequestForm = ({
       }
     };
     fetchData();
-  }, []);
+  }, [canViewSubdivision]);
 
   const fields = [
     {
@@ -139,6 +153,17 @@ const WatchRequestForm = ({
       options: departmentOptions,
       readOnly: true,
     },
+    ...(canViewSubdivision
+      ? [
+          {
+            type: 'autocomplete-select',
+            name: 'subdivision_id',
+            label: t('labels.subdivision'),
+            options: subdivisionOptions,
+            readOnly: true,
+          },
+        ]
+      : []),
     {
       type: 'autocomplete-input',
       name: 'contractor_id',
@@ -276,6 +301,7 @@ const WatchRequestForm = ({
           expense_category_id: request.expense_category_id || '',
           payment_form_id: request.payment_form_id || '',
           department_id: getDepartmentId(request),
+          subdivision_id: getSubdivisionId(request),
           contractor_id: request.contractor_id || '',
           payment_details: request.payment_details || '',
           purpose: request.purpose || '',
