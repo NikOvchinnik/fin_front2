@@ -28,7 +28,6 @@ import { useTranslation } from 'react-i18next';
 import { translateFinancialStatus } from '../../helpers/i18nOptions';
 import {
   filterDepartmentColumns,
-  getDepartmentName,
   getSubdivisionName,
   normalizeDepartmentVisibleColumns,
 } from '../../helpers/departmentField';
@@ -46,9 +45,15 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     const saved = localStorage.getItem('visibleSearchRequestColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
+    const parsed = normalizeDepartmentVisibleColumns(
+      JSON.parse(saved),
+      userRole
+    );
     if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
-      return [...parsed, 'subdivision'];
+      return normalizeDepartmentVisibleColumns(
+        [...parsed, 'subdivision'],
+        userRole
+      );
     }
 
     return parsed;
@@ -122,8 +127,6 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project || '',
       project_plain: request.project || '',
-      department: getDepartmentName(request),
-      department_plain: getDepartmentName(request),
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
@@ -305,14 +308,6 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'department',
-      header: (
-        <div className={style.sortContainer}>
-          <p>{t('labels.departmentName')}</p>
         </div>
       ),
     },
@@ -615,3 +610,5 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
 };
 
 export default RequestSearch;
+
+

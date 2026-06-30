@@ -24,7 +24,6 @@ import { selectUserRole } from '../../redux/auth/selectors';
 import { translateBudgetingStatus } from '../../helpers/i18nOptions';
 import {
   filterDepartmentColumns,
-  getDepartmentName,
   getSubdivisionName,
   normalizeDepartmentVisibleColumns,
 } from '../../helpers/departmentField';
@@ -41,9 +40,15 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
     const saved = localStorage.getItem('visibleSearchBudgetingColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
+    const parsed = normalizeDepartmentVisibleColumns(
+      JSON.parse(saved),
+      userRole
+    );
     if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
-      return [...parsed, 'subdivision'];
+      return normalizeDepartmentVisibleColumns(
+        [...parsed, 'subdivision'],
+        userRole
+      );
     }
 
     return parsed;
@@ -88,8 +93,6 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
-      department: getDepartmentName(request),
-      department_plain: getDepartmentName(request),
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
@@ -210,14 +213,6 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'department',
-      header: (
-        <div className={style.sortContainer}>
-          <p>{t('labels.departmentName')}</p>
         </div>
       ),
     },
@@ -458,3 +453,5 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
 };
 
 export default BudgetSearch;
+
+

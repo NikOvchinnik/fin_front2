@@ -3,26 +3,11 @@ import { isFinanceRole } from './roles';
 const DEPARTMENT_KEY = 'department';
 const SUBDIVISION_KEY = 'subdivision';
 
-export const mapDepartmentOptions = departments =>
-  (departments || []).map(department => ({
-    value: department.id,
-    label: department.name,
-  }));
-
 export const mapSubdivisionOptions = subdivisions =>
   (subdivisions || []).map(subdivision => ({
     value: subdivision.id,
     label: subdivision.name,
   }));
-
-export const getDepartmentName = record => {
-  if (typeof record?.department === 'string') return record.department;
-  return record?.department?.name ?? '';
-};
-
-export const getDepartmentId = record => {
-  return record?.department_id ?? '';
-};
 
 export const getSubdivisionName = record => {
   if (typeof record?.subdivision === 'string') return record.subdivision;

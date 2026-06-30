@@ -50,7 +50,6 @@ import {
 } from '../../helpers/i18nOptions';
 import {
   filterDepartmentColumns,
-  getDepartmentName,
   getSubdivisionName,
   normalizeDepartmentVisibleColumns,
 } from '../../helpers/departmentField';
@@ -445,8 +444,6 @@ const MyRequestsPage = () => {
             return req.payment_date_await || '';
           case 'project':
             return req.project || '';
-          case 'department':
-            return getDepartmentName(req);
           case 'subdivision':
             return getSubdivisionName(req);
           case 'contractor':
@@ -571,8 +568,6 @@ const MyRequestsPage = () => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project || '',
       project_plain: request.project || '',
-      department: getDepartmentName(request),
-      department_plain: getDepartmentName(request),
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
@@ -837,20 +832,6 @@ const MyRequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'department',
-      header: (
-        <div className={style.sortContainer}>
-          <p>{t('labels.departmentName')}</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('department')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1579,3 +1560,5 @@ const MyRequestsPage = () => {
 };
 
 export default MyRequestsPage;
+
+

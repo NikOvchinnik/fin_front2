@@ -95,9 +95,15 @@ const MyRefundsPage = () => {
     const saved = localStorage.getItem('visibleMyRefundsColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
+    const parsed = normalizeDepartmentVisibleColumns(
+      JSON.parse(saved),
+      userRole
+    );
     if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
-      return [...parsed, 'subdivision'];
+      return normalizeDepartmentVisibleColumns(
+        [...parsed, 'subdivision'],
+        userRole
+      );
     }
 
     return parsed;
@@ -1265,3 +1271,5 @@ const MyRefundsPage = () => {
 };
 
 export default MyRefundsPage;
+
+

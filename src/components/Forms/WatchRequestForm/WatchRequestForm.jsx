@@ -16,12 +16,9 @@ import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
 import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../redux/auth/selectors';
-import { getDepartments } from '../../../helpers/axios/departments';
 import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import {
-  getDepartmentId,
   getSubdivisionId,
-  mapDepartmentOptions,
   mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
 import { isFinanceRole } from '../../../helpers/roles';
@@ -40,7 +37,6 @@ const WatchRequestForm = ({
   const canViewSubdivision = isFinanceRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -62,9 +58,6 @@ const WatchRequestForm = ({
           label: p.name,
         }));
         setPaymentFormOptions(paymentFormSelector);
-
-        const departments = await getDepartments();
-        setDepartmentOptions(mapDepartmentOptions(departments));
 
         if (canViewSubdivision) {
           const subdivisions = await getSubdivisions();
@@ -144,13 +137,6 @@ const WatchRequestForm = ({
       label: t('labels.paymentForm'),
       options: paymentFormOptions,
       validation: { required: t('validation.required') },
-      readOnly: true,
-    },
-    {
-      type: 'autocomplete-select',
-      name: 'department_id',
-      label: t('labels.departmentName'),
-      options: departmentOptions,
       readOnly: true,
     },
     ...(canViewSubdivision
@@ -300,7 +286,6 @@ const WatchRequestForm = ({
           project_id: request.project_id || '',
           expense_category_id: request.expense_category_id || '',
           payment_form_id: request.payment_form_id || '',
-          department_id: getDepartmentId(request),
           subdivision_id: getSubdivisionId(request),
           contractor_id: request.contractor_id || '',
           payment_details: request.payment_details || '',

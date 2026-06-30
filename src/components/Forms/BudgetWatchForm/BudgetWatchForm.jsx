@@ -20,12 +20,9 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../redux/auth/selectors';
-import { getDepartments } from '../../../helpers/axios/departments';
 import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import {
-  getDepartmentId,
   getSubdivisionId,
-  mapDepartmentOptions,
   mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
 import { isFinanceRole } from '../../../helpers/roles';
@@ -41,7 +38,6 @@ const BudgetWatchForm = ({
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -77,9 +73,6 @@ const BudgetWatchForm = ({
           label: p.name,
         }));
         setProjectOptions(projectSelector);
-
-        const departments = await getDepartments();
-        setDepartmentOptions(mapDepartmentOptions(departments));
 
         if (canViewSubdivision) {
           const subdivisions = await getSubdivisions();
@@ -130,13 +123,6 @@ const BudgetWatchForm = ({
       label: t('labels.department'),
       options: projectOptions,
       validation: { required: t('validation.required') },
-      readOnly: true,
-    },
-    {
-      type: 'autocomplete-select',
-      name: 'department_id',
-      label: t('labels.departmentName'),
-      options: departmentOptions,
       readOnly: true,
     },
     ...(canViewSubdivision
@@ -296,7 +282,6 @@ const BudgetWatchForm = ({
             defaultValues={{
               applicant: request.applicant || '',
               project: request.project_id || '',
-              department_id: getDepartmentId(request),
               subdivision_id: getSubdivisionId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',

@@ -48,7 +48,6 @@ import {
 import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
 import {
   filterDepartmentColumns,
-  getDepartmentName,
   getSubdivisionName,
   normalizeDepartmentVisibleColumns,
 } from '../../helpers/departmentField';
@@ -413,8 +412,6 @@ const MyBudgetingPage = () => {
             return req.created_at ?? '';
           case 'project':
             return req.project ?? '';
-          case 'department':
-            return getDepartmentName(req);
           case 'subdivision':
             return getSubdivisionName(req);
           case 'week':
@@ -524,8 +521,6 @@ const MyBudgetingPage = () => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
-      department: getDepartmentName(request),
-      department_plain: getDepartmentName(request),
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
@@ -752,20 +747,6 @@ const MyBudgetingPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'department',
-      header: (
-        <div className={style.sortContainer}>
-          <p>{t('labels.departmentName')}</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('department')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1435,3 +1416,5 @@ const MyBudgetingPage = () => {
 };
 
 export default MyBudgetingPage;
+
+

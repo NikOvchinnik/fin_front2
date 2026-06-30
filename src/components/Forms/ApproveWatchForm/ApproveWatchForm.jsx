@@ -6,10 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
 import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../redux/auth/selectors';
-import {
-  getDepartmentName,
-  getSubdivisionName,
-} from '../../../helpers/departmentField';
+import { getSubdivisionName } from '../../../helpers/departmentField';
 import { isFinanceRole } from '../../../helpers/roles';
 
 const ApproveWatchForm = ({ request }) => {
@@ -17,12 +14,6 @@ const ApproveWatchForm = ({ request }) => {
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
   const fields = [
-    {
-      type: 'text',
-      name: 'department',
-      label: t('labels.departmentName'),
-      readOnly: true,
-    },
     ...(canViewSubdivision
       ? [
           {
@@ -85,7 +76,6 @@ const ApproveWatchForm = ({ request }) => {
         title={t('forms.watchRequest')}
         fields={fields}
         defaultValues={{
-          department: getDepartmentName(request),
           subdivision: getSubdivisionName(request),
           status: request.status?.id || '',
           comment: '',

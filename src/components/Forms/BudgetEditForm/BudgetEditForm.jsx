@@ -27,12 +27,9 @@ import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { useSelector } from 'react-redux';
 import { selectUserRole } from '../../../redux/auth/selectors';
-import { getDepartments } from '../../../helpers/axios/departments';
 import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import {
-  getDepartmentId,
   getSubdivisionId,
-  mapDepartmentOptions,
   mapSubdivisionOptions,
 } from '../../../helpers/departmentField';
 import { isFinanceRole } from '../../../helpers/roles';
@@ -42,7 +39,6 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
   const [projectOptions, setProjectOptions] = useState([]);
-  const [departmentOptions, setDepartmentOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -80,9 +76,6 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
           label: p.name,
         }));
         setProjectOptions(projectSelector);
-
-        const departments = await getDepartments();
-        setDepartmentOptions(mapDepartmentOptions(departments));
 
         if (canViewSubdivision) {
           const subdivisions = await getSubdivisions();
@@ -162,12 +155,6 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
       label: t('labels.department'),
       options: projectOptions,
       validation: { required: t('validation.required') },
-    },
-    {
-      type: 'autocomplete-select',
-      name: 'department_id',
-      label: t('labels.departmentName'),
-      options: departmentOptions,
     },
     ...(canViewSubdivision
       ? [
@@ -343,7 +330,6 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
             defaultValues={{
               applicant: request.applicant || '',
               project: request.project_id || '',
-              department_id: getDepartmentId(request),
               subdivision_id: getSubdivisionId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',

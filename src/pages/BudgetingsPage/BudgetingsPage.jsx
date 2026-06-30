@@ -48,7 +48,6 @@ import {
 import { FILTER_ALL, FILTER_DELETED } from '../../helpers/status';
 import {
   filterDepartmentColumns,
-  getDepartmentName,
   getSubdivisionName,
   normalizeDepartmentVisibleColumns,
 } from '../../helpers/departmentField';
@@ -90,9 +89,15 @@ const BudgetingsPage = () => {
     const saved = localStorage.getItem('visibleBudgetColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
+    const parsed = normalizeDepartmentVisibleColumns(
+      JSON.parse(saved),
+      userRole
+    );
     if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
-      return [...parsed, 'subdivision'];
+      return normalizeDepartmentVisibleColumns(
+        [...parsed, 'subdivision'],
+        userRole
+      );
     }
 
     return parsed;
@@ -379,8 +384,6 @@ const BudgetingsPage = () => {
             return req.created_at ?? '';
           case 'project':
             return req.project ?? '';
-          case 'department':
-            return getDepartmentName(req);
           case 'subdivision':
             return getSubdivisionName(req);
           case 'week':
@@ -492,8 +495,6 @@ const BudgetingsPage = () => {
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
       project: request.project || '',
       project_plain: request.project || '',
-      department: getDepartmentName(request),
-      department_plain: getDepartmentName(request),
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
@@ -697,20 +698,6 @@ const BudgetingsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'department',
-      header: (
-        <div className={style.sortContainer}>
-          <p>{t('labels.departmentName')}</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('department')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1282,3 +1269,5 @@ const BudgetingsPage = () => {
 };
 
 export default BudgetingsPage;
+
+

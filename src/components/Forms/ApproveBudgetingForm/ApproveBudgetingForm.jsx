@@ -18,10 +18,7 @@ import {
 import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
-import {
-  getDepartmentName,
-  getSubdivisionName,
-} from '../../../helpers/departmentField';
+import { getSubdivisionName } from '../../../helpers/departmentField';
 import { isFinanceRole } from '../../../helpers/roles';
 
 const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
@@ -50,12 +47,6 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
   }, []);
 
   const fields = [
-    {
-      type: 'text',
-      name: 'department',
-      label: t('labels.departmentName'),
-      readOnly: true,
-    },
     ...(canViewSubdivision
       ? [
           {
@@ -154,7 +145,6 @@ const ApproveBudgetingForm = ({ request, closeModal, onRefresh, userRole }) => {
           }
         }}
         defaultValues={{
-          department: getDepartmentName(request),
           subdivision: getSubdivisionName(request),
           status:
             userRole === 4 ? 7 : userRole === 1 ? 9 : userRole === 2 ? 5 : '',

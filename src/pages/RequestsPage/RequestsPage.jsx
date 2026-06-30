@@ -54,7 +54,6 @@ import {
 import { isExecutiveRole } from '../../helpers/roles';
 import {
   filterDepartmentColumns,
-  getDepartmentName,
   getSubdivisionName,
   normalizeDepartmentVisibleColumns,
 } from '../../helpers/departmentField';
@@ -102,9 +101,15 @@ const RequestsPage = () => {
     const saved = localStorage.getItem('visibleColumns');
     if (!saved) return 'All';
 
-    const parsed = JSON.parse(saved);
+    const parsed = normalizeDepartmentVisibleColumns(
+      JSON.parse(saved),
+      userRole
+    );
     if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
-      return [...parsed, 'subdivision'];
+      return normalizeDepartmentVisibleColumns(
+        [...parsed, 'subdivision'],
+        userRole
+      );
     }
 
     return parsed;
@@ -477,8 +482,6 @@ const RequestsPage = () => {
             return req.payment_date_await || '';
           case 'project':
             return req.project?.name || '';
-          case 'department':
-            return getDepartmentName(req);
           case 'subdivision':
             return getSubdivisionName(req);
           case 'contractor':
@@ -610,8 +613,6 @@ const RequestsPage = () => {
       payment_date_await_plain: request.payment_date_await || '',
       project: request.project?.name || '',
       project_plain: request.project?.name || '',
-      department: getDepartmentName(request),
-      department_plain: getDepartmentName(request),
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
@@ -882,20 +883,6 @@ const RequestsPage = () => {
           <button
             className={style.btnContainer}
             onClick={() => handleSort('project')}
-          >
-            <Icon id="sort" className={style.sortIcon} />
-          </button>
-        </div>
-      ),
-    },
-    {
-      accessorKey: 'department',
-      header: (
-        <div className={style.sortContainer}>
-          <p>{t('labels.departmentName')}</p>
-          <button
-            className={style.btnContainer}
-            onClick={() => handleSort('department')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1576,3 +1563,5 @@ const RequestsPage = () => {
 };
 
 export default RequestsPage;
+
+
