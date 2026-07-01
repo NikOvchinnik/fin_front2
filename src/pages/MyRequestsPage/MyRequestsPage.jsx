@@ -33,7 +33,7 @@ import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchReque
 import { exportToCSV } from '../../helpers/exportToCSV';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import SendFilesForm from '../../components/Forms/SendFilesForm/SendFilesForm';
-import { getProjects } from '../../helpers/axios/projects';
+import { getUnits } from '../../helpers/axios/units';
 import { getCurrencies, getExpenseCategories, getPaymentForms } from '../../helpers/axios/payments';
 import { getContractors } from '../../helpers/axios/contractors';
 import Form from '../../components/Form/Form';
@@ -58,12 +58,12 @@ const MyRequestsPage = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedUnit, setSelectedUnit] = useState(FILTER_ALL);
   const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [selectedContractor, setSelectedContractor] = useState(FILTER_ALL);
   const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
@@ -172,7 +172,7 @@ const MyRequestsPage = () => {
   useEffect(() => {
     resetSelection();
   }, [
-    selectedProject,
+    selectedUnit,
     selectedCurrency,
     selectedContractor,
     selectedPaymentForm,
@@ -249,15 +249,15 @@ const MyRequestsPage = () => {
 
       setDataRequests(requests);
 
-      const projects = await getProjects();
-      const projectSelector = [
+      const units = await getUnits();
+      const UnitSelector = [
         { value: FILTER_ALL, label: t('filters.all') },
-        ...(projects || []).map(p => ({
+        ...(units || []).map(p => ({
           value: p.id,
           label: p.name,
         })),
       ];
-      setProjectOptions(projectSelector);
+      setUnitOptions(UnitSelector);
 
       const currencies = await getCurrencies();
       const currencySelector = [
@@ -365,9 +365,9 @@ const MyRequestsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== FILTER_ALL) {
+    if (selectedUnit && selectedUnit !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
-        row => row.project_id === selectedProject
+        row => row.unit_id === selectedUnit
       );
     }
 
@@ -442,8 +442,8 @@ const MyRequestsPage = () => {
             return req.created_at || '';
           case 'payment_date_await':
             return req.payment_date_await || '';
-          case 'project':
-            return req.project || '';
+          case 'unit':
+            return req.unit || '';
           case 'subdivision':
             return getSubdivisionName(req);
           case 'contractor':
@@ -566,8 +566,8 @@ const MyRequestsPage = () => {
         </p>
       ),
       payment_date_await_plain: request.payment_date_await || '',
-      project: request.project || '',
-      project_plain: request.project || '',
+      unit: request.unit || '',
+      unit_plain: request.unit || '',
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
@@ -731,7 +731,7 @@ const MyRequestsPage = () => {
     dataRequests,
     activeStatus,
     sortConfig,
-    selectedProject,
+    selectedUnit,
     selectedCurrency,
     selectedContractor,
     selectedPaymentForm,
@@ -825,13 +825,13 @@ const MyRequestsPage = () => {
       ),
     },
     {
-      accessorKey: 'project',
+      accessorKey: 'unit',
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
-            onClick={() => handleSort('project')}
+            onClick={() => handleSort('unit')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1248,14 +1248,14 @@ const MyRequestsPage = () => {
                 fields={[
                   {
                     type: 'select',
-                    name: 'project',
+                    name: 'unit',
                     label: t('labels.department'),
-                    options: projectOptions,
-                    onChange: value => setSelectedProject(value),
+                    options: UnitOptions,
+                    onChange: value => setSelectedUnit(value),
                   },
                 ]}
                 defaultValues={{
-                  project: selectedProject,
+                  unit: selectedUnit,
                 }}
               />
               <Form

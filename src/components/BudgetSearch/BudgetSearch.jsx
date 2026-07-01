@@ -91,8 +91,8 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         </p>
       ),
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
-      project: request.project || '',
-      project_plain: request.project || '',
+      unit: request.unit || '',
+      unit_plain: request.unit || '',
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
@@ -209,7 +209,7 @@ const BudgetSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       ),
     },
     {
-      accessorKey: 'project',
+      accessorKey: 'unit',
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>

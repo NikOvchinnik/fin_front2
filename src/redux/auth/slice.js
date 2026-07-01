@@ -7,7 +7,7 @@ const initialState = {
     name: '',
     role: 0,
     departmentId: null,
-    projectId: null,
+    unitId: null,
   },
   token: null,
 };
@@ -25,7 +25,7 @@ const authSlice = createSlice({
         name: user.user_name,
         role: user.user_role_id ?? user.user_role?.id ?? user.user_role,
         departmentId: user.user_department_id,
-        projectId: user.user_project_id,
+        unitId: user.user_unit_id,
       };
     },
     logout: () => initialState,

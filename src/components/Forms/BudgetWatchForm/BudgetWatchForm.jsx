@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 import Loader from '../../Loader/Loader';
 import { generateDefaultPeriods } from '../../../helpers/periods';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import {
   ensureCurrentWeekOption,
   getWeeksOfMonth,
@@ -37,7 +37,7 @@ const BudgetWatchForm = ({
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -67,12 +67,12 @@ const BudgetWatchForm = ({
     const fetchData = async () => {
       try {
         setLoading(true);
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
+        const units = await getUnits();
+        const UnitSelector = units.map(p => ({
           value: p.id,
           label: p.name,
         }));
-        setProjectOptions(projectSelector);
+        setUnitOptions(UnitSelector);
 
         if (canViewSubdivision) {
           const subdivisions = await getSubdivisions();
@@ -119,9 +119,9 @@ const BudgetWatchForm = ({
     },
     {
       type: 'autocomplete-select',
-      name: 'project',
+      name: 'unit',
       label: t('labels.department'),
-      options: projectOptions,
+      options: UnitOptions,
       validation: { required: t('validation.required') },
       readOnly: true,
     },
@@ -281,7 +281,7 @@ const BudgetWatchForm = ({
             }}
             defaultValues={{
               applicant: request.applicant || '',
-              project: request.project_id || '',
+              unit: request.unit_id || '',
               subdivision_id: getSubdivisionId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',

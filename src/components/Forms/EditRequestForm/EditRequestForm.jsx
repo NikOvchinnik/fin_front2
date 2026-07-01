@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Form from '../../Form/Form';
 import style from './EditRequestForm.module.css';
 import { Notify } from 'notiflix';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import {
   getCurrencies,
   getExpenseCategories,
@@ -42,7 +42,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -60,12 +60,12 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
       try {
         setLoading(true);
         setRequestData(request);
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
+        const units = await getUnits();
+        const UnitSelector = units.map(p => ({
           value: p.id,
           label: p.name,
         }));
-        setProjectOptions(projectSelector);
+        setUnitOptions(UnitSelector);
 
         const paymentForms = await getPaymentForms();
         const paymentFormSelector = paymentForms.map(p => ({
@@ -191,9 +191,9 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
   const fields = [
     {
       type: 'autocomplete-select',
-      name: 'project_id',
+      name: 'unit_id',
       label: t('labels.department'),
-      options: projectOptions,
+      options: UnitOptions,
       validation: { required: t('validation.required') },
     },
     {
@@ -438,7 +438,7 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
               }
             }}
             defaultValues={{
-              project_id: requestData.project_id || '',
+              unit_id: requestData.unit_id || '',
               expense_category_id: requestData.expense_category_id || '',
               payment_form_id: requestData.payment_form_id || '',
               subdivision_id: getSubdivisionId(requestData),

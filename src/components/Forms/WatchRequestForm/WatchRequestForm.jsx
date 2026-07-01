@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Form from '../../Form/Form';
 import style from './WatchRequestForm.module.css';
 import { Notify } from 'notiflix';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import {
   getCurrencies,
   getExpenseCategories,
@@ -35,7 +35,7 @@ const WatchRequestForm = ({
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -45,12 +45,12 @@ const WatchRequestForm = ({
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
+        const units = await getUnits();
+        const UnitSelector = units.map(p => ({
           value: p.id,
           label: p.name,
         }));
-        setProjectOptions(projectSelector);
+        setUnitOptions(UnitSelector);
 
         const paymentForms = await getPaymentForms();
         const paymentFormSelector = paymentForms.map(p => ({
@@ -117,9 +117,9 @@ const WatchRequestForm = ({
   const fields = [
     {
       type: 'autocomplete-select',
-      name: 'project_id',
+      name: 'unit_id',
       label: t('labels.department'),
-      options: projectOptions,
+      options: UnitOptions,
       validation: { required: t('validation.required') },
       readOnly: true,
     },
@@ -283,7 +283,7 @@ const WatchRequestForm = ({
           }
         }}
         defaultValues={{
-          project_id: request.project_id || '',
+          unit_id: request.unit_id || '',
           expense_category_id: request.expense_category_id || '',
           payment_form_id: request.payment_form_id || '',
           subdivision_id: getSubdivisionId(request),

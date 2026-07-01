@@ -4,7 +4,7 @@ const buildParams = filters => ({
   params: {
     year: filters?.year ?? 'all',
     month: filters?.month ?? 'all',
-    project: filters?.project ?? 'all',
+    unit: filters?.unit ?? 'all',
   },
 });
 

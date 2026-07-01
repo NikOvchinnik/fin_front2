@@ -32,7 +32,7 @@ import {
 } from '../../helpers/status';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import Form from '../../components/Form/Form';
-import { getProjects } from '../../helpers/axios/projects';
+import { getUnits } from '../../helpers/axios/units';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
@@ -62,12 +62,12 @@ const RequestsPage = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [contractorsOptions, setContractorsOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedUnit, setSelectedUnit] = useState(FILTER_ALL);
   const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [selectedContractor, setSelectedContractor] = useState(FILTER_ALL);
   const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
@@ -184,7 +184,7 @@ const RequestsPage = () => {
   useEffect(() => {
     resetSelection();
   }, [
-    selectedProject,
+    selectedUnit,
     selectedCurrency,
     selectedContractor,
     selectedPaymentForm,
@@ -272,15 +272,15 @@ const RequestsPage = () => {
 
       setDataRequests(requests);
 
-      const projects = await getProjects();
-      const projectSelector = [
+      const units = await getUnits();
+      const UnitSelector = [
         { value: FILTER_ALL, label: t('filters.all') },
-        ...(projects || []).map(p => ({
+        ...(units || []).map(p => ({
           value: p.id,
           label: p.name,
         })),
       ];
-      setProjectOptions(projectSelector);
+      setUnitOptions(UnitSelector);
 
       const currencies = await getCurrencies();
       const currencySelector = [
@@ -389,9 +389,9 @@ const RequestsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== FILTER_ALL) {
+    if (selectedUnit && selectedUnit !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
-        row => row.project?.id === selectedProject
+        row => row.unit?.id === selectedUnit
       );
     }
 
@@ -480,8 +480,8 @@ const RequestsPage = () => {
             return req.created_at || '';
           case 'payment_date_await':
             return req.payment_date_await || '';
-          case 'project':
-            return req.project?.name || '';
+          case 'unit':
+            return req.unit?.name || '';
           case 'subdivision':
             return getSubdivisionName(req);
           case 'contractor':
@@ -509,7 +509,7 @@ const RequestsPage = () => {
           case 'payer':
             return req.payment_form?.payer || '';
           case 'beneficiary':
-            return req.project?.name || '';
+            return req.unit?.name || '';
           case 'planned_balance_optimistic':
             return req.planned_balance_optimistic ?? 0;
           case 'planned_balance_pessimistic':
@@ -611,8 +611,8 @@ const RequestsPage = () => {
         </p>
       ),
       payment_date_await_plain: request.payment_date_await || '',
-      project: request.project?.name || '',
-      project_plain: request.project?.name || '',
+      unit: request.unit?.name || '',
+      unit_plain: request.unit?.name || '',
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
@@ -663,8 +663,8 @@ const RequestsPage = () => {
         : '',
       payer: request.payment_form?.payer || '',
       payer_plain: request.payment_form?.payer || '',
-      beneficiary: request.project?.name || '',
-      beneficiary_plain: request.project?.name || '',
+      beneficiary: request.unit?.name || '',
+      beneficiary_plain: request.unit?.name || '',
       planned_balance_optimistic:
         request.planned_balance_optimistic != null
           ? request.planned_balance_optimistic.toLocaleString('uk-UA', {
@@ -774,7 +774,7 @@ const RequestsPage = () => {
     }));
   }, [
     dataRequests,
-    selectedProject,
+    selectedUnit,
     selectedCurrency,
     selectedContractor,
     selectedPaymentForm,
@@ -876,13 +876,13 @@ const RequestsPage = () => {
       ),
     },
     {
-      accessorKey: 'project',
+      accessorKey: 'unit',
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
-            onClick={() => handleSort('project')}
+            onClick={() => handleSort('unit')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1269,14 +1269,14 @@ const RequestsPage = () => {
                 fields={[
                   {
                     type: 'select',
-                    name: 'project',
+                    name: 'unit',
                     label: t('labels.department'),
-                    options: projectOptions,
-                    onChange: value => setSelectedProject(value),
+                    options: UnitOptions,
+                    onChange: value => setSelectedUnit(value),
                   },
                 ]}
                 defaultValues={{
-                  project: selectedProject,
+                  unit: selectedUnit,
                 }}
               />
               <form className={style.searchContainer}>

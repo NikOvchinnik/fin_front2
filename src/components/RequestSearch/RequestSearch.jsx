@@ -125,8 +125,8 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
         </p>
       ),
       payment_date_await_plain: request.payment_date_await || '',
-      project: request.project || '',
-      project_plain: request.project || '',
+      unit: request.unit || '',
+      unit_plain: request.unit || '',
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       contractor: request.contractor || '',
@@ -304,7 +304,7 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       ),
     },
     {
-      accessorKey: 'project',
+      accessorKey: 'unit',
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import Form from '../../Form/Form';
 import style from './NewRequestForm.module.css';
 import { Notify } from 'notiflix';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import {
   getCurrencies,
   getExpenseCategories,
@@ -30,7 +30,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [paymentFormOptions, setPaymentFormOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
@@ -42,12 +42,12 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
+        const units = await getUnits();
+        const UnitSelector = units.map(p => ({
           value: p.id,
           label: p.name,
         }));
-        setProjectOptions(projectSelector);
+        setUnitOptions(UnitSelector);
 
         const paymentForms = await getPaymentForms();
         const paymentFormSelector = paymentForms.map(p => ({
@@ -117,9 +117,9 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   const fields = [
     {
       type: 'autocomplete-select',
-      name: 'project_id',
+      name: 'unit_id',
       label: t('labels.department'),
-      options: projectOptions,
+      options: UnitOptions,
       validation: { required: t('validation.required') },
     },
     {
@@ -289,7 +289,7 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
               }
             }}
             defaultValues={{
-              project_id: '',
+              unit_id: '',
               payment_form_id: '',
               ...(canViewSubdivision ? { subdivision_id: '' } : {}),
               contractor_id: '',

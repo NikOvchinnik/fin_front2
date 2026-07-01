@@ -118,7 +118,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
     },
     {
       type: 'select',
-      name: 'project_id',
+      name: 'unit_id',
       label: t('labels.unit'),
       options: unitOptions,
     },
@@ -190,7 +190,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
           slack_id: user.user_slack_id || '',
           role_id: user.user_role_id || '',
           department_id: user.user_department_id || '',
-          project_id: user.user_project_id || '',
+          unit_id: user.user_unit_id || '',
           subdivision_id: user.user_subdivision_id || '',
         }}
       />

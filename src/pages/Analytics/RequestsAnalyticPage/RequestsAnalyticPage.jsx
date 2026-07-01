@@ -8,15 +8,15 @@ import Table from '../../../components/Table/Table';
 import Form from '../../../components/Form/Form';
 import Icon from '../../../components/Icon/Icon';
 import { exportToCSV } from '../../../helpers/exportToCSV';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import { useTranslation } from 'react-i18next';
 
 const RequestsAnalyticPage = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [statisticsRows, setStatisticsRows] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('all');
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [selectedUnit, setSelectedUnit] = useState('all');
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [sortConfig, setSortConfig] = useState({
     key: 'date',
     direction: 'desc',
@@ -26,18 +26,18 @@ const RequestsAnalyticPage = () => {
     try {
       setLoading(true);
       const statistics = await getAnalyticsTotal({
-        project: selectedProject || 'all',
+        unit: selectedUnit || 'all',
       });
 
-      const projects = await getProjects();
-      const projectSelector = [
+      const units = await getUnits();
+      const UnitSelector = [
         { value: 'all', label: t('filters.all') },
-        ...(projects || []).map(p => ({
+        ...(units || []).map(p => ({
           value: p.id,
           label: p.name,
         })),
       ];
-      setProjectOptions(projectSelector);
+      setUnitOptions(UnitSelector);
 
       const rows = statistics.map(slot => {
         return {
@@ -118,7 +118,7 @@ const RequestsAnalyticPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedProject]);
+  }, [selectedUnit]);
 
   useEffect(() => {
     fetchData();
@@ -271,14 +271,14 @@ const RequestsAnalyticPage = () => {
               fields={[
                 {
                   type: 'select',
-                  name: 'project',
+                  name: 'unit',
                   label: t('labels.department'),
-                  options: projectOptions,
-                  onChange: value => setSelectedProject(value),
+                  options: UnitOptions,
+                  onChange: value => setSelectedUnit(value),
                 },
               ]}
               defaultValues={{
-                project: selectedProject,
+                unit: selectedUnit,
               }}
             />
           </div>

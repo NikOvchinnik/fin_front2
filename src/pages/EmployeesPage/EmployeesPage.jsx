@@ -332,7 +332,7 @@ const EmployeesPage = () => {
                   {
                     type: 'select',
                     name: 'unit',
-                    label: 'Unit',
+                    label: 'unit',
                     options: filterOptions.unit,
                     onChange: value => handleFilterChange('unit', value),
                   },

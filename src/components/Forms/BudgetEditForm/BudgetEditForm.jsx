@@ -16,7 +16,7 @@ import {
 } from '../../../helpers/axios/budgeting';
 import ConfirmModal from '../../ConfirmModal/ConfirmModal';
 import ModalWindow from '../../ModalWindow/ModalWindow';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import {
   ensureCurrentWeekOption,
   getWeeksOfMonth,
@@ -38,7 +38,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
   const { t } = useTranslation();
   const userRole = useSelector(selectUserRole);
   const canViewSubdivision = isFinanceRole(userRole);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -70,12 +70,12 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
+        const units = await getUnits();
+        const UnitSelector = units.map(p => ({
           value: p.id,
           label: p.name,
         }));
-        setProjectOptions(projectSelector);
+        setUnitOptions(UnitSelector);
 
         if (canViewSubdivision) {
           const subdivisions = await getSubdivisions();
@@ -151,9 +151,9 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
     },
     {
       type: 'autocomplete-select',
-      name: 'project',
+      name: 'unit',
       label: t('labels.department'),
-      options: projectOptions,
+      options: UnitOptions,
       validation: { required: t('validation.required') },
     },
     ...(canViewSubdivision
@@ -329,7 +329,7 @@ const BudgetEditForm = ({ request, closeModal, onRefresh }) => {
             }}
             defaultValues={{
               applicant: request.applicant || '',
-              project: request.project_id || '',
+              unit: request.unit_id || '',
               subdivision_id: getSubdivisionId(request),
               expense_category_id: request.expense_category?.id || '',
               period: requestPeriod || '',

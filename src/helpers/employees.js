@@ -2,7 +2,7 @@ export const EMPLOYEE_REQUIRED_MESSAGE =
   "Заповніть обов'язкові поля перед збереженням.";
 
 export const employeeFields = [
-  { key: 'unit', label: 'Unit' },
+  { key: 'unit', label: 'unit' },
   { key: 'department', label: 'Department' },
   { key: 'subdivision', label: 'Subdivision' },
   { key: 'position', label: 'Position' },

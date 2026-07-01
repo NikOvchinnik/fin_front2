@@ -14,7 +14,7 @@ import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ExpandableText from '../../components/ExpandableText/ExpandableText';
 import dayjs from 'dayjs';
 import Form from '../../components/Form/Form';
-import { getProjects } from '../../helpers/axios/projects';
+import { getUnits } from '../../helpers/axios/units';
 import { selectUserRole } from '../../redux/auth/selectors';
 import { useSelector } from 'react-redux';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
@@ -56,10 +56,10 @@ const BudgetingsPage = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [loadingTable, setLoadingTable] = useState(false);
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [currenciesOptions, setCurrenciesOptions] = useState([]);
   const [expenseCategoriesOptions, setExpenseCategoriesOptions] = useState([]);
-  const [selectedProject, setSelectedProject] = useState(FILTER_ALL);
+  const [selectedUnit, setSelectedUnit] = useState(FILTER_ALL);
   const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [selectedExpenseCategorie, setSelectedExpenseCategorie] =
     useState(FILTER_ALL);
@@ -144,7 +144,7 @@ const BudgetingsPage = () => {
   useEffect(() => {
     resetSelection();
   }, [
-    selectedProject,
+    selectedUnit,
     selectedCurrency,
     selectedExpenseCategorie,
     filters,
@@ -230,15 +230,15 @@ const BudgetingsPage = () => {
 
       setDataRequests(requests || []);
 
-      const projects = await getProjects();
-      const projectSelector = [
+      const units = await getUnits();
+      const UnitSelector = [
         { value: FILTER_ALL, label: t('filters.all') },
-        ...(projects || []).map(p => ({
+        ...(units || []).map(p => ({
           value: p.id,
           label: p.name,
         })),
       ];
-      setProjectOptions(projectSelector);
+      setUnitOptions(UnitSelector);
 
       const currencies = await getCurrencies();
       const currencySelector = [
@@ -320,9 +320,9 @@ const BudgetingsPage = () => {
 
     let filteredRows = dataRequests;
 
-    if (selectedProject && selectedProject !== FILTER_ALL) {
+    if (selectedUnit && selectedUnit !== FILTER_ALL) {
       filteredRows = filteredRows.filter(
-        row => row.project_id === selectedProject
+        row => row.unit_id === selectedUnit
       );
     }
 
@@ -382,8 +382,8 @@ const BudgetingsPage = () => {
             return req.id || '';
           case 'created_at':
             return req.created_at ?? '';
-          case 'project':
-            return req.project ?? '';
+          case 'unit':
+            return req.unit ?? '';
           case 'subdivision':
             return getSubdivisionName(req);
           case 'week':
@@ -493,8 +493,8 @@ const BudgetingsPage = () => {
         </p>
       ),
       created_at_plain: dayjs(request.created_at).format('YYYY-MM-DD') || '',
-      project: request.project || '',
-      project_plain: request.project || '',
+      unit: request.unit || '',
+      unit_plain: request.unit || '',
       subdivision: getSubdivisionName(request),
       subdivision_plain: getSubdivisionName(request),
       week: request.week || '',
@@ -588,7 +588,7 @@ const BudgetingsPage = () => {
     }));
   }, [
     dataRequests,
-    selectedProject,
+    selectedUnit,
     selectedCurrency,
     activeStatus,
     filters,
@@ -691,13 +691,13 @@ const BudgetingsPage = () => {
       ),
     },
     {
-      accessorKey: 'project',
+      accessorKey: 'unit',
       header: (
         <div className={style.sortContainer}>
           <p>{t('labels.department')}</p>
           <button
             className={style.btnContainer}
-            onClick={() => handleSort('project')}
+            onClick={() => handleSort('unit')}
           >
             <Icon id="sort" className={style.sortIcon} />
           </button>
@@ -1006,14 +1006,14 @@ const BudgetingsPage = () => {
                 fields={[
                   {
                     type: 'select',
-                    name: 'project',
+                    name: 'unit',
                     label: t('labels.department'),
-                    options: projectOptions,
-                    onChange: value => setSelectedProject(value),
+                    options: UnitOptions,
+                    onChange: value => setSelectedUnit(value),
                   },
                 ]}
                 defaultValues={{
-                  project: selectedProject,
+                  unit: selectedUnit,
                 }}
               />
               <Form

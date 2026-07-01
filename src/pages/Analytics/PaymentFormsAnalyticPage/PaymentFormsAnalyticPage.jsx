@@ -10,7 +10,7 @@ import { yearsOptions } from '../../../helpers/years';
 import Form from '../../../components/Form/Form';
 import Icon from '../../../components/Icon/Icon';
 import { exportToCSV } from '../../../helpers/exportToCSV';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import { monthsOptionsAll } from '../../../helpers/months';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
@@ -19,10 +19,10 @@ const PaymentFormsAnalyticPage = () => {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [statisticsRows, setStatisticsRows] = useState([]);
-  const [selectedProject, setSelectedProject] = useState('all');
+  const [selectedUnit, setSelectedUnit] = useState('all');
   const [selectedMonth, setSelectedMonth] = useState(dayjs().month() + 1);
   const [selectedYear, setSelectedYear] = useState(dayjs().year());
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [sortConfig, setSortConfig] = useState({
     key: 'paid_count',
     direction: 'desc',
@@ -34,18 +34,18 @@ const PaymentFormsAnalyticPage = () => {
       const statistics = await getAnalyticsPaymentForms({
         year: selectedYear || 'all',
         month: selectedMonth || 'all',
-        project: selectedProject || 'all',
+        unit: selectedUnit || 'all',
       });
 
-      const projects = await getProjects();
-      const projectSelector = [
+      const units = await getUnits();
+      const UnitSelector = [
         { value: 'all', label: t('filters.all') },
-        ...(projects || []).map(p => ({
+        ...(units || []).map(p => ({
           value: p.id,
           label: p.name,
         })),
       ];
-      setProjectOptions(projectSelector);
+      setUnitOptions(UnitSelector);
 
       const rows = statistics.map(slot => {
         return {
@@ -94,7 +94,7 @@ const PaymentFormsAnalyticPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedYear, selectedMonth, selectedProject]);
+  }, [selectedYear, selectedMonth, selectedUnit]);
 
   useEffect(() => {
     fetchData();
@@ -220,14 +220,14 @@ const PaymentFormsAnalyticPage = () => {
               fields={[
                 {
                   type: 'select',
-                  name: 'project',
+                  name: 'unit',
                   label: t('labels.department'),
-                  options: projectOptions,
-                  onChange: value => setSelectedProject(value),
+                  options: UnitOptions,
+                  onChange: value => setSelectedUnit(value),
                 },
               ]}
               defaultValues={{
-                project: selectedProject,
+                unit: selectedUnit,
               }}
             />
             <Form

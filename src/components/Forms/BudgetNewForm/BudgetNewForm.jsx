@@ -12,7 +12,7 @@ import { generateDefaultPeriods } from '../../../helpers/periods';
 import { useSelector } from 'react-redux';
 import { selectUserName, selectUserRole } from '../../../redux/auth/selectors';
 import { postMyBudgeting } from '../../../helpers/axios/budgeting';
-import { getProjects } from '../../../helpers/axios/projects';
+import { getUnits } from '../../../helpers/axios/units';
 import {
   getWeeksOfMonth,
   resolveWeekRangeValue,
@@ -24,7 +24,7 @@ import { isFinanceRole } from '../../../helpers/roles';
 
 const BudgetNewForm = ({ closeModal, onRefresh }) => {
   const { t } = useTranslation();
-  const [projectOptions, setProjectOptions] = useState([]);
+  const [UnitOptions, setUnitOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
   const [currencyOptions, setCurrencyOptions] = useState([]);
   const [expenseCategoryOptions, setExpenseCategoryOptions] = useState([]);
@@ -50,12 +50,12 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const projects = await getProjects();
-        const projectSelector = projects.map(p => ({
+        const units = await getUnits();
+        const UnitSelector = units.map(p => ({
           value: p.id,
           label: p.name,
         }));
-        setProjectOptions(projectSelector);
+        setUnitOptions(UnitSelector);
 
         if (canViewSubdivision) {
           const subdivisions = await getSubdivisions();
@@ -94,9 +94,9 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
     },
     {
       type: 'autocomplete-select',
-      name: 'project',
+      name: 'unit',
       label: t('labels.department'),
-      options: projectOptions,
+      options: UnitOptions,
       validation: { required: t('validation.required') },
     },
     ...(canViewSubdivision
@@ -223,7 +223,7 @@ const BudgetNewForm = ({ closeModal, onRefresh }) => {
             }}
             defaultValues={{
               applicant: userName,
-              project: '',
+              unit: '',
               ...(canViewSubdivision ? { subdivision_id: '' } : {}),
               expense_category_id: '',
               period: defaultPeriod,

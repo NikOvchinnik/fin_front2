@@ -95,7 +95,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
     },
     {
       type: 'select',
-      name: 'project_id',
+      name: 'unit_id',
       label: t('labels.unit'),
       options: unitOptions,
     },
@@ -158,7 +158,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
           slack_id: '',
           role_id: 3,
           department_id: 1,
-          project_id: 6,
+          unit_id: 6,
           subdivision_id: '',
         }}
       />
