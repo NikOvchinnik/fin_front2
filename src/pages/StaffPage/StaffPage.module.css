@@ -1,0 +1,104 @@
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--heading-text);
+}
+
+.subtitle {
+  font-weight: 500;
+  color: var(--toggle-lang);
+}
+
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.inputContainer:hover,
+.inputContainer:focus {
+  border: 1px solid var(--border-hover);
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: #333333;
+  color: #333333;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.buttonsRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+@media screen and (min-width: 1024px) {
+  .formsContainer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .searchContainer {
+    flex: 1 1 200px;
+    min-width: 200px;
+  }
+
+  .selectSlot {
+    flex: 1 1 160px;
+    min-width: 160px;
+  }
+}

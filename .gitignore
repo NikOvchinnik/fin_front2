@@ -24,3 +24,6 @@ dist-ssr
 *.sw?
 
 .env
+
+# Local Claude Code notes — not shared with the team
+CLAUDE.md
