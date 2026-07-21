@@ -6,7 +6,7 @@ import {
   flexRender,
 } from '@tanstack/react-table';
 import style from './Table.module.css';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { useMediaQuery } from '@mui/material';
 import Icon from '../Icon/Icon';
 
@@ -25,6 +25,21 @@ const Table = ({
   const [visibleColumnIndex, setVisibleColumnIndex] = useState(0);
   const [needsHorizontalScroll, setNeedsHorizontalScroll] = useState(false);
   const scrollContainerRef = useRef(null);
+
+  // fixedFirstColumn лишається сумісним з true/false (0 або 1 зафіксована
+  // колонка, як і раніше); число (напр. 2) фіксує стільки перших колонок.
+  const fixedCount =
+    typeof fixedFirstColumn === 'number'
+      ? fixedFirstColumn
+      : fixedFirstColumn
+      ? 1
+      : 0;
+
+  const stickyRefs = useRef([]);
+  const [stickyOffsets, setStickyOffsets] = useState([]);
+
+  // Білий фон під зафіксованими клітинками — однаково для всіх сторінок.
+  const stickyCellClassName = `${style.stickyColumn} ${style.stickyCell}`;
 
   const table = useReactTable({
     data,
@@ -122,6 +137,33 @@ const Table = ({
     return () => window.removeEventListener('resize', checkScroll);
   }, [data, columns, visibleColumnsCount]);
 
+  // Реальна ширина кожної зафіксованої колонки (не хардкод) — щоб друга
+  // (і наступні) прилипала рівно там, де закінчується попередня.
+  useLayoutEffect(() => {
+    if (fixedCount <= 0) {
+      setStickyOffsets([]);
+      return;
+    }
+
+    const measure = () => {
+      const widths = stickyRefs.current
+        .slice(0, fixedCount)
+        .map(el => el?.offsetWidth || 0);
+
+      const offsets = [];
+      let sum = 0;
+      for (let i = 0; i < widths.length; i++) {
+        offsets.push(sum);
+        sum += widths[i];
+      }
+      setStickyOffsets(offsets);
+    };
+
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [fixedCount, data, columns]);
+
   return (
     <div className={style.mainContainer}>
       {columns.length > visibleColumnsCount &&
@@ -165,15 +207,22 @@ const Table = ({
         <table className={`${styles ? style[styles] : ''}`}>
           <thead>
             <tr>
-              {fixedFirstColumn && (
-                <th className={style.stickyColumn}>{columns[0].header}</th>
-              )}
+              {Array.from({ length: fixedCount }).map((_, i) => (
+                <th
+                  key={`sticky-header-${i}`}
+                  ref={el => (stickyRefs.current[i] = el)}
+                  className={style.stickyColumn}
+                  style={{ left: stickyOffsets[i] || 0 }}
+                >
+                  {columns[i]?.header}
+                </th>
+              ))}
               {columns
                 .slice(
                   enableHorizontalScroll && needsHorizontalScroll
-                    ? 0 
-                    : fixedFirstColumn
-                    ? visibleColumnIndex + 1
+                    ? 0
+                    : fixedCount > 0
+                    ? visibleColumnIndex + fixedCount
                     : visibleColumnIndex,
                   enableHorizontalScroll && needsHorizontalScroll
                     ? columns.length
@@ -192,8 +241,8 @@ const Table = ({
                   : row
                       .getVisibleCells()
                       .slice(
-                        fixedFirstColumn
-                          ? visibleColumnIndex + 1
+                        fixedCount > 0
+                          ? visibleColumnIndex + fixedCount
                           : visibleColumnIndex,
                         visibleColumnIndex + visibleColumnsCount
                       );
@@ -206,16 +255,23 @@ const Table = ({
                   key={row.id}
                   className={style[row.original.className] || ''}
                 >
-                  {fixedFirstColumn && (
-                    <td className={style.stickyColumn}>
-                      {row.getVisibleCells()[0]
-                        ? flexRender(
-                            row.getVisibleCells()[0].column.columnDef.cell,
-                            row.getVisibleCells()[0].getContext()
-                          )
-                        : null}
-                    </td>
-                  )}
+                  {Array.from({ length: fixedCount }).map((_, i) => {
+                    const cell = row.getVisibleCells()[i];
+                    return (
+                      <td
+                        key={`sticky-cell-${i}`}
+                        className={stickyCellClassName}
+                        style={{ left: stickyOffsets[i] || 0 }}
+                      >
+                        {cell
+                          ? flexRender(
+                              cell.column.columnDef.cell,
+                              cell.getContext()
+                            )
+                          : null}
+                      </td>
+                    );
+                  })}
                   {visibleCells.map(cell => (
                     <td key={cell.id}>
                       {flexRender(
