@@ -85,6 +85,36 @@
   gap: 16px;
 }
 
+.addRateBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 4px 16px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 1px rgba(0, 0, 0, 0.06);
+  color: #1a5c58;
+  font-size: 16px;
+  white-space: nowrap;
+  fill: #1a5c58;
+  transition: all 0.3s ease;
+}
+
+.addRateBtn:hover,
+.addRateBtn:focus {
+  background: #1a5c58;
+  color: var(--white);
+  fill: var(--white);
+}
+
+.addRateIcon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
 @media screen and (min-width: 1024px) {
   .formsContainer {
     flex-direction: row;

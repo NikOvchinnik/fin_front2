@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Notify } from 'notiflix';
 import { useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
@@ -7,6 +7,7 @@ import Form from '../../components/Form/Form';
 import Icon from '../../components/Icon/Icon';
 import Loader from '../../components/Loader/Loader';
 import Table from '../../components/Table/Table';
+import StaffRateDrawer from '../../components/StaffRateDrawer/StaffRateDrawer';
 import style from './StaffPage.module.css';
 import { FILTER_ALL } from '../../helpers/status';
 import { getUnits } from '../../helpers/axios/units';
@@ -21,14 +22,14 @@ const subdivisionOptions = [{ value: FILTER_ALL, label: 'Усі' }];
 const staffColumnKeys = [
   'status',
   'local_full_name',
-  'payment_details',
-  'tax_id',
-  'manager',
   'unit',
   'department',
   'subdivision',
   'position',
   'payment_form',
+  'payment_details',
+  'tax_id',
+  'manager',
   'currency',
   'rate',
 ];
@@ -37,6 +38,14 @@ const newStaffFieldLabels = {
   status: 'Статус',
   currency: 'Валюта',
   rate: 'Ставка',
+};
+
+const currencySymbols = { UAH: '₴', USD: '$', EUR: '€' };
+
+const formatRate = (rate, currency) => {
+  const symbol = currencySymbols[currency] || '';
+  const formattedNumber = String(rate).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${symbol}${formattedNumber}`;
 };
 
 const employeeFieldByKey = employeeFields.reduce((acc, field) => {
@@ -57,6 +66,20 @@ const StaffPage = () => {
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  const fetchEmployees = useCallback(async () => {
+    try {
+      const response = await getEmployees();
+      const list = Array.isArray(response) ? response : response?.employees ?? [];
+      setEmployees(list.map(normalizeEmployee));
+    } catch {
+      Notify.failure(t('notifications.genericError'));
+      setEmployees([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [t]);
 
   useEffect(() => {
     const fetchUnits = async () => {
@@ -77,29 +100,33 @@ const StaffPage = () => {
   }, [t]);
 
   useEffect(() => {
-    const fetchEmployees = async () => {
-      try {
-        const response = await getEmployees();
-        const list = Array.isArray(response)
-          ? response
-          : response?.employees ?? [];
-        setEmployees(list.map(normalizeEmployee));
-      } catch {
-        Notify.failure(t('notifications.genericError'));
-        setEmployees([]);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchEmployees();
-  }, [t]);
+  }, [fetchEmployees]);
 
   const columns = useMemo(
     () =>
       staffColumnKeys.map(key => ({
         accessorKey: key,
         header: employeeFieldByKey[key]?.label || newStaffFieldLabels[key],
-        cell: ({ row }) => row.original[key] || '-',
+        cell: ({ row }) => {
+          const value = row.original[key];
+          if (key === 'rate' && !value) {
+            return (
+              <button
+                type="button"
+                className={style.addRateBtn}
+                onClick={() => setSelectedEmployee(row.original)}
+              >
+                <Icon id="add" className={style.addRateIcon} />
+                Додати ставку
+              </button>
+            );
+          }
+          if (key === 'rate' && value) {
+            return formatRate(value, row.original.currency);
+          }
+          return value || '-';
+        },
       })),
     []
   );
@@ -202,6 +229,14 @@ const StaffPage = () => {
           enableHorizontalScroll={isMobile ? false : true}
         />
       )}
+
+      <StaffRateDrawer
+        key={selectedEmployee?.id}
+        isOpen={!!selectedEmployee}
+        employee={selectedEmployee}
+        onClose={() => setSelectedEmployee(null)}
+        onSaved={fetchEmployees}
+      />
     </section>
   );
 };

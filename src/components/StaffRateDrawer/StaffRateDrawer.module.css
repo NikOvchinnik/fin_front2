@@ -1,0 +1,256 @@
+.drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  background: var(--white);
+  font-family: 'IBM Plex Sans', serif;
+}
+
+/* ModalWindow обгортає children у SimpleBar з жорстким maxHeight: 90vh —
+   це навмисно для центрованих модалок (лишає відступ згори/знизу), але
+   наш дровер має бути на всю висоту екрана. :has() звужує перевизначення
+   лише до SimpleBar, що містить саме наш .drawer, — інші модалки не чіпає. */
+:global([data-simplebar]):has(.drawer) {
+  max-height: 100vh !important;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 32px;
+  width: 100%;
+}
+
+.header {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name {
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.33;
+  color: var(--heading-text);
+}
+
+.jobTitle {
+  font-size: 16px;
+  color: var(--toggle-lang);
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  fill: var(--main-text);
+  transition: fill 0.3s ease;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  fill: var(--heading-text);
+}
+
+.closeIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  font-size: 16px;
+  text-transform: uppercase;
+  color: var(--toggle-lang);
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.infoLabel {
+  width: 188px;
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--toggle-lang);
+}
+
+.infoValue {
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--heading-text);
+}
+
+.salaryRow {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Валюта (select) і Дата (date) — залишаємо сам функціонал (dropdown,
+   нативний календар) від спільного Form-компонента, але закритий інпут і
+   лейбл переоформляємо під вигляд .fieldInput/.fieldLabel (той самий
+   стиль, що й "Ставка"): звичайний лейбл над полем замість MUI-нотча,
+   рамка rounded-16 без синього фокусу. Все скопійовано лише в межах
+   .styledFormField, інші сторінки з Form не зачіпає. */
+.styledFormField :global(.MuiFormControl-root) {
+  width: 100%;
+}
+
+.styledFormField :global(.MuiInputLabel-root) {
+  position: static;
+  transform: none;
+  margin-bottom: 4px;
+  font-size: 16px !important;
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  letter-spacing: normal !important;
+  color: var(--toggle-lang) !important;
+}
+
+.styledFormField :global(.MuiInputLabel-root.Mui-focused) {
+  color: var(--toggle-lang) !important;
+}
+
+.styledFormField :global(.MuiOutlinedInput-root) {
+  border-radius: 16px;
+  font-size: 18px !important;
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  color: var(--heading-text) !important;
+}
+
+.styledFormField :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: var(--table-edit);
+}
+
+.styledFormField :global(.MuiOutlinedInput-notchedOutline legend) {
+  width: 0;
+}
+
+.styledFormField :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+  border-color: var(--table-edit);
+  border-width: 1px;
+}
+
+.fieldLabel {
+  font-size: 16px;
+  color: var(--toggle-lang);
+}
+
+.fieldInput {
+  height: 56px;
+  padding: 0 23px;
+  border: 1px solid var(--table-edit);
+  border-radius: 16px;
+  font-size: 18px;
+  color: var(--heading-text);
+  background: var(--white);
+}
+
+.fieldInput::placeholder {
+  color: var(--border-hover);
+}
+
+.dateWrapper {
+  display: block;
+  width: 100%;
+}
+
+.dateWrapper :global(.react-datepicker__input-container) {
+  width: 100%;
+}
+
+.dateWrapper .fieldInput {
+  width: 100%;
+}
+
+.fieldHint {
+  font-size: 14px;
+  line-height: 1.29;
+  color: var(--toggle-lang);
+}
+
+.historyText {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--toggle-lang);
+}
+
+.buttonsRow {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  gap: 16px;
+  padding: 28px 32px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+}
+
+.saveBtn {
+  flex: 1 1 0;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--button);
+  color: var(--white);
+  font-size: 22px;
+  transition: background 0.3s ease;
+}
+
+.saveBtn:hover:not(:disabled),
+.saveBtn:focus:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.saveBtn:disabled {
+  background: var(--table-edit);
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  flex: 1 1 0;
+  height: 56px;
+  border-radius: 16px;
+  border: 3px solid var(--table-edit);
+  color: var(--table-edit);
+  font-size: 22px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.cancelBtn:hover,
+.cancelBtn:focus {
+  border-color: var(--border-hover);
+  color: var(--main-text);
+}

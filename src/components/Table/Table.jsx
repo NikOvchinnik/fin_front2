@@ -220,7 +220,7 @@ const Table = ({
               {columns
                 .slice(
                   enableHorizontalScroll && needsHorizontalScroll
-                    ? 0
+                    ? fixedCount
                     : fixedCount > 0
                     ? visibleColumnIndex + fixedCount
                     : visibleColumnIndex,
@@ -237,7 +237,7 @@ const Table = ({
             {table.getRowModel().rows.map(row => {
               const visibleCells =
                 enableHorizontalScroll && needsHorizontalScroll
-                  ? row.getVisibleCells()
+                  ? row.getVisibleCells().slice(fixedCount)
                   : row
                       .getVisibleCells()
                       .slice(
