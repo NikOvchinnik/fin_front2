@@ -183,6 +183,14 @@ const StaffPage = () => {
     [columns]
   );
 
+  const filteredEmployees = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return employees;
+    return employees.filter(employee =>
+      (employee.local_full_name || '').toLowerCase().includes(query)
+    );
+  }, [employees, search]);
+
   return (
     <section className={style.mainContainer}>
       <DocTitle>Staff</DocTitle>
@@ -275,13 +283,12 @@ const StaffPage = () => {
         <Loader />
       ) : (
         <Table
-          data={employees}
+          data={filteredEmployees}
           columns={filteredColumns}
           fixedFirstColumn={2}
           styles="staffTable"
           visibleColumns={25}
           visibleColumnsMobile={2}
-          rowsPerPage={15}
           enableHorizontalScroll={isMobile ? false : true}
         />
       )}

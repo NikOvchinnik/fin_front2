@@ -62,12 +62,35 @@ table {
   min-width: 100%;
 }
 
+/* Контейнер вже має overflow: auto (спільне правило вище) — тут лише
+   обмежуємо йому висоту, щоб він сам почав вертикально скролитись
+   (інакше "нема відносно чого" прилипати заголовку). overflow і
+   border-collapse навмисно не чіпаємо — саме вони зламали
+   горизонтальний скрол минулого разу. */
+.tableContainer:has(.staffTable) {
+  max-height: 70vh;
+}
+
 .staffTable th,
 .staffTable td {
   font-size: 16px;
   line-height: 1.5;
   padding: 15px 16px;
   white-space: nowrap;
+}
+
+.staffTable th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* Кутові клітинки заголовка (Статус/ПІБ) зафіксовані і по горизонталі,
+   і по вертикалі одночасно — їм потрібен вищий z-index за звичайні
+   клітинки заголовка, інакше ті "напливають" на них при горизонтальному
+   скролі. */
+.staffTable th.stickyColumn {
+  z-index: 5;
 }
 
 .staffTable td {
