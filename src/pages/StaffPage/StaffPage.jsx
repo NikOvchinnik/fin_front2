@@ -12,12 +12,17 @@ import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColum
 import StaffRateDrawer from '../../components/StaffRateDrawer/StaffRateDrawer';
 import style from './StaffPage.module.css';
 import { FILTER_ALL } from '../../helpers/status';
-import { getUnits } from '../../helpers/axios/units';
 import { getEmployees } from '../../helpers/axios/employees';
-import { employeeFields, normalizeEmployee } from '../../helpers/employees';
+import {
+  buildEmployeeFieldOptions,
+  employeeFields,
+  normalizeEmployee,
+} from '../../helpers/employees';
 
-const departmentOptions = [{ value: FILTER_ALL, label: 'Усі' }];
-const subdivisionOptions = [{ value: FILTER_ALL, label: 'Усі' }];
+const withAllOption = options => [
+  { value: FILTER_ALL, label: 'Усі' },
+  ...options,
+];
 
 // Порядок і набір колонок для сторінки фінансиста — частина полів спільна
 // з карткою співробітника (employeeFields), частина ще не існує в моделі.
@@ -66,9 +71,6 @@ const StaffPage = () => {
   const { t } = useTranslation();
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const [search, setSearch] = useState('');
-  const [unitOptions, setUnitOptions] = useState([
-    { value: FILTER_ALL, label: 'Усі' },
-  ]);
   const [selectedUnit, setSelectedUnit] = useState(FILTER_ALL);
   const [selectedDepartment, setSelectedDepartment] = useState(FILTER_ALL);
   const [selectedSubdivision, setSelectedSubdivision] = useState(FILTER_ALL);
@@ -108,23 +110,18 @@ const StaffPage = () => {
     }
   }, [t]);
 
-  useEffect(() => {
-    const fetchUnits = async () => {
-      try {
-        const units = await getUnits();
-        setUnitOptions([
-          { value: FILTER_ALL, label: 'Усі' },
-          ...(units || []).map(unit => ({
-            value: unit.id,
-            label: unit.name,
-          })),
-        ]);
-      } catch {
-        Notify.failure(t('notifications.genericError'));
-      }
-    };
-    fetchUnits();
-  }, [t]);
+  const unitOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'unit')),
+    [employees]
+  );
+  const departmentOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'department')),
+    [employees]
+  );
+  const subdivisionOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'subdivision')),
+    [employees]
+  );
 
   useEffect(() => {
     fetchEmployees();
@@ -184,12 +181,31 @@ const StaffPage = () => {
   );
 
   const filteredEmployees = useMemo(() => {
+    let rows = employees;
+
+    if (selectedUnit !== FILTER_ALL) {
+      rows = rows.filter(employee => employee.unit === selectedUnit);
+    }
+    if (selectedDepartment !== FILTER_ALL) {
+      rows = rows.filter(
+        employee => employee.department === selectedDepartment
+      );
+    }
+    if (selectedSubdivision !== FILTER_ALL) {
+      rows = rows.filter(
+        employee => employee.subdivision === selectedSubdivision
+      );
+    }
+
     const query = search.trim().toLowerCase();
-    if (!query) return employees;
-    return employees.filter(employee =>
-      (employee.local_full_name || '').toLowerCase().includes(query)
-    );
-  }, [employees, search]);
+    if (query) {
+      rows = rows.filter(employee =>
+        (employee.local_full_name || '').toLowerCase().includes(query)
+      );
+    }
+
+    return rows;
+  }, [employees, search, selectedUnit, selectedDepartment, selectedSubdivision]);
 
   return (
     <section className={style.mainContainer}>
