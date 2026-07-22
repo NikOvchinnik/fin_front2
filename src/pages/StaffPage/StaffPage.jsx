@@ -74,6 +74,10 @@ const StaffPage = () => {
   const [selectedUnit, setSelectedUnit] = useState(FILTER_ALL);
   const [selectedDepartment, setSelectedDepartment] = useState(FILTER_ALL);
   const [selectedSubdivision, setSelectedSubdivision] = useState(FILTER_ALL);
+  const [selectedPosition, setSelectedPosition] = useState(FILTER_ALL);
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
+  const [selectedPaymentDetails, setSelectedPaymentDetails] = useState(FILTER_ALL);
+  const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -120,6 +124,23 @@ const StaffPage = () => {
   );
   const subdivisionOptions = useMemo(
     () => withAllOption(buildEmployeeFieldOptions(employees, 'subdivision')),
+    [employees]
+  );
+  const positionOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'position')),
+    [employees]
+  );
+  const paymentFormOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'payment_form')),
+    [employees]
+  );
+  const paymentDetailsOptions = useMemo(
+    () =>
+      withAllOption(buildEmployeeFieldOptions(employees, 'payment_details')),
+    [employees]
+  );
+  const currencyOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'currency')),
     [employees]
   );
 
@@ -196,6 +217,22 @@ const StaffPage = () => {
         employee => employee.subdivision === selectedSubdivision
       );
     }
+    if (selectedPosition !== FILTER_ALL) {
+      rows = rows.filter(employee => employee.position === selectedPosition);
+    }
+    if (selectedPaymentForm !== FILTER_ALL) {
+      rows = rows.filter(
+        employee => employee.payment_form === selectedPaymentForm
+      );
+    }
+    if (selectedPaymentDetails !== FILTER_ALL) {
+      rows = rows.filter(
+        employee => employee.payment_details === selectedPaymentDetails
+      );
+    }
+    if (selectedCurrency !== FILTER_ALL) {
+      rows = rows.filter(employee => employee.currency === selectedCurrency);
+    }
 
     const query = search.trim().toLowerCase();
     if (query) {
@@ -205,7 +242,24 @@ const StaffPage = () => {
     }
 
     return rows;
-  }, [employees, search, selectedUnit, selectedDepartment, selectedSubdivision]);
+  }, [
+    employees,
+    search,
+    selectedUnit,
+    selectedDepartment,
+    selectedSubdivision,
+    selectedPosition,
+    selectedPaymentForm,
+    selectedPaymentDetails,
+    selectedCurrency,
+  ]);
+
+  const activeAdditionalFiltersCount = [
+    selectedPosition,
+    selectedPaymentForm,
+    selectedPaymentDetails,
+    selectedCurrency,
+  ].filter(value => value !== FILTER_ALL).length;
 
   return (
     <section className={style.mainContainer}>
@@ -275,6 +329,67 @@ const StaffPage = () => {
           </div>
         </div>
 
+        {showAllFilters && (
+          <div className={style.formsContainer}>
+            <div className={style.selectSlot}>
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'position',
+                    label: 'Position',
+                    options: positionOptions,
+                    onChange: value => setSelectedPosition(value),
+                  },
+                ]}
+                defaultValues={{ position: selectedPosition }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'payment_form',
+                    label: 'Форма оплати',
+                    options: paymentFormOptions,
+                    onChange: value => setSelectedPaymentForm(value),
+                  },
+                ]}
+                defaultValues={{ payment_form: selectedPaymentForm }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'payment_details',
+                    label: 'Реквізити',
+                    options: paymentDetailsOptions,
+                    onChange: value => setSelectedPaymentDetails(value),
+                  },
+                ]}
+                defaultValues={{ payment_details: selectedPaymentDetails }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <Form
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'currency',
+                    label: 'Валюта',
+                    options: currencyOptions,
+                    onChange: value => setSelectedCurrency(value),
+                  },
+                ]}
+                defaultValues={{ currency: selectedCurrency }}
+              />
+            </div>
+          </div>
+        )}
+
         <div className={style.buttonsRow}>
           <button
             type="button"
@@ -291,6 +406,11 @@ const StaffPage = () => {
           >
             <Icon id="filter_list" className={style.filterIcon} />
             {showAllFilters ? 'Сховати фільтри' : 'Більше фільтрів'}
+            {activeAdditionalFiltersCount > 0 && (
+              <span className={style.filterCountBadge}>
+                {activeAdditionalFiltersCount}
+              </span>
+            )}
           </button>
         </div>
       </div>
