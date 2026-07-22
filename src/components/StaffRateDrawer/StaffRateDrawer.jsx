@@ -49,7 +49,9 @@ const drawerCustomStyles = {
 
 const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
   const [rateDate, setRateDate] = useState(new Date());
-  const [rateValue, setRateValue] = useState(employee?.rate || '');
+  const [rateValue, setRateValue] = useState(
+    employee?.rate != null ? String(employee.rate) : ''
+  );
   const [currency, setCurrency] = useState(employee?.currency || 'UAH');
   const [saving, setSaving] = useState(false);
 

@@ -7,6 +7,8 @@ import Form from '../../components/Form/Form';
 import Icon from '../../components/Icon/Icon';
 import Loader from '../../components/Loader/Loader';
 import Table from '../../components/Table/Table';
+import ModalWindow from '../../components/ModalWindow/ModalWindow';
+import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import StaffRateDrawer from '../../components/StaffRateDrawer/StaffRateDrawer';
 import style from './StaffPage.module.css';
 import { FILTER_ALL } from '../../helpers/status';
@@ -33,6 +35,13 @@ const staffColumnKeys = [
   'currency',
   'rate',
 ];
+
+// Перші дві колонки зафіксовані (fixedFirstColumn={2} у Table) — ховати їх
+// через фільтр колонок не можна, тож у списку хідебл-колонок їх не буде.
+const fixedColumnKeys = staffColumnKeys.slice(0, 2);
+const hideableColumnKeys = staffColumnKeys.filter(
+  key => !fixedColumnKeys.includes(key)
+);
 
 const newStaffFieldLabels = {
   status: 'Статус',
@@ -67,6 +76,24 @@ const StaffPage = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
+    const saved = localStorage.getItem('staffVisibleColumns');
+    return saved ? JSON.parse(saved) : 'All';
+  });
+  const [isColumnsModalOpen, setColumnsModalOpen] = useState(false);
+
+  const handleColumnToggle = accessorKey => {
+    setVisibleColumnKeys(prev => {
+      const current = prev === 'All' ? hideableColumnKeys : prev;
+      const updated = current.includes(accessorKey)
+        ? current.filter(key => key !== accessorKey)
+        : [...current, accessorKey];
+      const next =
+        updated.length === hideableColumnKeys.length ? 'All' : updated;
+      localStorage.setItem('staffVisibleColumns', JSON.stringify(next));
+      return next;
+    });
+  };
 
   const fetchEmployees = useCallback(async () => {
     try {
@@ -123,12 +150,37 @@ const StaffPage = () => {
             );
           }
           if (key === 'rate' && value) {
-            return formatRate(value, row.original.currency);
+            return (
+              <div className={style.rateValueCell}>
+                <span>{formatRate(value, row.original.currency)}</span>
+                <button
+                  type="button"
+                  className={style.rateEditBtn}
+                  onClick={() => setSelectedEmployee(row.original)}
+                >
+                  <Icon id="edit" className={style.rateEditIcon} />
+                </button>
+              </div>
+            );
           }
           return value || '-';
         },
       })),
     []
+  );
+
+  const filteredColumns = useMemo(() => {
+    if (visibleColumnKeys === 'All') return columns;
+    return columns.filter(
+      col =>
+        fixedColumnKeys.includes(col.accessorKey) ||
+        visibleColumnKeys.includes(col.accessorKey)
+    );
+  }, [columns, visibleColumnKeys]);
+
+  const hideableColumns = useMemo(
+    () => columns.filter(col => hideableColumnKeys.includes(col.accessorKey)),
+    [columns]
   );
 
   return (
@@ -203,14 +255,18 @@ const StaffPage = () => {
           <button
             type="button"
             className={style.filterBtn}
+            onClick={() => setColumnsModalOpen(true)}
+          >
+            <Icon id="filter_list" className={style.filterIcon} />
+            Фільтр колонок
+          </button>
+          <button
+            type="button"
+            className={style.filterBtn}
             onClick={() => setShowAllFilters(prev => !prev)}
           >
             <Icon id="filter_list" className={style.filterIcon} />
             {showAllFilters ? 'Сховати фільтри' : 'Більше фільтрів'}
-          </button>
-          <button type="button" className={style.filterBtn}>
-            <Icon id="filter_list" className={style.filterIcon} />
-            Фільтр колонок
           </button>
         </div>
       </div>
@@ -220,7 +276,7 @@ const StaffPage = () => {
       ) : (
         <Table
           data={employees}
-          columns={columns}
+          columns={filteredColumns}
           fixedFirstColumn={2}
           styles="staffTable"
           visibleColumns={25}
@@ -237,6 +293,17 @@ const StaffPage = () => {
         onClose={() => setSelectedEmployee(null)}
         onSaved={fetchEmployees}
       />
+
+      <ModalWindow
+        isModalOpen={isColumnsModalOpen}
+        onCloseModal={() => setColumnsModalOpen(false)}
+      >
+        <ModalColumnsForm
+          columns={hideableColumns}
+          visibleColumns={visibleColumnKeys}
+          handleColumnToggle={handleColumnToggle}
+        />
+      </ModalWindow>
     </section>
   );
 };

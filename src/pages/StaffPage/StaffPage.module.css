@@ -69,8 +69,8 @@
 
 .filterBtn:hover,
 .filterBtn:focus {
-  fill: #333333;
-  color: #333333;
+  fill: var(--button);
+  color: var(--button);
 }
 
 .filterIcon {
@@ -113,6 +113,39 @@
   width: 18px;
   height: 18px;
   flex-shrink: 0;
+}
+
+.rateValueCell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.rateEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.rateEditBtn:hover {
+  background: #1a5c58;
+  border-color: #124a47;
+  fill: var(--white);
+}
+
+.rateEditIcon {
+  width: 16px;
+  height: 16px;
 }
 
 @media screen and (min-width: 1024px) {
