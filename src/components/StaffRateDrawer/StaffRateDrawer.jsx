@@ -57,6 +57,7 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
   const [rateValue, setRateValue] = useState('');
   const [currency, setCurrency] = useState(employee?.currency || 'UAH');
   const [saving, setSaving] = useState(false);
+  const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [rateHistory, setRateHistory] = useState(employee?.rate_history || []);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [editRateValue, setEditRateValue] = useState('');
@@ -67,6 +68,24 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
   if (!employee) return null;
 
   const canSave = rateValue.trim() !== '' && !!currency && !!rateDate;
+  const hasUnsavedChanges = rateValue.trim() !== '';
+
+  const handleRequestClose = () => {
+    if (hasUnsavedChanges) {
+      setShowUnsavedConfirm(true);
+    } else {
+      onClose();
+    }
+  };
+
+  const handleContinueEditing = () => {
+    setShowUnsavedConfirm(false);
+  };
+
+  const handleDiscardClose = () => {
+    setShowUnsavedConfirm(false);
+    onClose();
+  };
 
   const handleSave = async () => {
     setSaving(true);
@@ -120,7 +139,7 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
   return (
     <ModalWindow
       isModalOpen={isOpen}
-      onCloseModal={onClose}
+      onCloseModal={handleRequestClose}
       closeBtn={false}
       customStyles={drawerCustomStyles}
     >
@@ -133,7 +152,7 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
           <button
             type="button"
             className={style.closeBtn}
-            onClick={onClose}
+            onClick={handleRequestClose}
           >
             <Icon id="close" className={style.closeIcon} />
           </button>
@@ -314,6 +333,45 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
           </button>
         </div>
       </div>
+
+      <ModalWindow
+        isModalOpen={showUnsavedConfirm}
+        onCloseModal={handleContinueEditing}
+        closeBtn={false}
+      >
+        <div className={style.unsavedConfirm}>
+          <div className={style.unsavedConfirmHeader}>
+            <p className={style.unsavedConfirmTitle}>Незбережені зміни</p>
+            <button
+              type="button"
+              className={style.unsavedConfirmCloseBtn}
+              onClick={handleContinueEditing}
+            >
+              <Icon id="close" className={style.unsavedConfirmCloseIcon} />
+            </button>
+          </div>
+          <p className={style.unsavedConfirmText}>
+            Ви внесли зміни в картку співробітника, але не зберегли їх. Якщо
+            ви закриєте панель, усі нові дані буде втрачено.
+          </p>
+          <div className={style.unsavedConfirmActions}>
+            <button
+              type="button"
+              className={style.unsavedConfirmPrimaryBtn}
+              onClick={handleContinueEditing}
+            >
+              Продовжити редагування
+            </button>
+            <button
+              type="button"
+              className={style.unsavedConfirmSecondaryBtn}
+              onClick={handleDiscardClose}
+            >
+              Закрити без збереження
+            </button>
+          </div>
+        </div>
+      </ModalWindow>
     </ModalWindow>
   );
 };
