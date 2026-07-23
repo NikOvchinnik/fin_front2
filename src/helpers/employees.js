@@ -22,6 +22,8 @@ export const employeeFields = [
   { key: 'payment_form', label: 'Форма оплати' },
   { key: 'payment_details', label: 'Реквізити' },
   { key: 'tax_id', label: 'ІПН' },
+  { key: 'gender', label: 'Стать' },
+  { key: 'work_schedule', label: 'Графік роботи' },
   { key: 'contacts', label: 'Контакти' },
   { key: 'manager', label: 'Керівник' },
   { key: 'hire_date', label: 'Дата прийому' },
@@ -36,12 +38,18 @@ export const employeeLookupFieldIds = {
   manager: 'manager_id',
 };
 
-export const requiredEmployeeFields = [
-  'tax_id',
-  'accounting_full_name',
-  'local_full_name',
-  'payment_form_id',
-  'hire_date',
+export const requiredEmployeeFields = employeeFields
+  .filter(field => field.key !== 'termination_date')
+  .map(field => employeeLookupFieldIds[field.key] || field.key);
+
+export const genderOptions = [
+  { value: 'Ж', label: 'Ж' },
+  { value: 'Ч', label: 'Ч' },
+];
+
+export const workScheduleOptions = [
+  { value: 'Part', label: 'Part' },
+  { value: 'Full', label: 'Full' },
 ];
 
 export const employeeImportAliases = {
@@ -55,6 +63,8 @@ export const employeeImportAliases = {
   payment_form: ['форма оплати'],
   payment_details: ['реквізити'],
   tax_id: ['іпн', 'ipn', 'tax id', 'tax_id'],
+  gender: ['стать', 'gender'],
+  work_schedule: ['графік роботи', 'графік', 'work schedule', 'work_schedule'],
   contacts: ['контакти', 'contacts'],
   manager: ['керівник', 'manager'],
   hire_date: ['дата прийому', 'hire date', 'hire_date'],

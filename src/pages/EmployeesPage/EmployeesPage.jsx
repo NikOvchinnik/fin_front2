@@ -77,15 +77,21 @@ const EmployeesPage = () => {
     setSelectedEmployee(null);
   }, []);
 
+  // Таблиця рендериться з employeeRows, де кожне порожнє поле замінене на
+  // "-" для показу (див. employeeRows нижче) — тому row.original з таблиці
+  // не годиться напряму для редагування. Береться реальний об'єкт
+  // співробітника з employees за id, щоб порожні поля лишались порожніми.
   const openEditModal = useCallback(employee => {
-    setSelectedEmployee(employee);
+    const rawEmployee = employees.find(e => e.id === employee.id) || employee;
+    setSelectedEmployee(rawEmployee);
     setModalType('edit');
-  }, []);
+  }, [employees]);
 
   const openHistoryModal = useCallback(employee => {
-    setSelectedEmployee(employee);
+    const rawEmployee = employees.find(e => e.id === employee.id) || employee;
+    setSelectedEmployee(rawEmployee);
     setModalType('history');
-  }, []);
+  }, [employees]);
 
   const filterOptions = useMemo(
     () => ({

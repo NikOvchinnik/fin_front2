@@ -8,10 +8,12 @@ import {
   employeeLookupFieldIds,
   emptyEmployee,
   findEmployeeDuplicate,
+  genderOptions,
   getEmployeeId,
   normalizeEmployee,
   toEmployeeOptionLabel,
   requiredEmployeeFields,
+  workScheduleOptions,
 } from '../../../helpers/employees';
 import {
   getEmployeeLookups,
@@ -28,8 +30,14 @@ const lookupOptionKeys = {
   manager: 'managers',
 };
 
+const fixedSelectOptions = {
+  gender: genderOptions,
+  work_schedule: workScheduleOptions,
+};
+
 const getFieldType = key => {
   if (employeeLookupFieldIds[key]) return 'autocomplete-select';
+  if (fixedSelectOptions[key]) return 'select';
   if (key === 'tax_id') return 'number';
   if (key === 'hire_date' || key === 'termination_date') return 'date';
   if (key === 'payment_details' || key === 'contacts') return 'textarea';
@@ -129,7 +137,7 @@ const EmployeeForm = ({
       type: getFieldType(field.key),
       name,
       label: field.label,
-      options: optionsByField[field.key] || [],
+      options: optionsByField[field.key] || fixedSelectOptions[field.key] || [],
       rows: field.key === 'contacts' || field.key === 'payment_details' ? 3 : 2,
       containerClassName:
         field.key === 'contacts' || field.key === 'payment_details'
