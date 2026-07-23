@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Notify } from 'notiflix';
-import { useMediaQuery } from '@mui/material';
+import { Tooltip, useMediaQuery } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 import DocTitle from '../../components/DocTitle/DocTitle';
 import Form from '../../components/Form/Form';
@@ -155,6 +155,22 @@ const StaffPage = () => {
         header: employeeFieldByKey[key]?.label || newStaffFieldLabels[key],
         cell: ({ row }) => {
           const value = row.original[key];
+          if (key === 'local_full_name' && value && row.original.rate) {
+            return (
+              <div className={style.rateValueCell}>
+                <span>{value}</span>
+                <Tooltip title="Редагувати ставку" arrow>
+                  <button
+                    type="button"
+                    className={style.rateEditBtn}
+                    onClick={() => setSelectedEmployee(row.original)}
+                  >
+                    <Icon id="edit" className={style.rateEditIcon} />
+                  </button>
+                </Tooltip>
+              </div>
+            );
+          }
           if (key === 'rate' && !value) {
             return (
               <button
@@ -171,13 +187,15 @@ const StaffPage = () => {
             return (
               <div className={style.rateValueCell}>
                 <span>{formatRate(value, row.original.currency)}</span>
-                <button
-                  type="button"
-                  className={style.rateEditBtn}
-                  onClick={() => setSelectedEmployee(row.original)}
-                >
-                  <Icon id="edit" className={style.rateEditIcon} />
-                </button>
+                <Tooltip title="Редагувати ставку" arrow>
+                  <button
+                    type="button"
+                    className={style.rateEditBtn}
+                    onClick={() => setSelectedEmployee(row.original)}
+                  >
+                    <Icon id="edit" className={style.rateEditIcon} />
+                  </button>
+                </Tooltip>
               </div>
             );
           }
