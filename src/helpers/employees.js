@@ -11,6 +11,23 @@ export const formatRate = (rate, currency) => {
   return `${symbol}${formattedNumber}`;
 };
 
+// "Налаштовано" — коли призначена ставка, валюта, реквізити та дата, з якої
+// ставка діє. Всі чотири мають бути заповнені одночасно.
+const CONFIG_FIELD_LABELS = {
+  rate: 'Ставка',
+  currency: 'Валюта',
+  payment_details: 'Реквізити',
+  rate_date: 'Дата початку',
+};
+
+export const getMissingConfigFields = employee =>
+  Object.entries(CONFIG_FIELD_LABELS)
+    .filter(([key]) => !employee?.[key])
+    .map(([, label]) => label);
+
+export const isEmployeeConfigured = employee =>
+  getMissingConfigFields(employee).length === 0;
+
 export const employeeFields = [
   { key: 'unit', label: 'unit' },
   { key: 'department', label: 'Department' },

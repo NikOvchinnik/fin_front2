@@ -17,6 +17,8 @@ import {
   buildEmployeeFieldOptions,
   employeeFields,
   formatRate,
+  getMissingConfigFields,
+  isEmployeeConfigured,
   normalizeEmployee,
 } from '../../helpers/employees';
 
@@ -37,6 +39,8 @@ const staffColumnKeys = [
   'payment_form',
   'payment_details',
   'tax_id',
+  'gender',
+  'work_schedule',
   'manager',
   'currency',
   'rate',
@@ -98,7 +102,17 @@ const StaffPage = () => {
     try {
       const response = await getEmployees();
       const list = Array.isArray(response) ? response : response?.employees ?? [];
-      setEmployees(list.map(normalizeEmployee));
+      // Спочатку "Не налаштовано" (потребують уваги фінансиста), далі
+      // "Налаштовано". Всередині кожної групи — щойно додані HR зверху.
+      const normalized = list
+        .map(normalizeEmployee)
+        .sort((a, b) => {
+          const aConfigured = isEmployeeConfigured(a) ? 1 : 0;
+          const bConfigured = isEmployeeConfigured(b) ? 1 : 0;
+          if (aConfigured !== bConfigured) return aConfigured - bConfigured;
+          return (b.id || 0) - (a.id || 0);
+        });
+      setEmployees(normalized);
     } catch {
       Notify.failure(t('notifications.genericError'));
       setEmployees([]);
@@ -148,6 +162,31 @@ const StaffPage = () => {
         header: employeeFieldByKey[key]?.label || newStaffFieldLabels[key],
         cell: ({ row }) => {
           const value = row.original[key];
+          if (key === 'status') {
+            const missingFields = getMissingConfigFields(row.original);
+            const configured = missingFields.length === 0;
+            const badge = (
+              <span
+                className={`${style.statusBadge} ${
+                  configured ? style.statusConfigured : style.statusNotConfigured
+                }`}
+              >
+                <span className={style.statusDot} />
+                {configured ? 'Налаштовано' : 'Не налаштовано'}
+              </span>
+            );
+
+            if (configured) return badge;
+
+            return (
+              <Tooltip
+                title={`Незаповнені поля: ${missingFields.join(', ')}`}
+                arrow
+              >
+                {badge}
+              </Tooltip>
+            );
+          }
           if (key === 'local_full_name' && value && row.original.rate) {
             return (
               <div className={style.rateValueCell}>
