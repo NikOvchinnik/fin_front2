@@ -1,6 +1,16 @@
 export const EMPLOYEE_REQUIRED_MESSAGE =
   "Заповніть обов'язкові поля перед збереженням.";
 
+// Використовується сторінкою "Співробітники" фінансиста (таблиця + дровер
+// редагування ставки) для однакового форматування суми в обох місцях.
+const CURRENCY_SYMBOLS = { UAH: '₴', USD: '$', EUR: '€' };
+
+export const formatRate = (rate, currency) => {
+  const symbol = CURRENCY_SYMBOLS[currency] || '';
+  const formattedNumber = String(rate).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${symbol}${formattedNumber}`;
+};
+
 export const employeeFields = [
   { key: 'unit', label: 'unit' },
   { key: 'department', label: 'Department' },

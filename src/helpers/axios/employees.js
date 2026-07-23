@@ -31,3 +31,19 @@ export const patchEmployee = async (id, payload) => {
     throw error;
   }
 };
+
+export const postEmployeeRate = async (id, payload) => {
+  try {
+    return await axios.post(`/api/employees/${id}/rate`, payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const putEmployeeRate = async (id, rateId, payload) => {
+  try {
+    return await axios.put(`/api/employees/${id}/rate/${rateId}`, payload);
+  } catch (error) {
+    throw error;
+  }
+};

@@ -1,5 +1,7 @@
 import { useState } from 'react';
+import dayjs from 'dayjs';
 import { Notify } from 'notiflix';
+import { Tooltip } from '@mui/material';
 import DatePicker, { registerLocale } from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import uk from 'date-fns/locale/uk';
@@ -7,8 +9,11 @@ import ModalWindow from '../ModalWindow/ModalWindow';
 import Form from '../Form/Form';
 import Icon from '../Icon/Icon';
 import style from './StaffRateDrawer.module.css';
-import { employeeFields } from '../../helpers/employees';
-import { patchEmployee } from '../../helpers/axios/employees';
+import { employeeFields, formatRate } from '../../helpers/employees';
+import {
+  postEmployeeRate,
+  putEmployeeRate,
+} from '../../helpers/axios/employees';
 
 registerLocale('uk', {
   ...uk,
@@ -48,12 +53,16 @@ const drawerCustomStyles = {
 };
 
 const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
-  const [rateDate, setRateDate] = useState(new Date());
-  const [rateValue, setRateValue] = useState(
-    employee?.rate != null ? String(employee.rate) : ''
-  );
+  const [rateDate, setRateDate] = useState(() => new Date());
+  const [rateValue, setRateValue] = useState('');
   const [currency, setCurrency] = useState(employee?.currency || 'UAH');
   const [saving, setSaving] = useState(false);
+  const [rateHistory, setRateHistory] = useState(employee?.rate_history || []);
+  const [editingEntryId, setEditingEntryId] = useState(null);
+  const [editRateValue, setEditRateValue] = useState('');
+  const [editCurrency, setEditCurrency] = useState('UAH');
+  const [editRateDate, setEditRateDate] = useState(new Date());
+  const [editSaving, setEditSaving] = useState(false);
 
   if (!employee) return null;
 
@@ -62,7 +71,11 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await patchEmployee(employee.id, { rate: rateValue, currency });
+      await postEmployeeRate(employee.id, {
+        rate: rateValue,
+        currency,
+        rate_date: dayjs(rateDate).format('DD.MM.YYYY'),
+      });
       Notify.success('Ставку збережено.');
       await onSaved();
       onClose();
@@ -70,6 +83,37 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
       Notify.failure('Не вдалося зберегти ставку.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const startEditingEntry = entry => {
+    setEditingEntryId(entry.id);
+    setEditRateValue(String(entry.rate));
+    setEditCurrency(entry.currency);
+    setEditRateDate(dayjs(entry.effective_date).toDate());
+  };
+
+  const cancelEditingEntry = () => {
+    setEditingEntryId(null);
+  };
+
+  const handleSaveEntryEdit = async entryId => {
+    setEditSaving(true);
+    try {
+      const updatedEmployee = await putEmployeeRate(employee.id, entryId, {
+        rate: editRateValue,
+        currency: editCurrency,
+        rate_date: dayjs(editRateDate).format('DD.MM.YYYY'),
+      });
+      setRateHistory(updatedEmployee.rate_history || []);
+      setEditingEntryId(null);
+      Notify.success('Запис оновлено.');
+      // Оновлюємо таблицю на фоні — дровер лишається відкритим.
+      onSaved();
+    } catch {
+      Notify.failure('Не вдалося оновити запис.');
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -162,9 +206,98 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
 
         <div className={style.section}>
           <p className={style.sectionTitle}>Історія змін ставки</p>
-          <p className={style.historyText}>
-            Записів ще немає — це нова ставка.
-          </p>
+          {rateHistory.length > 0 ? (
+            <div className={style.historyList}>
+              {rateHistory.map(entry =>
+                editingEntryId === entry.id ? (
+                  <div key={entry.id} className={style.historyEditRow}>
+                    <div className={style.historyEditFields}>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        className={style.historyEditInput}
+                        value={editRateValue}
+                        onChange={e =>
+                          setEditRateValue(e.target.value.replace(/\D/g, ''))
+                        }
+                      />
+                      <select
+                        className={style.historyEditSelect}
+                        value={editCurrency}
+                        onChange={e => setEditCurrency(e.target.value)}
+                      >
+                        {currencyOptions.map(option => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      <DatePicker
+                        selected={editRateDate}
+                        onChange={date => setEditRateDate(date)}
+                        dateFormat="dd.MM.yyyy"
+                        locale="uk"
+                        className={style.historyEditInput}
+                        wrapperClassName={style.historyEditDateWrapper}
+                      />
+                    </div>
+                    <div className={style.historyEditActions}>
+                      <button
+                        type="button"
+                        className={style.historyConfirmBtn}
+                        disabled={editSaving}
+                        onClick={() => handleSaveEntryEdit(entry.id)}
+                      >
+                        <Icon id="check" className={style.historyActionIcon} />
+                      </button>
+                      <button
+                        type="button"
+                        className={style.historyCancelBtn}
+                        disabled={editSaving}
+                        onClick={cancelEditingEntry}
+                      >
+                        <Icon id="close" className={style.historyActionIcon} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={entry.id} className={style.historyItem}>
+                    <span className={style.historyRate}>
+                      {formatRate(entry.rate, entry.currency)}
+                    </span>
+                    <span className={style.historyMeta}>
+                      {dayjs(entry.effective_date).format('DD.MM.YY')}
+                      {' • '}
+                      {entry.created_by_name
+                        ? `Внесено: ${entry.created_by_name}`
+                        : 'Автор невідомий'}
+                    </span>
+                    {entry.is_editable ? (
+                      <Tooltip title="Редагувати запис" arrow>
+                        <button
+                          type="button"
+                          className={style.historyActionBtn}
+                          onClick={() => startEditingEntry(entry)}
+                        >
+                          <Icon id="edit" className={style.historyActionIcon} />
+                        </button>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Редагування недоступне" arrow>
+                        <span className={style.historyLockBtn}>
+                          <Icon id="lock" className={style.historyActionIcon} />
+                        </span>
+                      </Tooltip>
+                    )}
+                  </div>
+                )
+              )}
+            </div>
+          ) : (
+            <p className={style.historyText}>
+              Записів ще немає — це нова ставка.
+            </p>
+          )}
         </div>
 
         <div className={style.buttonsRow}>

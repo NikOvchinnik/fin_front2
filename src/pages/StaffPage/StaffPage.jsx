@@ -16,6 +16,7 @@ import { getEmployees } from '../../helpers/axios/employees';
 import {
   buildEmployeeFieldOptions,
   employeeFields,
+  formatRate,
   normalizeEmployee,
 } from '../../helpers/employees';
 
@@ -52,14 +53,6 @@ const newStaffFieldLabels = {
   status: 'Статус',
   currency: 'Валюта',
   rate: 'Ставка',
-};
-
-const currencySymbols = { UAH: '₴', USD: '$', EUR: '€' };
-
-const formatRate = (rate, currency) => {
-  const symbol = currencySymbols[currency] || '';
-  const formattedNumber = String(rate).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  return `${symbol}${formattedNumber}`;
 };
 
 const employeeFieldByKey = employeeFields.reduce((acc, field) => {
