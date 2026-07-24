@@ -76,6 +76,10 @@ const StaffPage = () => {
   const [selectedPaymentDetails, setSelectedPaymentDetails] = useState(FILTER_ALL);
   const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
   const [showAllFilters, setShowAllFilters] = useState(false);
+  // Форми-селекти фільтрів беруть defaultValues лише при монтуванні (react-hook-form) —
+  // щоб після скидання вони й візуально показали "Усі", примусово ремаунтимо їх,
+  // змінюючи key на кожен селект-компонент.
+  const [filtersResetKey, setFiltersResetKey] = useState(0);
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
@@ -311,6 +315,25 @@ const StaffPage = () => {
     selectedCurrency,
   ].filter(value => value !== FILTER_ALL).length;
 
+  const hasActiveFilters =
+    search.trim() !== '' ||
+    selectedUnit !== FILTER_ALL ||
+    selectedDepartment !== FILTER_ALL ||
+    selectedSubdivision !== FILTER_ALL ||
+    activeAdditionalFiltersCount > 0;
+
+  const handleResetFilters = () => {
+    setSearch('');
+    setSelectedUnit(FILTER_ALL);
+    setSelectedDepartment(FILTER_ALL);
+    setSelectedSubdivision(FILTER_ALL);
+    setSelectedPosition(FILTER_ALL);
+    setSelectedPaymentForm(FILTER_ALL);
+    setSelectedPaymentDetails(FILTER_ALL);
+    setSelectedCurrency(FILTER_ALL);
+    setFiltersResetKey(prev => prev + 1);
+  };
+
   return (
     <section className={style.mainContainer}>
       <DocTitle>Staff</DocTitle>
@@ -337,6 +360,7 @@ const StaffPage = () => {
           </form>
           <div className={style.selectSlot}>
             <Form
+              key={`unit-${filtersResetKey}`}
               fields={[
                 {
                   type: 'select',
@@ -351,6 +375,7 @@ const StaffPage = () => {
           </div>
           <div className={style.selectSlot}>
             <Form
+              key={`department-${filtersResetKey}`}
               fields={[
                 {
                   type: 'select',
@@ -365,6 +390,7 @@ const StaffPage = () => {
           </div>
           <div className={style.selectSlot}>
             <Form
+              key={`subdivision-${filtersResetKey}`}
               fields={[
                 {
                   type: 'select',
@@ -383,6 +409,7 @@ const StaffPage = () => {
           <div className={style.formsContainer}>
             <div className={style.selectSlot}>
               <Form
+                key={`position-${filtersResetKey}`}
                 fields={[
                   {
                     type: 'select',
@@ -397,6 +424,7 @@ const StaffPage = () => {
             </div>
             <div className={style.selectSlot}>
               <Form
+                key={`payment_form-${filtersResetKey}`}
                 fields={[
                   {
                     type: 'select',
@@ -411,6 +439,7 @@ const StaffPage = () => {
             </div>
             <div className={style.selectSlot}>
               <Form
+                key={`payment_details-${filtersResetKey}`}
                 fields={[
                   {
                     type: 'select',
@@ -425,6 +454,7 @@ const StaffPage = () => {
             </div>
             <div className={style.selectSlot}>
               <Form
+                key={`currency-${filtersResetKey}`}
                 fields={[
                   {
                     type: 'select',
@@ -462,6 +492,16 @@ const StaffPage = () => {
               </span>
             )}
           </button>
+          {hasActiveFilters && (
+            <button
+              type="button"
+              className={style.resetFiltersBtn}
+              onClick={handleResetFilters}
+            >
+              <Icon id="close" className={style.filterIcon} />
+              Скинути всі фільтри
+            </button>
+          )}
         </div>
       </div>
 
