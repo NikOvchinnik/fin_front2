@@ -93,6 +93,24 @@
   line-height: 1;
 }
 
+.resetFiltersBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--button);
+  fill: var(--white);
+  color: var(--white);
+  transition: background 0.3s ease;
+}
+
+.resetFiltersBtn:hover,
+.resetFiltersBtn:focus {
+  background: var(--button-hover);
+}
+
 .buttonsRow {
   display: flex;
   align-items: center;
