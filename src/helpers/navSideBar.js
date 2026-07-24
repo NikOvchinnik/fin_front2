@@ -229,6 +229,12 @@ export const getNavSideBar = userId => {
           icon: 'coins',
         },
         {
+          page: 'Співробітники',
+          pageKey: 'nav.staff',
+          link: `/staff`,
+          icon: 'employees',
+        },
+        {
           page: 'Пошук',
           pageKey: 'nav.search',
           link: `/search`,

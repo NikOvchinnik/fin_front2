@@ -1,0 +1,521 @@
+.drawer {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 100vh;
+  background: var(--white);
+  font-family: 'IBM Plex Sans', serif;
+}
+
+/* ModalWindow обгортає children у SimpleBar з жорстким maxHeight: 90vh —
+   це навмисно для центрованих модалок (лишає відступ згори/знизу), але
+   наш дровер має бути на всю висоту екрана. :has() звужує перевизначення
+   лише до SimpleBar, що містить саме наш .drawer, — інші модалки не чіпає. */
+:global([data-simplebar]):has(.drawer) {
+  max-height: 100vh !important;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 28px 32px;
+  width: 100%;
+}
+
+.header {
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+}
+
+.titleContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.name {
+  font-weight: 500;
+  font-size: 24px;
+  line-height: 1.33;
+  color: var(--heading-text);
+}
+
+.jobTitle {
+  font-size: 16px;
+  color: var(--toggle-lang);
+}
+
+.closeBtn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  fill: var(--main-text);
+  transition: fill 0.3s ease;
+  flex-shrink: 0;
+}
+
+.closeBtn:hover {
+  fill: var(--heading-text);
+}
+
+.closeIcon {
+  width: 20px;
+  height: 20px;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  font-size: 16px;
+  text-transform: uppercase;
+  color: var(--toggle-lang);
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.infoItem {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+.infoLabel {
+  width: 188px;
+  flex-shrink: 0;
+  font-size: 16px;
+  color: var(--toggle-lang);
+}
+
+.infoValue {
+  font-weight: 500;
+  font-size: 16px;
+  color: var(--heading-text);
+}
+
+.salaryRow {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/* Валюта (select) і Дата (date) — залишаємо сам функціонал (dropdown,
+   нативний календар) від спільного Form-компонента, але закритий інпут і
+   лейбл переоформляємо під вигляд .fieldInput/.fieldLabel (той самий
+   стиль, що й "Ставка"): звичайний лейбл над полем замість MUI-нотча,
+   рамка rounded-16 без синього фокусу. Все скопійовано лише в межах
+   .styledFormField, інші сторінки з Form не зачіпає. */
+.styledFormField :global(.MuiFormControl-root) {
+  width: 100%;
+}
+
+.styledFormField :global(.MuiInputLabel-root) {
+  position: static;
+  transform: none;
+  margin-bottom: 4px;
+  font-size: 16px !important;
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  letter-spacing: normal !important;
+  color: var(--toggle-lang) !important;
+}
+
+.styledFormField :global(.MuiInputLabel-root.Mui-focused) {
+  color: var(--toggle-lang) !important;
+}
+
+.styledFormField :global(.MuiOutlinedInput-root) {
+  border-radius: 16px;
+  font-size: 18px !important;
+  font-family: inherit !important;
+  font-weight: 400 !important;
+  color: var(--heading-text) !important;
+}
+
+.styledFormField :global(.MuiOutlinedInput-notchedOutline) {
+  border-color: var(--table-edit);
+}
+
+.styledFormField :global(.MuiOutlinedInput-notchedOutline legend) {
+  width: 0;
+}
+
+.styledFormField :global(.MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline) {
+  border-color: var(--table-edit);
+  border-width: 1px;
+}
+
+.fieldLabel {
+  font-size: 16px;
+  color: var(--toggle-lang);
+}
+
+.fieldInput {
+  height: 56px;
+  padding: 0 23px;
+  border: 1px solid var(--table-edit);
+  border-radius: 16px;
+  font-size: 18px;
+  color: var(--heading-text);
+  background: var(--white);
+}
+
+.fieldInput::placeholder {
+  color: var(--border-hover);
+}
+
+.dateWrapper {
+  display: block;
+  width: 100%;
+}
+
+.dateWrapper :global(.react-datepicker__input-container) {
+  width: 100%;
+}
+
+.dateWrapper .fieldInput {
+  width: 100%;
+}
+
+.fieldHint {
+  font-size: 14px;
+  line-height: 1.29;
+  color: var(--toggle-lang);
+}
+
+.historyText {
+  font-size: 16px;
+  font-style: italic;
+  color: var(--toggle-lang);
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.historyItem {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 6px 56px 6px 12px;
+  margin: 0 -12px;
+  border-radius: 8px;
+  transition: background 0.2s ease;
+}
+
+.historyItem:hover {
+  background: #f5f5f5;
+}
+
+.historyRate {
+  font-weight: 500;
+  font-size: 18px;
+  color: var(--heading-text);
+}
+
+.historyMeta {
+  font-size: 16px;
+  color: var(--toggle-lang);
+  text-align: right;
+}
+
+.historyActionBtn,
+.historyLockBtn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  fill: var(--main-text);
+  opacity: 0;
+  transition: opacity 0.2s ease, fill 0.3s ease;
+}
+
+.historyItem:hover .historyActionBtn,
+.historyItem:hover .historyLockBtn {
+  opacity: 1;
+}
+
+.historyActionBtn:hover {
+  fill: #1a5c58;
+}
+
+.historyLockBtn {
+  cursor: default;
+}
+
+.historyActionIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.historyEditRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  width: 100%;
+}
+
+.historyEditFields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.historyEditInput,
+.historyEditSelect {
+  height: 40px;
+  padding: 0 10px;
+  border: 1px solid var(--table-edit);
+  border-radius: 12px;
+  font-size: 16px;
+  color: var(--heading-text);
+  background: var(--white);
+  font-family: inherit;
+  flex: none;
+}
+
+.historyEditInput {
+  width: 104px;
+}
+
+.historyEditSelect {
+  width: 88px;
+  padding: 0 32px 0 12px;
+  border-radius: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236e6e6e'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 18px;
+  cursor: pointer;
+}
+
+.historyEditDateWrapper {
+  width: 108px;
+  flex: none;
+}
+
+.historyEditDateWrapper :global(.react-datepicker__input-container) {
+  width: 100%;
+}
+
+.historyEditDateWrapper .historyEditInput {
+  width: 100%;
+  padding: 0 8px;
+}
+
+.historyEditActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.historyConfirmBtn,
+.historyCancelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.historyConfirmBtn {
+  fill: #6b9429;
+}
+
+.historyConfirmBtn:hover {
+  background: #6b9429;
+  fill: var(--white);
+}
+
+.historyCancelBtn {
+  fill: #b24132;
+}
+
+.historyCancelBtn:hover {
+  background: #b24132;
+  fill: var(--white);
+}
+
+.buttonsRow {
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  gap: 16px;
+  padding: 28px 32px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
+}
+
+.saveBtn {
+  flex: 1 1 0;
+  height: 56px;
+  border-radius: 16px;
+  background: var(--button);
+  color: var(--white);
+  font-size: 22px;
+  transition: background 0.3s ease;
+}
+
+.saveBtn:hover:not(:disabled),
+.saveBtn:focus:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.saveBtn:disabled {
+  background: var(--table-edit);
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  flex: 1 1 0;
+  height: 56px;
+  border-radius: 16px;
+  border: 3px solid var(--table-edit);
+  color: var(--table-edit);
+  font-size: 22px;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.cancelBtn:hover,
+.cancelBtn:focus {
+  border-color: var(--border-hover);
+  color: var(--main-text);
+}
+
+.unsavedConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 32px;
+  width: min(92vw, 540px);
+}
+
+.unsavedConfirmHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.unsavedConfirmTitle {
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--heading-text);
+}
+
+.unsavedConfirmCloseBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  fill: var(--main-text);
+  flex-shrink: 0;
+  transition: fill 0.3s ease;
+}
+
+.unsavedConfirmCloseBtn:hover {
+  fill: var(--heading-text);
+}
+
+.unsavedConfirmCloseIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.unsavedConfirmText {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--toggle-lang);
+}
+
+.unsavedConfirmActions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.unsavedConfirmPrimaryBtn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+  background: var(--button);
+  color: var(--white);
+  font-size: 16px;
+  white-space: nowrap;
+  transition: background 0.3s ease;
+}
+
+.unsavedConfirmPrimaryBtn:hover {
+  background: var(--button-hover);
+}
+
+.unsavedConfirmSecondaryBtn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 16px;
+  border: 2px solid var(--table-edit);
+  color: var(--table-edit);
+  background: transparent;
+  font-size: 16px;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.unsavedConfirmSecondaryBtn:hover {
+  border-color: var(--border-hover);
+  color: var(--main-text);
+}

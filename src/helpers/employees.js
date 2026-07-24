@@ -1,6 +1,33 @@
 export const EMPLOYEE_REQUIRED_MESSAGE =
   "Заповніть обов'язкові поля перед збереженням.";
 
+// Використовується сторінкою "Співробітники" фінансиста (таблиця + дровер
+// редагування ставки) для однакового форматування суми в обох місцях.
+const CURRENCY_SYMBOLS = { UAH: '₴', USD: '$', EUR: '€' };
+
+export const formatRate = (rate, currency) => {
+  const symbol = CURRENCY_SYMBOLS[currency] || '';
+  const formattedNumber = String(rate).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  return `${symbol}${formattedNumber}`;
+};
+
+// "Налаштовано" — коли призначена ставка, валюта, реквізити та дата, з якої
+// ставка діє. Всі чотири мають бути заповнені одночасно.
+const CONFIG_FIELD_LABELS = {
+  rate: 'Ставка',
+  currency: 'Валюта',
+  payment_details: 'Реквізити',
+  rate_date: 'Дата початку',
+};
+
+export const getMissingConfigFields = employee =>
+  Object.entries(CONFIG_FIELD_LABELS)
+    .filter(([key]) => !employee?.[key])
+    .map(([, label]) => label);
+
+export const isEmployeeConfigured = employee =>
+  getMissingConfigFields(employee).length === 0;
+
 export const employeeFields = [
   { key: 'unit', label: 'unit' },
   { key: 'department', label: 'Department' },
@@ -12,6 +39,8 @@ export const employeeFields = [
   { key: 'payment_form', label: 'Форма оплати' },
   { key: 'payment_details', label: 'Реквізити' },
   { key: 'tax_id', label: 'ІПН' },
+  { key: 'gender', label: 'Стать' },
+  { key: 'work_schedule', label: 'Графік роботи' },
   { key: 'contacts', label: 'Контакти' },
   { key: 'manager', label: 'Керівник' },
   { key: 'hire_date', label: 'Дата прийому' },
@@ -26,12 +55,18 @@ export const employeeLookupFieldIds = {
   manager: 'manager_id',
 };
 
-export const requiredEmployeeFields = [
-  'tax_id',
-  'accounting_full_name',
-  'local_full_name',
-  'payment_form_id',
-  'hire_date',
+export const requiredEmployeeFields = employeeFields
+  .filter(field => field.key !== 'termination_date')
+  .map(field => employeeLookupFieldIds[field.key] || field.key);
+
+export const genderOptions = [
+  { value: 'Ж', label: 'Ж' },
+  { value: 'Ч', label: 'Ч' },
+];
+
+export const workScheduleOptions = [
+  { value: 'Part', label: 'Part' },
+  { value: 'Full', label: 'Full' },
 ];
 
 export const employeeImportAliases = {
@@ -45,6 +80,8 @@ export const employeeImportAliases = {
   payment_form: ['форма оплати'],
   payment_details: ['реквізити'],
   tax_id: ['іпн', 'ipn', 'tax id', 'tax_id'],
+  gender: ['стать', 'gender'],
+  work_schedule: ['графік роботи', 'графік', 'work schedule', 'work_schedule'],
   contacts: ['контакти', 'contacts'],
   manager: ['керівник', 'manager'],
   hire_date: ['дата прийому', 'hire date', 'hire_date'],
