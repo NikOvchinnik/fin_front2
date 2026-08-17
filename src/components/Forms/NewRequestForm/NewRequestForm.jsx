@@ -99,19 +99,14 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
   }, [canViewSubdivision]);
 
   const getNextTuesdayOrThursday = () => {
-    let date = dayjs();
-    const day = date.day(); // 0=Нд, 1=Пн, 2=Вт, ...
+    const date = dayjs();
+    const day = date.day(); // 0=Нд, 1=Пн, 2=Вт, 3=Ср, 4=Чт, 5=Пт, 6=Сб
 
-    if (day <= 2) {
-      // Пн (1) або Вт (2)
-      return date.day(2);
-    } else if (day <= 4) {
-      // Ср (3) або Чт (4)
-      return date.day(4);
-    } else {
-      // Пт (5), Сб (6), Нд (0) → наступний Вівторок
-      return date.add(1, 'week').day(2);
-    }
+    // Сьогоднішній день обирати не можна, навіть якщо сьогодні саме Вт чи Чт —
+    // тому в цих двох випадках свідомо перескакуємо на наступний відповідний день.
+    if (day === 0 || day === 1) return date.day(2); // Нд/Пн → цей вівторок
+    if (day === 2 || day === 3) return date.day(4); // Вт/Ср → цей четвер
+    return date.add(1, 'week').day(2); // Чт/Пт/Сб → наступний вівторок
   };
 
   const fields = [
@@ -177,12 +172,14 @@ const NewRequestForm = ({ closeModal, onRefresh, formType }) => {
           const today = new Date();
           today.setHours(0, 0, 0, 0);
           if (selected < today) return t('validation.pastDateNotAllowed');
+          if (selected.getTime() === today.getTime())
+            return t('validation.todayNotAllowed');
           const day = selected.getDay();
           if (day !== 2 && day !== 4) return t('validation.onlyTueOrThu');
           return true;
         },
       },
-      min: dayjs().format('YYYY-MM-DD'),
+      min: dayjs().add(1, 'day').format('YYYY-MM-DD'),
     },
     {
       type: 'autocomplete-select',
