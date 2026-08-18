@@ -250,7 +250,12 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
               required: t('validation.required'),
               validate: value => {
                 if (!value) return t('validation.dateRequired');
-                const selected = new Date(value);
+                // "YYYY-MM-DD" парситься new Date() як UTC-північ, а не
+                // локальна — на позитивних часових поясах (Україна) це
+                // зсуває час на 2-3 год вперед і ламає порівняння з
+                // "сьогодні". Будуємо дату вручну з компонентів.
+                const [year, month, dayOfMonth] = value.split('-').map(Number);
+                const selected = new Date(year, month - 1, dayOfMonth);
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 if (selected < today) return t('validation.pastDateNotAllowed');
