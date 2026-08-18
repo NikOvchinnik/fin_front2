@@ -267,6 +267,21 @@
   height: 16px;
 }
 
+.filterCountBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--button);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
 .linkContainer {
   display: flex;
   flex-direction: column;

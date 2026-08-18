@@ -315,6 +315,11 @@ const StaffPage = () => {
     selectedCurrency,
   ].filter(value => value !== FILTER_ALL).length;
 
+  const hiddenColumnsCount =
+    visibleColumnKeys === 'All'
+      ? 0
+      : hideableColumnKeys.length - visibleColumnKeys.length;
+
   const hasActiveFilters =
     search.trim() !== '' ||
     selectedUnit !== FILTER_ALL ||
@@ -478,6 +483,11 @@ const StaffPage = () => {
           >
             <Icon id="filter_list" className={style.filterIcon} />
             Фільтр колонок
+            {hiddenColumnsCount > 0 && (
+              <span className={style.filterCountBadge}>
+                {hiddenColumnsCount}
+              </span>
+            )}
           </button>
           <button
             type="button"

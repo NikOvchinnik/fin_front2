@@ -155,6 +155,7 @@
     "onlyNumbers": "Only numbers",
     "dateRequired": "Date is required",
     "pastDateNotAllowed": "Past dates are not allowed",
+    "todayNotAllowed": "Today's date cannot be selected",
     "onlyTueOrThu": "Only Tue or Thu can be selected",
     "selectWeekForPeriod": "Select a week for the selected period",
     "emailRequired": "*enter your email",

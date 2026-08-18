@@ -209,6 +209,9 @@ const EmployeesPage = () => {
     return columns.filter(col => visibleColumns.includes(col.accessorKey));
   }, [columns, visibleColumns]);
 
+  const hiddenColumnsCount =
+    visibleColumns === 'All' ? 0 : columns.length - visibleColumns.length;
+
   const handleColumnToggle = accessorKey => {
     setVisibleColumns(prev => {
       let updated;
@@ -329,6 +332,11 @@ const EmployeesPage = () => {
               >
                 <Icon id="filter_list" className={style.filterIcon} />
                 Фільтр колонок
+                {hiddenColumnsCount > 0 && (
+                  <span className={style.filterCountBadge}>
+                    {hiddenColumnsCount}
+                  </span>
+                )}
               </button>
             </div>
 

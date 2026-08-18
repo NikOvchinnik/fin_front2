@@ -96,7 +96,6 @@ const MyBudgetingPage = () => {
     const parsed = JSON.parse(saved);
     if (Array.isArray(parsed)) {
       const migrated = [...parsed];
-      if (!migrated.includes('subdivision')) migrated.push('subdivision');
       if (!migrated.includes('action')) migrated.push('action');
       return migrated;
     }
@@ -915,6 +914,9 @@ const MyBudgetingPage = () => {
 
   const tableColumns = filterDepartmentColumns(columns, userRole);
 
+  const hiddenColumnsCount =
+    visibleColumns === 'All' ? 0 : tableColumns.length - visibleColumns.length;
+
   const filteredColumns = useMemo(() => {
     if (visibleColumns === 'All') return tableColumns;
     return tableColumns.filter(
@@ -1232,6 +1234,11 @@ const MyBudgetingPage = () => {
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
                 {t('common.columnsFilter')}
+                {hiddenColumnsCount > 0 && (
+                  <span className={style.filterCountBadge}>
+                    {hiddenColumnsCount}
+                  </span>
+                )}
               </button>
             </div>
           </div>

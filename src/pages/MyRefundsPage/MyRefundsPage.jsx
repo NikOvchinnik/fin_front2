@@ -95,18 +95,7 @@ const MyRefundsPage = () => {
     const saved = localStorage.getItem('visibleMyRefundsColumns');
     if (!saved) return 'All';
 
-    const parsed = normalizeDepartmentVisibleColumns(
-      JSON.parse(saved),
-      userRole
-    );
-    if (Array.isArray(parsed) && !parsed.includes('subdivision')) {
-      return normalizeDepartmentVisibleColumns(
-        [...parsed, 'subdivision'],
-        userRole
-      );
-    }
-
-    return parsed;
+    return normalizeDepartmentVisibleColumns(JSON.parse(saved), userRole);
   });
   const userSelectorId = useSelector(selectUserId);
   const userId = userSelectorId;
@@ -895,6 +884,9 @@ const MyRefundsPage = () => {
 
   const tableColumns = filterDepartmentColumns(columns, userRole);
 
+  const hiddenColumnsCount =
+    visibleColumns === 'All' ? 0 : tableColumns.length - visibleColumns.length;
+
   const filteredColumns = useMemo(() => {
     if (visibleColumns === 'All') return tableColumns;
     return tableColumns.filter(col => visibleColumns.includes(col.accessorKey));
@@ -1147,6 +1139,11 @@ const MyRefundsPage = () => {
               <button className={style.filterBtn} onClick={openModalColumns}>
                 <Icon id="filter_list" className={style.filterIcon} />
                 {t('common.columnsFilter')}
+                {hiddenColumnsCount > 0 && (
+                  <span className={style.filterCountBadge}>
+                    {hiddenColumnsCount}
+                  </span>
+                )}
               </button>
             </div>
           </div>

@@ -254,13 +254,15 @@ const EditRequestForm = ({ request, closeModal, onRefresh, formType }) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 if (selected < today) return t('validation.pastDateNotAllowed');
+                if (selected.getTime() === today.getTime())
+                  return t('validation.todayNotAllowed');
                 const day = selected.getDay();
                 if (day !== 2 && day !== 4)
                   return t('validation.onlyTueOrThu');
                 return true;
               },
             },
-      min: dayjs().format('YYYY-MM-DD'),
+      min: dayjs().add(1, 'day').format('YYYY-MM-DD'),
     },
     {
       type: 'autocomplete-select',

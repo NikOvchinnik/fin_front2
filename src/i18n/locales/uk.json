@@ -119,6 +119,7 @@
     "onlyNumbers": "Лише цифри",
     "dateRequired": "Дата обов'язкова",
     "pastDateNotAllowed": "Не можна обрати минулу дату",
+    "todayNotAllowed": "Не можна обрати сьогоднішній день",
     "onlyTueOrThu": "Можна обрати тільки Вт або Чт",
     "selectWeekForPeriod": "Оберіть тиждень для обраного періоду",
     "emailRequired": "*вкажіть ваш email",
