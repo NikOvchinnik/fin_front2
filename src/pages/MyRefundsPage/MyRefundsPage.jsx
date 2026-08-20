@@ -1164,6 +1164,7 @@ const MyRefundsPage = () => {
                 fixedFirstColumn={isMobile ? true : 2}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
+                rowsPerPage={30}
                 enableHorizontalScroll={isMobile ? false : true}
               />
               {totals && (

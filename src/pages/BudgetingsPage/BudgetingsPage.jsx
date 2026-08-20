@@ -92,7 +92,8 @@ const BudgetingsPage = () => {
     return normalizeDepartmentVisibleColumns(JSON.parse(saved), userRole);
   });
   const [selectedIds, setSelectedIds] = useState(() => new Set());
-  const [pageRowIds, setPageRowIds] = useState([]); // IDs усіх видимих рядків
+  const [pageRowIds, setPageRowIds] = useState([]); // IDs поточної сторінки
+  const [pageIndex, setPageIndex] = useState(0);
   const requestById = useMemo(
     () =>
       new Map(
@@ -124,6 +125,10 @@ const BudgetingsPage = () => {
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
+
+  useEffect(() => {
+    resetSelection();
+  }, [pageIndex, resetSelection]);
 
   useEffect(() => {
     resetSelection();
@@ -1136,7 +1141,9 @@ const BudgetingsPage = () => {
                 fixedFirstColumn={isMobile ? true : 3}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
+                rowsPerPage={30}
                 enableHorizontalScroll={isMobile ? false : true}
+                onPageChange={(idx) => setPageIndex(idx)}
                 onPageRowIdsChange={(ids) => setPageRowIds(ids)}
               />
               {totals && (

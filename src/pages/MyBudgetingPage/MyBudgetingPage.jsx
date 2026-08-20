@@ -103,7 +103,8 @@ const MyBudgetingPage = () => {
     return parsed;
   });
   const [selectedIds, setSelectedIds] = useState(() => new Set());
-  const [pageRowIds, setPageRowIds] = useState([]); // IDs усіх видимих рядків
+  const [pageRowIds, setPageRowIds] = useState([]);
+  const [pageIndex, setPageIndex] = useState(0);
   const userSelectorId = useSelector(selectUserId);
   const userId = userSelectorId;
   const navigate = useNavigate();
@@ -165,6 +166,10 @@ const MyBudgetingPage = () => {
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
+
+  useEffect(() => {
+    resetSelection();
+  }, [pageIndex, resetSelection]);
 
   useEffect(() => {
     resetSelection();
@@ -1254,7 +1259,9 @@ const MyBudgetingPage = () => {
                 fixedFirstColumn={isMobile ? true : 3}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
+                rowsPerPage={30}
                 enableHorizontalScroll={isMobile ? false : true}
+                onPageChange={idx => setPageIndex(idx)}
                 onPageRowIdsChange={ids => setPageRowIds(ids)}
               />
               {totals && (
