@@ -111,7 +111,8 @@ const RequestsPage = () => {
     !isExecutiveApprovalMode &&
     [UserRole.FINANCE, UserRole.ACCOUNTANT].includes(userRole);
   const [selectedIds, setSelectedIds] = useState(() => new Set());
-  const [pageRowIds, setPageRowIds] = useState([]); // IDs усіх видимих рядків
+  const [pageRowIds, setPageRowIds] = useState([]);
+  const [pageIndex, setPageIndex] = useState(0);
   const requestById = useMemo(
     () =>
       new Map(
@@ -164,6 +165,10 @@ const RequestsPage = () => {
   const resetSelection = useCallback(() => {
     setSelectedIds(new Set());
   }, []);
+
+  useEffect(() => {
+    resetSelection();
+  }, [pageIndex, resetSelection]);
 
   useEffect(() => {
     resetSelection();
@@ -1461,7 +1466,9 @@ const RequestsPage = () => {
                 }
                 visibleColumns={25}
                 visibleColumnsMobile={2}
+                rowsPerPage={30}
                 enableHorizontalScroll={isMobile ? false : true}
+                onPageChange={idx => setPageIndex(idx)}
                 onPageRowIdsChange={ids => setPageRowIds(ids)}
               />
               {totals && (
