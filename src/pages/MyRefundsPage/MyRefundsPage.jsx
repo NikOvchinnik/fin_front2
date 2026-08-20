@@ -1161,10 +1161,9 @@ const MyRefundsPage = () => {
                 data={requestsRows}
                 columns={filteredColumns}
                 styles="analyticTable"
-                fixedFirstColumn={isMobile ? true : false}
+                fixedFirstColumn={isMobile ? true : 2}
                 visibleColumns={25}
                 visibleColumnsMobile={2}
-                rowsPerPage={15}
                 enableHorizontalScroll={isMobile ? false : true}
               />
               {totals && (

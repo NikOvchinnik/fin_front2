@@ -50,11 +50,28 @@ table {
 .analyticTable th {
   font-size: 14px;
   padding: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+/* Кутові клітинки заголовка (закріплені колонки) — вищий z-index, інакше
+   звичайні клітинки заголовка "напливають" на них при горизонтальному
+   скролі (той самий патерн, що й у .staffTable). */
+.analyticTable th.stickyColumn {
+  z-index: 5;
 }
 
 .analyticTable td {
   font-size: 14px;
   padding: 8px;
+}
+
+/* Контейнер вже має overflow: auto (спільне правило вище) — тут лише
+   обмежуємо йому висоту, щоб з'явився вертикальний скрол, відносно якого
+   і прилипає заголовок. */
+.tableContainer:has(.analyticTable) {
+  max-height: 70vh;
 }
 
 .staffTable {
