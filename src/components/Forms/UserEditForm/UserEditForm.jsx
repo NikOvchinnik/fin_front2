@@ -134,6 +134,12 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
       label: t('labels.subdivision'),
       options: subdivisionOptions,
     },
+    {
+      type: 'switch',
+      name: 'is_payroll_manager',
+      label: t('user.isPayrollManager'),
+      readOnly: !canManageUserRole,
+    },
   ];
 
   const buttons = [
@@ -192,6 +198,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
           department_id: user.user_department_id || '',
           unit_id: user.user_unit_id || '',
           subdivision_id: user.user_subdivision_id || '',
+          is_payroll_manager: Boolean(user.user_is_payroll_manager),
         }}
       />
       <ModalWindow

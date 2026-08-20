@@ -1,7 +1,10 @@
 import { UserRole } from './enums';
-import { canAccessGoogleSheetsAnalytics } from './featureAccess';
+import {
+  canAccessGoogleSheetsAnalytics,
+  canAccessPayrollStatement,
+} from './featureAccess';
 
-export const getNavSideBar = userId => {
+export const getNavSideBar = (userId, isPayrollManager) => {
   const showCeoGoogleSheets = canAccessGoogleSheetsAnalytics({
     userId,
     userRole: UserRole.CEO,
@@ -14,6 +17,15 @@ export const getNavSideBar = userId => {
     userId,
     userRole: UserRole.FINANCE,
   });
+  const showPayrollStatement = canAccessPayrollStatement({
+    isPayrollManager,
+  });
+  const payrollStatementPage = {
+    page: 'Зарплатна відомість',
+    pageKey: 'nav.payrollStatement',
+    link: `/payroll-statement`,
+    icon: 'dollar',
+  };
 
   return [
     {
@@ -112,6 +124,7 @@ export const getNavSideBar = userId => {
               : []),
           ],
         },
+        ...(showPayrollStatement ? [payrollStatementPage] : []),
       ],
     },
     {
@@ -164,6 +177,7 @@ export const getNavSideBar = userId => {
             },
           ],
         },
+        ...(showPayrollStatement ? [payrollStatementPage] : []),
       ],
     },
     {
@@ -187,6 +201,7 @@ export const getNavSideBar = userId => {
           link: `/my-budgeting`,
           icon: 'coins',
         },
+        ...(showPayrollStatement ? [payrollStatementPage] : []),
       ],
     },
     {
@@ -314,6 +329,7 @@ export const getNavSideBar = userId => {
               : []),
           ],
         },
+        ...(showPayrollStatement ? [payrollStatementPage] : []),
       ],
     },
     {
@@ -417,6 +433,7 @@ export const getNavSideBar = userId => {
               : []),
           ],
         },
+        ...(showPayrollStatement ? [payrollStatementPage] : []),
       ],
     },
     {
@@ -428,6 +445,7 @@ export const getNavSideBar = userId => {
           link: `/employees`,
           icon: 'users',
         },
+        ...(showPayrollStatement ? [payrollStatementPage] : []),
       ],
     },
   ];

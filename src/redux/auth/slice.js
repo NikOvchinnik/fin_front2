@@ -8,6 +8,7 @@ const initialState = {
     role: 0,
     departmentId: null,
     unitId: null,
+    isPayrollManager: false,
   },
   token: null,
 };
@@ -26,6 +27,7 @@ const authSlice = createSlice({
         role: user.user_role_id ?? user.user_role?.id ?? user.user_role,
         departmentId: user.user_department_id,
         unitId: user.user_unit_id,
+        isPayrollManager: Boolean(user.user_is_payroll_manager),
       };
     },
     logout: () => initialState,

@@ -18,6 +18,16 @@ const routesConfig = [
     element: lazy(() => import('../pages/StaffPage/StaffPage')),
   },
   {
+    // Доступ тут перевіряється не за роллю (тому перелічені всі ролі), а
+    // окремо, за прапорцем is_payroll_manager — див. App.jsx і
+    // helpers/featureAccess.js -> canAccessPayrollStatement.
+    path: 'payroll-statement',
+    roles: Object.values(UserRole),
+    element: lazy(() =>
+      import('../pages/PayrollStatementPage/PayrollStatementPage')
+    ),
+  },
+  {
     path: 'requests',
     roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() => import('../pages/RequestsPage/RequestsPage')),

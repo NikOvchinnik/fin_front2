@@ -99,7 +99,8 @@
     "history": "History",
     "requestHistory": "Request history",
     "budgetingHistory": "Budgeting history",
-    "googleSheets": "Google Sheets"
+    "googleSheets": "Google Sheets",
+    "payrollStatement": "Payroll statement"
   },
   "financialStatus": {
     "draft": "Draft",
@@ -316,7 +317,8 @@
   "user": {
     "firstName": "First name",
     "lastName": "Last name",
-    "role": "Role"
+    "role": "Role",
+    "isPayrollManager": "Enable if this user is a manager and submits a payroll statement"
   },
   "months": {
     "january": "January",

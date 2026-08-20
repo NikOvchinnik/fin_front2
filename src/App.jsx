@@ -1,10 +1,14 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { lazy } from 'react';
 import { useSelector } from 'react-redux';
-import { canAccessGoogleSheetsAnalytics } from './helpers/featureAccess';
+import {
+  canAccessGoogleSheetsAnalytics,
+  canAccessPayrollStatement,
+} from './helpers/featureAccess';
 import routesConfig from './helpers/routerPath';
 import {
   selectIsAuthenticated,
+  selectIsPayrollManager,
   selectUserId,
   selectUserRole,
 } from './redux/auth/selectors';
@@ -17,11 +21,19 @@ const App = () => {
   const isAuthenticated = useSelector(selectIsAuthenticated);
   const userId = useSelector(selectUserId);
   const userRole = useSelector(selectUserRole);
+  const isPayrollManager = useSelector(selectIsPayrollManager);
 
   const filteredRoutes = routesConfig.filter(route => {
     if (
       route.path === 'analytics-google-sheets' &&
       !canAccessGoogleSheetsAnalytics({ userId, userRole })
+    ) {
+      return false;
+    }
+
+    if (
+      route.path === 'payroll-statement' &&
+      !canAccessPayrollStatement({ isPayrollManager })
     ) {
       return false;
     }

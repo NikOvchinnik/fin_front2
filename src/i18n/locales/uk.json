@@ -99,7 +99,8 @@
     "history": "Історія",
     "requestHistory": "Історія заявок",
     "budgetingHistory": "Історія бюджетування",
-    "googleSheets": "Google Sheets"
+    "googleSheets": "Google Sheets",
+    "payrollStatement": "Зарплатна відомість"
   },
   "actions": {
     "create": "Створити",
@@ -316,7 +317,8 @@
   "user": {
     "firstName": "Ім'я",
     "lastName": "Прізвище",
-    "role": "Роль"
+    "role": "Роль",
+    "isPayrollManager": "Увімкніть, якщо цей користувач є керівником і подає зарплатну відомість"
   },
   "months": {
     "january": "Січень",
