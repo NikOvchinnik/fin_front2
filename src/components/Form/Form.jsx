@@ -15,6 +15,7 @@ import {
   FormHelperText,
   Tooltip,
   Autocomplete,
+  Switch,
 } from '@mui/material';
 import { useTranslation } from 'react-i18next';
 
@@ -343,6 +344,78 @@ const Form = ({
                       const newChecked = e.target.checked;
                       input.onChange(newChecked);
                       field.onChange && field.onChange(newChecked);
+                    }}
+                  />
+                }
+                label={field.label || ''}
+              />
+            )}
+          />
+        );
+      case 'switch':
+        return (
+          <Controller
+            name={field.name}
+            control={control}
+            rules={field.validation}
+            render={({ field: input }) => (
+              <FormControlLabel
+                sx={{
+                  marginLeft: 0,
+                  marginRight: 0,
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  '& .MuiFormControlLabel-label': {
+                    whiteSpace: 'normal',
+                    minWidth: 0,
+                  },
+                }}
+                control={
+                  <Switch
+                    {...input}
+                    disableRipple
+                    checked={field.checked ?? !!input.value}
+                    disabled={field.readOnly || false}
+                    onChange={e => {
+                      const newChecked = e.target.checked;
+                      input.onChange(newChecked);
+                      field.onChange && field.onChange(newChecked);
+                    }}
+                    sx={{
+                      width: 44,
+                      height: 26,
+                      padding: 0,
+                      '& .MuiSwitch-switchBase': {
+                        padding: '3px',
+                        '&.Mui-checked': {
+                          transform: 'translateX(18px)',
+                          color: 'var(--white)',
+                          '& + .MuiSwitch-track': {
+                            backgroundColor: 'var(--button)',
+                            opacity: 1,
+                          },
+                        },
+                        '&.Mui-disabled': {
+                          '& .MuiSwitch-thumb': {
+                            opacity: 0.7,
+                          },
+                          '& + .MuiSwitch-track': {
+                            opacity: 0.5,
+                          },
+                        },
+                      },
+                      '& .MuiSwitch-thumb': {
+                        width: 20,
+                        height: 20,
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+                      },
+                      '& .MuiSwitch-track': {
+                        borderRadius: 13,
+                        backgroundColor: 'var(--toggle-lang)',
+                        opacity: 1,
+                        transition: 'background-color 0.2s ease',
+                      },
                     }}
                   />
                 }

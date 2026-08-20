@@ -5,3 +5,5 @@ export const selectUserRole = state => state.auth.user.role;
 export const selectUserName = state => state.auth.user.name;
 export const selectUserDepartmentId = state => state.auth.user.departmentId;
 export const selectUserUnitId = state => state.auth.user.unitId;
+export const selectIsPayrollManager = state =>
+  state.auth.user.isPayrollManager;

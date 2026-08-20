@@ -111,6 +111,12 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
       label: t('labels.subdivision'),
       options: subdivisionOptions,
     },
+    {
+      type: 'switch',
+      name: 'is_payroll_manager',
+      label: t('user.isPayrollManager'),
+      readOnly: !canManageUserRoles,
+    },
   ];
 
   const buttons = [
@@ -160,6 +166,7 @@ const UserNewForm = ({ closeModal, onRefresh, userRole }) => {
           department_id: 1,
           unit_id: 6,
           subdivision_id: '',
+          is_payroll_manager: false,
         }}
       />
     </div>
