@@ -11,6 +11,15 @@ export const formatRate = (rate, currency) => {
   return `${symbol}${formattedNumber}`;
 };
 
+// Використовується в "Зарплатній відомості" — і inline-редагуванням у таблиці,
+// і масовим редагуванням — щоб обидва місця клемпили однаково.
+export const clampToRange = (value, min, max) => {
+  if (value === '') return value;
+  const num = Number(value);
+  if (Number.isNaN(num)) return value;
+  return String(Math.min(max, Math.max(min, num)));
+};
+
 // "Налаштовано" — коли призначена ставка, валюта, реквізити та дата, з якої
 // ставка діє. Всі чотири мають бути заповнені одночасно.
 const CONFIG_FIELD_LABELS = {
