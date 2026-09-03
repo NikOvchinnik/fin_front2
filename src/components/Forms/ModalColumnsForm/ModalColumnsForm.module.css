@@ -34,6 +34,7 @@
 
 .columnItem {
   display: flex;
+  align-items: flex-start;
   flex: 0 0 48%;
   gap: 10px;
   cursor: pointer;
@@ -53,8 +54,10 @@
 .columnItem input[type='checkbox'] {
   appearance: none;
   -webkit-appearance: none;
+  flex-shrink: 0;
   width: 20px;
   height: 20px;
+  margin-top: 2px;
   border: 2px solid #474747;
   border-radius: 4px;
   position: relative;

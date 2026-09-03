@@ -1,0 +1,338 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  padding: 24px;
+  width: min(90vw, 480px);
+}
+
+.titleRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.title {
+  font-weight: 500;
+  color: var(--modal-title);
+  font-size: 20px;
+  line-height: 1.33;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  fill: var(--main-text);
+  transition: fill 0.3s ease;
+}
+
+.closeBtn:hover {
+  fill: var(--heading-text);
+}
+
+.closeIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.selectedCount {
+  margin-top: 20px;
+  font-weight: 500;
+  color: var(--heading-text);
+}
+
+.chipsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 100px;
+  background-color: #f1eefc;
+  color: var(--modal-title);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.chipRemoveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  fill: var(--modal-title);
+  transition: fill 0.3s ease;
+}
+
+.chipRemoveBtn:hover {
+  fill: var(--button-hover);
+}
+
+.chipRemoveIcon {
+  width: 10px;
+  height: 10px;
+}
+
+.fieldsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.field {
+  position: relative;
+}
+
+/* Лейбл "прориває" верхню рамку інпута — той самий візуальний прийом, що
+   й у MUI notched outline на інпутах Unit/Department/Subdivision над
+   таблицею: лейбл лежить рівно на лінії рамки, а фон під ним (колір
+   модалки) перекриває саму лінію. */
+.fieldLabel {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  background: var(--white);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--toggle-lang);
+}
+
+.fieldInput {
+  width: 100%;
+  height: 48px;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--heading-text);
+  background: var(--white);
+}
+
+.fieldInput:focus {
+  outline: none;
+  border-color: var(--border-hover);
+}
+
+.fieldInput::placeholder {
+  color: var(--border-hover);
+}
+
+.fieldInput:disabled {
+  padding-right: 14px;
+  color: var(--border-hover);
+  background: var(--toggle-lang-background);
+  cursor: not-allowed;
+}
+
+.fieldClearBtn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  fill: var(--toggle-lang);
+  transition: fill 0.3s ease;
+}
+
+.fieldClearBtn:hover {
+  fill: var(--heading-text);
+}
+
+.fieldClearIcon {
+  width: 12px;
+  height: 12px;
+}
+
+.hint {
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--toggle-lang);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.saveBtn {
+  height: 48px;
+  border-radius: 8px;
+  background: var(--button);
+  color: var(--white);
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.saveBtn:hover:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.saveBtn:disabled {
+  background: var(--table-edit);
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  height: 48px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--main-text);
+  font-weight: 500;
+  background: transparent;
+  transition: all 0.3s ease;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--button);
+  color: var(--button);
+}
+
+.cancelBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.unsavedConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 32px;
+  width: min(92vw, 560px);
+}
+
+.unsavedConfirmHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.unsavedConfirmTitle {
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--heading-text);
+}
+
+.unsavedConfirmCloseBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  fill: var(--main-text);
+  transition: fill 0.3s ease;
+}
+
+.unsavedConfirmCloseBtn:hover {
+  fill: var(--heading-text);
+}
+
+.unsavedConfirmCloseIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.unsavedConfirmText {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--toggle-lang);
+}
+
+.unsavedConfirmActions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.unsavedConfirmPrimaryBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  background: var(--button);
+  color: var(--white);
+  font-weight: 500;
+  text-align: center;
+  transition: background-color 0.3s ease;
+}
+
+.unsavedConfirmPrimaryBtn:hover {
+  background: var(--button-hover);
+}
+
+.unsavedConfirmSecondaryBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  color: var(--main-text);
+  font-weight: 500;
+  background: transparent;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.unsavedConfirmSecondaryBtn:hover {
+  border-color: var(--button);
+  color: var(--button);
+}
+
+@media screen and (min-width: 640px) {
+  .unsavedConfirmActions {
+    flex-direction: row;
+  }
+
+  .unsavedConfirmPrimaryBtn,
+  .unsavedConfirmSecondaryBtn {
+    flex: 1 1 0;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .container {
+    width: min(90vw, 640px);
+  }
+
+  .fieldsGrid {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .field {
+    flex: 1 1 calc(50% - 8px);
+    min-width: 220px;
+  }
+
+  .actions {
+    flex-direction: row;
+  }
+
+  .saveBtn,
+  .cancelBtn {
+    flex: 1 1 0;
+  }
+}

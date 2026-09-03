@@ -67,6 +67,11 @@ table {
   padding: 8px;
 }
 
+.analyticTable tbody tr:hover td {
+  background: var(--toggle-lang-background);
+  cursor: pointer;
+}
+
 /* Контейнер вже має overflow: auto (спільне правило вище) — тут лише
    обмежуємо йому висоту, щоб з'явився вертикальний скрол, відносно якого
    і прилипає заголовок. */

@@ -5,10 +5,10 @@
   width: 100%;
 }
 
-.headerText {
+.header {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 16px;
 }
 
 .title {
@@ -17,24 +17,455 @@
   color: var(--heading-text);
 }
 
-.emptyState {
+.subtitle {
+  margin-top: 6px;
+  font-weight: 500;
+  color: var(--toggle-lang);
+}
+
+.headerActions {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  min-height: 40px;
+  border-radius: 8px;
+  background-color: var(--button);
+  color: var(--white);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.primaryBtn:hover,
+.primaryBtn:focus {
+  background-color: var(--button-hover);
+}
+
+.plus {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.inputContainer:hover,
+.inputContainer:focus {
+  border: 1px solid var(--border-hover);
+}
+
+.filterBtn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 80px 20px;
-  text-align: center;
-  border: 2px dashed var(--border);
-  border-radius: 24px;
-  background-color: rgba(101, 60, 217, 0.03);
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  fill: var(--main-text);
+  white-space: nowrap;
+  transition: all 0.3s ease;
 }
 
-.badge {
-  padding: 4px 12px;
-  border-radius: 100px;
-  background-color: var(--button);
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: var(--button);
+  color: var(--button);
+  border-color: var(--button);
+}
+
+.filterCountBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--button);
   color: var(--white);
   font-size: 12px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  line-height: 1;
+}
+
+.resetFiltersBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--button);
+  fill: var(--white);
+  color: var(--white);
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+}
+
+.resetFiltersBtn:hover,
+.resetFiltersBtn:focus {
+  background: var(--button-hover);
+}
+
+.columnsFilterRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.displayedCountText {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #5331b2;
+  font-weight: 500;
+}
+
+.displayedCountBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 100px;
+  background-color: var(--button);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.accruedMissingBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background-color: #fae8e6;
+  color: #a71916;
+  cursor: help;
+}
+
+.headerWithHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+}
+
+.headerHintIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: var(--toggle-lang);
+}
+
+.viewCellContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 140px;
+}
+
+.rateEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.rateEditBtn:hover {
+  background: var(--button);
+  border-color: var(--button);
+  fill: var(--white);
+}
+
+.rateEditIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.actionContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.editIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.sendReviewBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #81c784;
+  border-radius: 4px;
+  fill: #81c784;
+  transition: all 0.3s ease;
+}
+
+.sendReviewBtn:hover:not(:disabled),
+.sendReviewBtn:focus:not(:disabled) {
+  fill: #66bb6a;
+  border-color: #66bb6a;
+}
+
+.sendReviewBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.cancelReviewBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #b24132;
+  border-radius: 4px;
+  /* icon-x у спільному спрайті має захардкоджений білий колір через
+     inline style="fill: var(--color1, #fff)" — перевизначаємо саме цю
+     CSS-змінну (той самий трюк, що й у .editCellCancelBtn нижче). */
+  --color1: #b24132;
+  fill: #b24132;
+  transition: all 0.3s ease;
+}
+
+.cancelReviewBtn:hover:not(:disabled),
+.cancelReviewBtn:focus:not(:disabled) {
+  --color1: #fff;
+  background: #b24132;
+  border-color: #8a2f22;
+  fill: var(--white);
+}
+
+.cancelReviewBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.statusBadge {
+  padding-left: 6px;
+  font-weight: 700;
+}
+
+.editCellContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 140px;
+  margin: -8px;
+  padding: 8px;
+  background-color: #f1eefc;
+}
+
+.editCellInput {
+  width: 100%;
+  min-width: 60px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--main-text);
+  background: var(--white);
+}
+
+.editCellInput:focus {
+  border-color: var(--button);
+  outline: none;
+}
+
+.editCellSaveBtn,
+.editCellCancelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.editCellSaveBtn {
+  fill: #6b9429;
+}
+
+.editCellSaveBtn:hover {
+  background: #6b9429;
+  border-color: #6b9429;
+  fill: var(--white);
+}
+
+.editCellCancelBtn {
+  /* icon-x у спільному спрайті має захардкоджений білий колір через
+     inline style="fill: var(--color1, #fff)" — звичайний fill на нього
+     не діє, перевизначаємо саме цю CSS-змінну. */
+  --color1: #b24132;
+  fill: #b24132;
+}
+
+.editCellCancelBtn:hover {
+  --color1: #fff;
+  background: #b24132;
+  border-color: #8a2f22;
+  fill: var(--white);
+}
+
+.editCellSaveBtn:disabled,
+.editCellCancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editCellIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.bulkBar {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background-color: var(--heading-text);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 20;
+}
+
+.bulkBarText {
+  color: var(--white);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.bulkBarEditBtn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  background-color: var(--button);
+  color: var(--white);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+}
+
+.bulkBarEditBtn:hover {
+  background-color: var(--button-hover);
+}
+
+.bulkBarCloseBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  transition: background-color 0.3s ease;
+}
+
+.bulkBarCloseBtn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.bulkBarCloseIcon {
+  width: 14px;
+  height: 14px;
+}
+
+@media screen and (min-width: 768px) {
+  .header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .headerActions {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media screen and (min-width: 1024px) {
+  .title {
+    font-size: 32px;
+  }
+
+  .formsContainer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .searchContainer {
+    flex: 1 1 220px;
+    min-width: 220px;
+  }
+
+  .selectSlot {
+    flex: 1 1 160px;
+    min-width: 160px;
+  }
 }
