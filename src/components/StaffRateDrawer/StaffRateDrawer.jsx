@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { Notify } from 'notiflix';
 import { Tooltip } from '@mui/material';
@@ -22,14 +22,18 @@ registerLocale('uk', {
 
 const currencyOptions = ['UAH', 'USD', 'EUR'];
 
-const drawerInfoKeys = [
+// "Спільні дані" — однакові для людини незалежно від того, скільки в неї
+// призначень (керівників). Керівник/юніт/департамент/підрозділ/посада/
+// графік належать конкретному призначенню — показуються нижче, під
+// вкладкою обраного керівника.
+const sharedInfoKeys = ['payment_form', 'payment_details', 'gender'];
+
+const assignmentInfoKeys = [
   'unit',
   'department',
   'subdivision',
-  'manager',
-  'payment_form',
-  'payment_details',
-  'tax_id',
+  'position',
+  'work_schedule',
 ];
 
 const employeeFieldByKey = employeeFields.reduce((acc, field) => {
@@ -52,18 +56,56 @@ const drawerCustomStyles = {
   padding: 0,
 };
 
-const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
+const StaffRateDrawer = ({
+  isOpen,
+  employee,
+  initialAssignmentId = null,
+  onClose,
+  onSaved,
+}) => {
+  // Бекенд завжди віддає хоча б одне призначення; про всяк випадок — якщо
+  // раптом масив порожній — падаємо назад на самого employee (у нього ці
+  // самі поля лежать сплющено, для сумісності зі старим кодом). Обчислюємо
+  // ДО хуків (звичайний JS, не хук) — потрібно для initial-значення стейту
+  // нижче.
+  const assignments = employee?.assignments?.length
+    ? employee.assignments
+    : employee
+    ? [employee]
+    : [];
+  const initialIndex = Math.max(
+    assignments.findIndex(item => item.id === initialAssignmentId),
+    0
+  );
+
+  const [selectedAssignmentIndex, setSelectedAssignmentIndex] =
+    useState(initialIndex);
+  const [pendingTabIndex, setPendingTabIndex] = useState(null);
   const [rateDate, setRateDate] = useState(() => new Date());
   const [rateValue, setRateValue] = useState('');
-  const [currency, setCurrency] = useState(employee?.currency || 'UAH');
+  const [currency, setCurrency] = useState('UAH');
   const [saving, setSaving] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
-  const [rateHistory, setRateHistory] = useState(employee?.rate_history || []);
+  const [rateHistory, setRateHistory] = useState([]);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [editRateValue, setEditRateValue] = useState('');
   const [editCurrency, setEditCurrency] = useState('UAH');
   const [editRateDate, setEditRateDate] = useState(new Date());
   const [editSaving, setEditSaving] = useState(false);
+
+  const selectedAssignment =
+    assignments[selectedAssignmentIndex] || assignments[0] || null;
+
+  // При відкритті/перемиканні вкладки керівника — скидаємо поле нової
+  // ставки (це чернетка саме для ЦЬОГО керівника) і підвантажуємо історію
+  // саме його призначення, а не когось іншого.
+  useEffect(() => {
+    setCurrency(selectedAssignment?.currency || 'UAH');
+    setRateValue('');
+    setRateDate(new Date());
+    setRateHistory(selectedAssignment?.rate_history || []);
+    setEditingEntryId(null);
+  }, [selectedAssignment?.id]);
 
   if (!employee) return null;
 
@@ -72,25 +114,42 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
 
   const handleRequestClose = () => {
     if (hasUnsavedChanges) {
+      setPendingTabIndex(null);
       setShowUnsavedConfirm(true);
     } else {
       onClose();
     }
   };
 
+  const handleTabClick = index => {
+    if (index === selectedAssignmentIndex) return;
+    if (hasUnsavedChanges) {
+      setPendingTabIndex(index);
+      setShowUnsavedConfirm(true);
+      return;
+    }
+    setSelectedAssignmentIndex(index);
+  };
+
   const handleContinueEditing = () => {
     setShowUnsavedConfirm(false);
+    setPendingTabIndex(null);
   };
 
   const handleDiscardClose = () => {
     setShowUnsavedConfirm(false);
-    onClose();
+    if (pendingTabIndex !== null) {
+      setSelectedAssignmentIndex(pendingTabIndex);
+      setPendingTabIndex(null);
+    } else {
+      onClose();
+    }
   };
 
   const handleSave = async () => {
     setSaving(true);
     try {
-      await postEmployeeRate(employee.id, {
+      await postEmployeeRate(employee.id, selectedAssignment.id, {
         rate: rateValue,
         currency,
         rate_date: dayjs(rateDate).format('DD.MM.YYYY'),
@@ -119,12 +178,20 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
   const handleSaveEntryEdit = async entryId => {
     setEditSaving(true);
     try {
-      const updatedEmployee = await putEmployeeRate(employee.id, entryId, {
-        rate: editRateValue,
-        currency: editCurrency,
-        rate_date: dayjs(editRateDate).format('DD.MM.YYYY'),
-      });
-      setRateHistory(updatedEmployee.rate_history || []);
+      const updatedEmployee = await putEmployeeRate(
+        employee.id,
+        selectedAssignment.id,
+        entryId,
+        {
+          rate: editRateValue,
+          currency: editCurrency,
+          rate_date: dayjs(editRateDate).format('DD.MM.YYYY'),
+        }
+      );
+      const updatedAssignment = (updatedEmployee.assignments || []).find(
+        item => item.id === selectedAssignment.id
+      );
+      setRateHistory(updatedAssignment?.rate_history || []);
       setEditingEntryId(null);
       Notify.success('Запис оновлено.');
       // Оновлюємо таблицю на фоні — дровер лишається відкритим.
@@ -147,7 +214,7 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
         <div className={`${style.section} ${style.header}`}>
           <div className={style.titleContainer}>
             <p className={style.name}>{employee.local_full_name || '-'}</p>
-            <p className={style.jobTitle}>{employee.position || '-'}</p>
+            <p className={style.jobTitle}>ІПН: {employee.tax_id || '-'}</p>
           </div>
           <button
             type="button"
@@ -159,14 +226,44 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
         </div>
 
         <div className={style.section}>
-          <p className={style.sectionTitle}>Інформація про співробітника</p>
+          <p className={style.sectionTitle}>Спільні дані</p>
           <div className={style.infoList}>
-            {drawerInfoKeys.map(key => (
+            {sharedInfoKeys.map(key => (
               <div key={key} className={style.infoItem}>
                 <p className={style.infoLabel}>
                   {employeeFieldByKey[key]?.label || key}
                 </p>
                 <p className={style.infoValue}>{employee[key] || '-'}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className={style.section}>
+          <p className={style.sectionTitle}>Дані по керівнику</p>
+          <div className={style.managerTabs}>
+            {assignments.map((assignment, index) => (
+              <button
+                key={assignment.id ?? index}
+                type="button"
+                className={`${style.managerTab} ${
+                  index === selectedAssignmentIndex ? style.managerTabActive : ''
+                }`}
+                onClick={() => handleTabClick(index)}
+              >
+                {assignment.manager || '-'}
+              </button>
+            ))}
+          </div>
+          <div className={style.infoList}>
+            {assignmentInfoKeys.map(key => (
+              <div key={key} className={style.infoItem}>
+                <p className={style.infoLabel}>
+                  {employeeFieldByKey[key]?.label || key}
+                </p>
+                <p className={style.infoValue}>
+                  {selectedAssignment[key] || '-'}
+                </p>
               </div>
             ))}
           </div>
@@ -190,6 +287,12 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
             </div>
             <div className={`${style.field} ${style.styledFormField}`}>
               <Form
+                // Form (react-hook-form) бере defaultValues лише при
+                // монтуванні — без key, прив'язаного до обраного
+                // призначення, видима валюта не оновлювалась би при
+                // перемиканні вкладки керівника (хоч внутрішній стейт і
+                // збереження вже й так були б правильні).
+                key={selectedAssignment.id}
                 fields={[
                   {
                     type: 'select',
@@ -351,8 +454,9 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
             </button>
           </div>
           <p className={style.unsavedConfirmText}>
-            Ви внесли зміни в картку співробітника, але не зберегли їх. Якщо
-            ви закриєте панель, усі нові дані буде втрачено.
+            {pendingTabIndex !== null
+              ? 'Ви ввели нову ставку для цього керівника, але не зберегли її. Якщо перейдете до іншого керівника, ці дані буде втрачено.'
+              : 'Ви внесли зміни в картку співробітника, але не зберегли їх. Якщо ви закриєте панель, усі нові дані буде втрачено.'}
           </p>
           <div className={style.unsavedConfirmActions}>
             <button
@@ -367,7 +471,9 @@ const StaffRateDrawer = ({ isOpen, employee, onClose, onSaved }) => {
               className={style.unsavedConfirmSecondaryBtn}
               onClick={handleDiscardClose}
             >
-              Закрити без збереження
+              {pendingTabIndex !== null
+                ? 'Перейти без збереження'
+                : 'Закрити без збереження'}
             </button>
           </div>
         </div>

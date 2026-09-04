@@ -85,17 +85,23 @@ export const deleteEmployeeAssignment = async (id, assignmentId) => {
   }
 };
 
-export const postEmployeeRate = async (id, payload) => {
+export const postEmployeeRate = async (id, assignmentId, payload) => {
   try {
-    return await axios.post(`/api/employees/${id}/rate`, payload);
+    return await axios.post(
+      `/api/employees/${id}/assignments/${assignmentId}/rate`,
+      payload
+    );
   } catch (error) {
     throw error;
   }
 };
 
-export const putEmployeeRate = async (id, rateId, payload) => {
+export const putEmployeeRate = async (id, assignmentId, rateId, payload) => {
   try {
-    return await axios.put(`/api/employees/${id}/rate/${rateId}`, payload);
+    return await axios.put(
+      `/api/employees/${id}/assignments/${assignmentId}/rate/${rateId}`,
+      payload
+    );
   } catch (error) {
     throw error;
   }

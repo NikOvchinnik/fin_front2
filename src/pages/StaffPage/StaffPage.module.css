@@ -118,6 +118,61 @@
   gap: 16px;
 }
 
+/* Комірка призначення, яке відрізняється в кількох призначеннях одного
+   співробітника — стрілочка розгортання лише в колонці ПІБ, а решта
+   призначень показується нижче в цій самій комірці по кліку в будь-якому
+   місці рядка (той самий підхід, що на "Співробітниках"). */
+.multiValueCell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.multiValuePrimary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
+.rowExpandToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.rowExpandToggle:hover {
+  background: var(--toggle-lang-background);
+}
+
+.multiValueChevron {
+  width: 22px;
+  height: 22px;
+  color: var(--toggle-lang);
+  transition: transform 0.2s ease;
+}
+
+.multiValueChevronCollapsed {
+  transform: rotate(180deg);
+}
+
+.multiValueExtra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  line-height: 24px;
+  color: var(--toggle-lang);
+  white-space: nowrap;
+}
+
 .addRateBtn {
   display: flex;
   align-items: center;
