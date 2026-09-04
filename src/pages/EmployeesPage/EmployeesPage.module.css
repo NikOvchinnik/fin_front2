@@ -180,6 +180,58 @@
   line-height: 1;
 }
 
+/* Комірка призначення, яке відрізняється в кількох призначеннях одного
+   співробітника — стрілочка розгортання лише в першій колонці рядка, а
+   решта призначень показується нижче в цій самій комірці по кліку в
+   будь-якому місці рядка (клік по кнопці/стрілочці теж працює). */
+.multiValueCell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.multiValuePrimary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 20px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.rowExpandToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.rowExpandToggle:hover {
+  background: var(--toggle-lang-background);
+}
+
+.multiValueChevron {
+  width: 22px;
+  height: 22px;
+  color: var(--toggle-lang);
+  transition: transform 0.2s ease;
+}
+
+.multiValueChevronCollapsed {
+  transform: rotate(180deg);
+}
+
+.multiValueExtra {
+  min-height: 20px;
+  line-height: 20px;
+  color: var(--toggle-lang);
+  white-space: nowrap;
+}
+
 .csvBtn {
   display: flex;
   align-items: center;

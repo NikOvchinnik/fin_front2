@@ -30,6 +30,20 @@ const withAllOption = options => [
   ...options,
 ];
 
+// Ці поля належать конкретному призначенню (керівнику), не людині — якщо в
+// співробітника кілька призначень і значення в них різні, показуємо бейдж
+// "+N" з розгортанням решти значень просто в цій-таки комірці.
+const ASSIGNMENT_DISPLAY_FIELD_KEYS = [
+  'unit',
+  'department',
+  'subdivision',
+  'position',
+  'work_schedule',
+  'manager',
+  'hire_date',
+  'termination_date',
+];
+
 const EmployeesPage = () => {
   const [loading, setLoading] = useState(true);
   const [employees, setEmployees] = useState([]);
@@ -53,7 +67,17 @@ const EmployeesPage = () => {
     const saved = localStorage.getItem('visibleEmployeeColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
+  const [expandedRowIds, setExpandedRowIds] = useState(() => new Set());
   const isMobile = useMediaQuery('(max-width: 1024px)');
+
+  const toggleRowExpand = employeeId => {
+    setExpandedRowIds(prev => {
+      const next = new Set(prev);
+      if (next.has(employeeId)) next.delete(employeeId);
+      else next.add(employeeId);
+      return next;
+    });
+  };
 
   const fetchData = useCallback(async () => {
     try {
@@ -164,16 +188,102 @@ const EmployeesPage = () => {
     [filteredEmployees]
   );
 
+  // CSV не має поняття "згорнути/розгорнути" — тому для експорту, на
+  // відміну від показу в таблиці, кожне ДОДАТКОВЕ призначення співробітника
+  // стає окремим рядком (інакше друге/третє призначення просто губилось би).
+  const csvRows = useMemo(
+    () =>
+      employeeRows.flatMap(employee => {
+        const assignments = employee.assignments || [];
+        if (assignments.length <= 1) return [employee];
+
+        return assignments.map(assignment => {
+          const row = { ...employee };
+          ASSIGNMENT_DISPLAY_FIELD_KEYS.forEach(key => {
+            const value = assignment?.[key] || '';
+            row[key] = value || '-';
+            row[`${key}_plain`] = value;
+          });
+          return row;
+        });
+      }),
+    [employeeRows]
+  );
+
+  // Обидва рахуємо з ОДНОГО й того самого (вже відфільтрованого) списку —
+  // інакше, коли фільтр звужує вибірку, підсумкові бейджі показують суміш
+  // "загальна кількість по всій компанії" і "кількість у поточному фільтрі".
   const activeEmployeesCount = filteredEmployees.filter(
     employee => !employee.termination_date
   ).length;
+  const terminatedEmployeesCount =
+    filteredEmployees.length - activeEmployeesCount;
 
   const columns = useMemo(
     () => [
-      ...employeeFields.map(field => ({
+      ...employeeFields.map((field, fieldIndex) => ({
         accessorKey: field.key,
         header: field.label,
-        cell: ({ row }) => row.original[field.key] || '-',
+        cell: ({ row }) => {
+          const employee = row.original;
+          const assignments = employee.assignments || [];
+          const hasMultipleAssignments = assignments.length > 1;
+          const primaryValue = employee[field.key] || '-';
+          const isFirstColumn = fieldIndex === 0;
+          const isExpanded = expandedRowIds.has(employee.id);
+
+          // Стрілочка розгортання сидить лише в першій колонці — клік по
+          // ній (або будь-де в рядку) розгортає решту призначень.
+          const showToggle = isFirstColumn && hasMultipleAssignments;
+
+          // Кожна колонка, що належить призначенню, а не людині, при
+          // розгортанні показує решту значень нижче основного — але лише
+          // якщо вони справді відрізняються (щоб не дублювати однакове
+          // значення, коли в обох призначеннях, наприклад, той самий Unit).
+          const uniqueValues =
+            ASSIGNMENT_DISPLAY_FIELD_KEYS.includes(field.key) &&
+            hasMultipleAssignments
+              ? [...new Set(assignments.map(item => item?.[field.key] || '-'))]
+              : [primaryValue];
+          const extraValues =
+            uniqueValues.length > 1 ? uniqueValues.slice(1) : [];
+
+          // Завжди та сама структура (обгортка + фіксована висота рядка),
+          // навіть коли додавати нічого — щоб висота першого рядка
+          // збігалась в усіх колонках і другі рядки вирівнювались по одній
+          // лінії.
+
+          return (
+            <div className={style.multiValueCell}>
+              <div className={style.multiValuePrimary}>
+                {showToggle && (
+                  <button
+                    type="button"
+                    className={style.rowExpandToggle}
+                    onClick={event => {
+                      event.stopPropagation();
+                      toggleRowExpand(employee.id);
+                    }}
+                  >
+                    <Icon
+                      id="chevron-up"
+                      className={`${style.multiValueChevron} ${
+                        isExpanded ? '' : style.multiValueChevronCollapsed
+                      }`}
+                    />
+                  </button>
+                )}
+                <span>{primaryValue}</span>
+              </div>
+              {isExpanded &&
+                extraValues.map((value, index) => (
+                  <div key={index} className={style.multiValueExtra}>
+                    {value}
+                  </div>
+                ))}
+            </div>
+          );
+        },
       })),
       {
         accessorKey: 'actions',
@@ -184,7 +294,10 @@ const EmployeesPage = () => {
               type="button"
               className={style.iconBtn}
               title="Редагувати"
-              onClick={() => openEditModal(row.original)}
+              onClick={event => {
+                event.stopPropagation();
+                openEditModal(row.original);
+              }}
             >
               <Icon id="edit" className={style.actionIcon} />
             </button>
@@ -192,7 +305,10 @@ const EmployeesPage = () => {
               <button
                 type="button"
                 className={style.historyBtn}
-                onClick={() => openHistoryModal(row.original)}
+                onClick={event => {
+                  event.stopPropagation();
+                  openHistoryModal(row.original);
+                }}
               >
                 Історія
               </button>
@@ -201,7 +317,7 @@ const EmployeesPage = () => {
         ),
       },
     ],
-    [openEditModal, openHistoryModal]
+    [openEditModal, openHistoryModal, expandedRowIds]
   );
 
   const filteredColumns = useMemo(() => {
@@ -298,7 +414,7 @@ const EmployeesPage = () => {
             </div>
             <div className={style.summaryItem}>
               <span>Звільнені</span>
-              <strong>{employees.length - activeEmployeesCount}</strong>
+              <strong>{terminatedEmployeesCount}</strong>
             </div>
           </div>
 
@@ -317,7 +433,7 @@ const EmployeesPage = () => {
                 type="button"
                 onClick={() =>
                   exportToCSV({
-                    rows: employeeRows,
+                    rows: csvRows,
                     columns: filteredColumns,
                     filePrefix: 'employees',
                   })
@@ -477,6 +593,11 @@ const EmployeesPage = () => {
               visibleColumnsMobile={2}
               rowsPerPage={15}
               enableHorizontalScroll={isMobile ? false : true}
+              onRowClick={employee => {
+                if ((employee.assignments || []).length > 1) {
+                  toggleRowExpand(employee.id);
+                }
+              }}
             />
           ) : employees.length > 0 ? (
             <div className={style.emptyState}>

@@ -5,6 +5,188 @@
   width: min(92vw, 520px);
 }
 
+.title {
+  font-weight: 500;
+  color: var(--modal-title);
+  font-size: 22px;
+  line-height: 1.33;
+  margin-bottom: 20px;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--toggle-lang);
+  margin-top: 8px;
+}
+
+.fieldsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  position: relative;
+}
+
+/* Обгортка для селектів, які рендеряться через спільний Form-компонент
+   (MUI) — щоб вигляд/розкривний список збігався з фільтрами Unit/Department/
+   Subdivision над таблицями, а не імітувався нативним <select>. */
+.selectField {
+  width: 100%;
+}
+
+/* Лейбл "прориває" верхню рамку інпута — той самий прийом, що й у полях
+   Unit/Department/Subdivision над таблицями та в масовому редагуванні
+   зарплатної відомості. */
+.fieldLabel {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  background: var(--white);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--toggle-lang);
+}
+
+.fieldInput,
+.fieldTextarea {
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--heading-text);
+  background: var(--white);
+}
+
+.fieldInput {
+  height: 48px;
+}
+
+.fieldTextarea {
+  padding: 12px 14px;
+  resize: vertical;
+}
+
+.fieldInput:disabled,
+.fieldTextarea:disabled {
+  cursor: not-allowed;
+  color: var(--border-hover);
+  background: var(--toggle-lang-background);
+}
+
+.assignmentBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.assignmentBlockHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.assignmentBlockTitle {
+  font-weight: 500;
+  color: var(--heading-text);
+}
+
+.removeAssignmentBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.removeAssignmentBtn:hover {
+  background: #fae8e6;
+  fill: #a71916;
+}
+
+.removeAssignmentIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.addAssignmentBtn {
+  align-self: flex-start;
+  padding: 10px 16px;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  color: var(--button);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.addAssignmentBtn:hover {
+  border-color: var(--button);
+  background: #f1eefc;
+}
+
+.duplicateText {
+  color: var(--main-text);
+  line-height: 1.5;
+  margin-bottom: 20px;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.submitBtn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--button);
+  color: var(--white);
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.submitBtn:disabled {
+  background: var(--table-edit);
+  cursor: not-allowed;
+}
+
+.cancelLinkBtn {
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--main-text);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancelLinkBtn:hover {
+  border-color: var(--button);
+  color: var(--button);
+}
+
 .errorBlock {
   display: flex;
   flex-direction: column;
