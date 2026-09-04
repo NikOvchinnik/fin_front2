@@ -357,7 +357,14 @@ const EmployeeForm = ({
                 label: `${fieldDef.label}${fieldDef.required ? ' *' : ''}`,
                 options,
                 readOnly: disabled,
-                onChange: onChange,
+                // autocomplete-select віддає в onChange весь об'єкт опції
+                // ({value, label}), а не саме значення — так само, як в
+                // усіх інших формах проєкту (MyRefundsPage тощо), треба
+                // розпакувати .value самим. Звичайний select вже віддає
+                // готове значення.
+                onChange: fieldDef.searchable
+                  ? option => onChange(option?.value ?? '')
+                  : onChange,
               },
             ]}
             defaultValues={{ [fieldDef.key]: value ?? '' }}
