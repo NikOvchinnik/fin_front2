@@ -12,9 +12,10 @@ import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColum
 import StaffRateDrawer from '../../components/StaffRateDrawer/StaffRateDrawer';
 import style from './StaffPage.module.css';
 import { FILTER_ALL } from '../../helpers/status';
-import { getEmployees } from '../../helpers/axios/employees';
+import { getEmployeeLookups, getEmployees } from '../../helpers/axios/employees';
 import {
   buildEmployeeFieldOptions,
+  buildEmployeeOptions,
   employeeFields,
   formatRate,
   getMissingConfigFields,
@@ -26,6 +27,16 @@ const withAllOption = options => [
   { value: FILTER_ALL, label: 'Усі' },
   ...options,
 ];
+
+// Unit/Department/Subdivision/Position/Графік/Керівник/Валюта належать
+// призначенню, не людині — якщо в співробітника кілька керівників,
+// фільтр має спрацьовувати, коли значення є ХОЧА Б в одному з призначень
+// (а не лише в найстарішому, яке лежить сплющеним в employee.*).
+const employeeAssignments = employee =>
+  employee.assignments?.length ? employee.assignments : [employee];
+
+const matchesAnyAssignment = (employee, field, value) =>
+  employeeAssignments(employee).some(assignment => assignment[field] === value);
 
 // Порядок і набір колонок для сторінки фінансиста — частина полів спільна
 // з карткою співробітника (employeeFields), частина ще не існує в моделі.
@@ -53,11 +64,31 @@ const hideableColumnKeys = staffColumnKeys.filter(
   key => !fixedColumnKeys.includes(key)
 );
 
+// Ці поля належать конкретному призначенню (керівнику), не людині — якщо в
+// співробітника кілька призначень і значення в них різні, показуємо рядок
+// нижче основного при розгортанні (той самий підхід, що на "Співробітниках").
+const ASSIGNMENT_DISPLAY_FIELD_KEYS = [
+  'unit',
+  'department',
+  'subdivision',
+  'position',
+  'work_schedule',
+  'manager',
+];
+
 const newStaffFieldLabels = {
   status: 'Статус',
   currency: 'Валюта',
   rate: 'Ставка',
 };
+
+// "Статус" — не сире поле employee, а обчислене (isEmployeeConfigured), тому
+// список значень фіксований, а не будується з даних, як інші фільтри.
+const statusFilterOptions = [
+  { value: FILTER_ALL, label: 'Усі' },
+  { value: 'configured', label: 'Налаштовано' },
+  { value: 'not_configured', label: 'Не налаштовано' },
+];
 
 const employeeFieldByKey = employeeFields.reduce((acc, field) => {
   acc[field.key] = field;
@@ -75,6 +106,11 @@ const StaffPage = () => {
   const [selectedPaymentForm, setSelectedPaymentForm] = useState(FILTER_ALL);
   const [selectedPaymentDetails, setSelectedPaymentDetails] = useState(FILTER_ALL);
   const [selectedCurrency, setSelectedCurrency] = useState(FILTER_ALL);
+  const [selectedStatus, setSelectedStatus] = useState(FILTER_ALL);
+  const [selectedGender, setSelectedGender] = useState(FILTER_ALL);
+  const [selectedWorkSchedule, setSelectedWorkSchedule] = useState(FILTER_ALL);
+  const [selectedManager, setSelectedManager] = useState(FILTER_ALL);
+  const [taxIdSearch, setTaxIdSearch] = useState('');
   const [showAllFilters, setShowAllFilters] = useState(false);
   // Форми-селекти фільтрів беруть defaultValues лише при монтуванні (react-hook-form) —
   // щоб після скидання вони й візуально показали "Усі", примусово ремаунтимо їх,
@@ -83,11 +119,34 @@ const StaffPage = () => {
   const [employees, setEmployees] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState(null);
+
+  // Відкриває дровер ставки одразу на вкладці потрібного керівника —
+  // ставка/валюта/дата тепер належать конкретному призначенню.
+  const openRateDrawer = (employee, assignmentId) => {
+    setSelectedEmployee(employee);
+    setSelectedAssignmentId(assignmentId ?? employee.assignments?.[0]?.id ?? null);
+  };
   const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
     const saved = localStorage.getItem('staffVisibleColumns');
     return saved ? JSON.parse(saved) : 'All';
   });
   const [isColumnsModalOpen, setColumnsModalOpen] = useState(false);
+  const [expandedRowIds, setExpandedRowIds] = useState(() => new Set());
+  // Повний довідник керівників (усі, хто може бути призначений керівником,
+  // незалежно від того, чи є в них зараз хоч один співробітник) — для
+  // фільтра "Керівник", на відміну від решти фільтрів, які будуються з
+  // даних поточної таблиці.
+  const [managerDirectory, setManagerDirectory] = useState([]);
+
+  const toggleRowExpand = employeeId => {
+    setExpandedRowIds(prev => {
+      const next = new Set(prev);
+      if (next.has(employeeId)) next.delete(employeeId);
+      else next.add(employeeId);
+      return next;
+    });
+  };
 
   const handleColumnToggle = accessorKey => {
     setVisibleColumnKeys(prev => {
@@ -154,10 +213,43 @@ const StaffPage = () => {
     () => withAllOption(buildEmployeeFieldOptions(employees, 'currency')),
     [employees]
   );
+  const genderOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'gender')),
+    [employees]
+  );
+  const workScheduleOptions = useMemo(
+    () => withAllOption(buildEmployeeFieldOptions(employees, 'work_schedule')),
+    [employees]
+  );
+  const managerOptions = useMemo(
+    () =>
+      withAllOption(
+        buildEmployeeOptions(managerDirectory.map(manager => manager.name))
+      ),
+    [managerDirectory]
+  );
 
   useEffect(() => {
     fetchEmployees();
+    getEmployeeLookups()
+      .then(result => setManagerDirectory(result?.managers || []))
+      .catch(() => setManagerDirectory([]));
   }, [fetchEmployees]);
+
+  // Поки активний фільтр по полю, що належить призначенню (не людині) —
+  // автоматично розгортаємо рядки з кількома призначеннями, інакше збіг
+  // може ховатись у згорнутому підрядку, і незрозуміло, чому рядок узагалі
+  // потрапив у вибірку.
+  const hasActiveAssignmentFilter = [
+    selectedUnit,
+    selectedDepartment,
+    selectedSubdivision,
+    selectedPosition,
+    selectedWorkSchedule,
+    selectedManager,
+    selectedCurrency,
+    selectedStatus,
+  ].some(value => value !== FILTER_ALL);
 
   const columns = useMemo(
     () =>
@@ -165,80 +257,192 @@ const StaffPage = () => {
         accessorKey: key,
         header: employeeFieldByKey[key]?.label || newStaffFieldLabels[key],
         cell: ({ row }) => {
-          const value = row.original[key];
+          const employee = row.original;
+          const assignments = employee.assignments || [];
+          const hasMultipleAssignments = assignments.length > 1;
+          const isExpanded =
+            expandedRowIds.has(employee.id) ||
+            (hasActiveAssignmentFilter && hasMultipleAssignments);
+
+          // Ставка/валюта/дата тепер належать конкретному призначенню
+          // (керівнику) — бекенд завжди віддає хоча б одне, тож для
+          // employee з одним призначенням це просто один "слот", для
+          // кількох — по одному на кожного керівника.
+          const rateSlots = assignments.length ? assignments : [employee];
+
           if (key === 'status') {
-            const missingFields = getMissingConfigFields(row.original);
-            const configured = missingFields.length === 0;
-            const badge = (
-              <span
-                className={`${style.statusBadge} ${
-                  configured ? style.statusConfigured : style.statusNotConfigured
-                }`}
-              >
-                <span className={style.statusDot} />
-                {configured ? 'Налаштовано' : 'Не налаштовано'}
-              </span>
-            );
-
-            if (configured) return badge;
-
             return (
-              <Tooltip
-                title={`Незаповнені поля: ${missingFields.join(', ')}`}
-                arrow
-              >
-                {badge}
-              </Tooltip>
-            );
-          }
-          if (key === 'local_full_name' && value && row.original.rate) {
-            return (
-              <div className={style.rateValueCell}>
-                <span>{value}</span>
-                <Tooltip title="Редагувати ставку" arrow>
-                  <button
-                    type="button"
-                    className={style.rateEditBtn}
-                    onClick={() => setSelectedEmployee(row.original)}
-                  >
-                    <Icon id="edit" className={style.rateEditIcon} />
-                  </button>
-                </Tooltip>
+              <div className={style.multiValueCell}>
+                {rateSlots.map((assignment, index) => {
+                  if (index > 0 && !isExpanded) return null;
+                  const missingFields = getMissingConfigFields(employee, assignment);
+                  const configured = missingFields.length === 0;
+                  const rowClassName =
+                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  const badge = (
+                    <span
+                      className={`${style.statusBadge} ${
+                        configured ? style.statusConfigured : style.statusNotConfigured
+                      }`}
+                    >
+                      <span className={style.statusDot} />
+                      {configured ? 'Налаштовано' : 'Не налаштовано'}
+                    </span>
+                  );
+                  return (
+                    <div key={assignment?.id ?? index} className={rowClassName}>
+                      {configured ? (
+                        badge
+                      ) : (
+                        <Tooltip
+                          title={`Незаповнені поля: ${missingFields.join(', ')}`}
+                          arrow
+                        >
+                          {badge}
+                        </Tooltip>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           }
-          if (key === 'rate' && !value) {
+
+          if (key === 'local_full_name') {
+            const value = employee[key] || '-';
             return (
-              <button
-                type="button"
-                className={style.addRateBtn}
-                onClick={() => setSelectedEmployee(row.original)}
-              >
-                <Icon id="add" className={style.addRateIcon} />
-                Додати ставку
-              </button>
-            );
-          }
-          if (key === 'rate' && value) {
-            return (
-              <div className={style.rateValueCell}>
-                <span>{formatRate(value, row.original.currency)}</span>
-                <Tooltip title="Редагувати ставку" arrow>
-                  <button
-                    type="button"
-                    className={style.rateEditBtn}
-                    onClick={() => setSelectedEmployee(row.original)}
-                  >
-                    <Icon id="edit" className={style.rateEditIcon} />
-                  </button>
-                </Tooltip>
+              <div className={style.multiValueCell}>
+                <div className={style.multiValuePrimary}>
+                  {hasMultipleAssignments && (
+                    <button
+                      type="button"
+                      className={style.rowExpandToggle}
+                      onClick={event => {
+                        event.stopPropagation();
+                        toggleRowExpand(employee.id);
+                      }}
+                    >
+                      <Icon
+                        id="chevron-up"
+                        className={`${style.multiValueChevron} ${
+                          isExpanded ? '' : style.multiValueChevronCollapsed
+                        }`}
+                      />
+                    </button>
+                  )}
+                  <span>{value}</span>
+                  {/* Для кількох призначень редагування — лише через рядки
+                      в колонці "Ставка" нижче, щоб не було неоднозначності,
+                      якого саме керівника відкриває ця іконка. */}
+                  {!hasMultipleAssignments && employee.rate && (
+                    <Tooltip title="Редагувати ставку" arrow>
+                      <button
+                        type="button"
+                        className={style.rateEditBtn}
+                        onClick={event => {
+                          event.stopPropagation();
+                          openRateDrawer(employee, assignments[0]?.id);
+                        }}
+                      >
+                        <Icon id="edit" className={style.rateEditIcon} />
+                      </button>
+                    </Tooltip>
+                  )}
+                </div>
               </div>
             );
           }
-          return value || '-';
+
+          if (key === 'rate') {
+            return (
+              <div className={style.multiValueCell}>
+                {rateSlots.map((assignment, index) => {
+                  if (index > 0 && !isExpanded) return null;
+                  const rowClassName =
+                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  return (
+                    <div key={assignment?.id ?? index} className={rowClassName}>
+                      {assignment.rate ? (
+                        <div className={style.rateValueCell}>
+                          <span>{formatRate(assignment.rate, assignment.currency)}</span>
+                          <Tooltip title="Редагувати ставку" arrow>
+                            <button
+                              type="button"
+                              className={style.rateEditBtn}
+                              onClick={event => {
+                                event.stopPropagation();
+                                openRateDrawer(employee, assignment?.id);
+                              }}
+                            >
+                              <Icon id="edit" className={style.rateEditIcon} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className={style.addRateBtn}
+                          onClick={event => {
+                            event.stopPropagation();
+                            openRateDrawer(employee, assignment?.id);
+                          }}
+                        >
+                          <Icon id="add" className={style.addRateIcon} />
+                          Додати ставку
+                        </button>
+                      )}
+                      {index === 0 && hasMultipleAssignments && (
+                        <button
+                          type="button"
+                          className={style.rowExpandToggle}
+                          onClick={event => {
+                            event.stopPropagation();
+                            toggleRowExpand(employee.id);
+                          }}
+                        >
+                          <Icon
+                            id="chevron-up"
+                            className={`${style.multiValueChevron} ${
+                              isExpanded ? '' : style.multiValueChevronCollapsed
+                            }`}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
+
+          if (ASSIGNMENT_DISPLAY_FIELD_KEYS.includes(key) && hasMultipleAssignments) {
+            const uniqueValues = [
+              ...new Set(assignments.map(item => item?.[key] || '-')),
+            ];
+            const extraValues = uniqueValues.length > 1 ? uniqueValues.slice(1) : [];
+            return (
+              <div className={style.multiValueCell}>
+                <div className={style.multiValuePrimary}>
+                  <span>{uniqueValues[0]}</span>
+                </div>
+                {isExpanded &&
+                  extraValues.map((value, index) => (
+                    <div key={index} className={style.multiValueExtra}>
+                      {value}
+                    </div>
+                  ))}
+              </div>
+            );
+          }
+
+          return (
+            <div className={style.multiValueCell}>
+              <div className={style.multiValuePrimary}>{employee[key] || '-'}</div>
+            </div>
+          );
         },
       })),
-    []
+    [expandedRowIds, hasActiveAssignmentFilter]
   );
 
   const filteredColumns = useMemo(() => {
@@ -259,20 +463,24 @@ const StaffPage = () => {
     let rows = employees;
 
     if (selectedUnit !== FILTER_ALL) {
-      rows = rows.filter(employee => employee.unit === selectedUnit);
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'unit', selectedUnit)
+      );
     }
     if (selectedDepartment !== FILTER_ALL) {
-      rows = rows.filter(
-        employee => employee.department === selectedDepartment
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'department', selectedDepartment)
       );
     }
     if (selectedSubdivision !== FILTER_ALL) {
-      rows = rows.filter(
-        employee => employee.subdivision === selectedSubdivision
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'subdivision', selectedSubdivision)
       );
     }
     if (selectedPosition !== FILTER_ALL) {
-      rows = rows.filter(employee => employee.position === selectedPosition);
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'position', selectedPosition)
+      );
     }
     if (selectedPaymentForm !== FILTER_ALL) {
       rows = rows.filter(
@@ -285,7 +493,34 @@ const StaffPage = () => {
       );
     }
     if (selectedCurrency !== FILTER_ALL) {
-      rows = rows.filter(employee => employee.currency === selectedCurrency);
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'currency', selectedCurrency)
+      );
+    }
+    if (selectedStatus !== FILTER_ALL) {
+      rows = rows.filter(employee => {
+        // "Налаштовано" — усі призначення налаштовані (нема жодного, що
+        // потребує уваги); "Не налаштовано" — є хоча б одне таке.
+        const fullyConfigured = employeeAssignments(employee).every(
+          assignment => isEmployeeConfigured(employee, assignment)
+        );
+        return selectedStatus === 'configured'
+          ? fullyConfigured
+          : !fullyConfigured;
+      });
+    }
+    if (selectedGender !== FILTER_ALL) {
+      rows = rows.filter(employee => employee.gender === selectedGender);
+    }
+    if (selectedWorkSchedule !== FILTER_ALL) {
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'work_schedule', selectedWorkSchedule)
+      );
+    }
+    if (selectedManager !== FILTER_ALL) {
+      rows = rows.filter(employee =>
+        matchesAnyAssignment(employee, 'manager', selectedManager)
+      );
     }
 
     const query = search.trim().toLowerCase();
@@ -295,10 +530,18 @@ const StaffPage = () => {
       );
     }
 
+    const taxIdQuery = taxIdSearch.trim();
+    if (taxIdQuery) {
+      rows = rows.filter(employee =>
+        String(employee.tax_id ?? '').includes(taxIdQuery)
+      );
+    }
+
     return rows;
   }, [
     employees,
     search,
+    taxIdSearch,
     selectedUnit,
     selectedDepartment,
     selectedSubdivision,
@@ -306,14 +549,24 @@ const StaffPage = () => {
     selectedPaymentForm,
     selectedPaymentDetails,
     selectedCurrency,
+    selectedStatus,
+    selectedGender,
+    selectedWorkSchedule,
+    selectedManager,
   ]);
 
-  const activeAdditionalFiltersCount = [
-    selectedPosition,
-    selectedPaymentForm,
-    selectedPaymentDetails,
-    selectedCurrency,
-  ].filter(value => value !== FILTER_ALL).length;
+  const activeAdditionalFiltersCount =
+    [
+      selectedPosition,
+      selectedPaymentForm,
+      selectedPaymentDetails,
+      selectedCurrency,
+      selectedStatus,
+      selectedGender,
+      selectedWorkSchedule,
+      selectedManager,
+    ].filter(value => value !== FILTER_ALL).length +
+    (taxIdSearch.trim() !== '' ? 1 : 0);
 
   const hiddenColumnsCount =
     visibleColumnKeys === 'All'
@@ -336,6 +589,11 @@ const StaffPage = () => {
     setSelectedPaymentForm(FILTER_ALL);
     setSelectedPaymentDetails(FILTER_ALL);
     setSelectedCurrency(FILTER_ALL);
+    setSelectedStatus(FILTER_ALL);
+    setSelectedGender(FILTER_ALL);
+    setSelectedWorkSchedule(FILTER_ALL);
+    setSelectedManager(FILTER_ALL);
+    setTaxIdSearch('');
     setFiltersResetKey(prev => prev + 1);
   };
 
@@ -472,6 +730,78 @@ const StaffPage = () => {
                 defaultValues={{ currency: selectedCurrency }}
               />
             </div>
+            <div className={style.selectSlot}>
+              <Form
+                key={`status-${filtersResetKey}`}
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'status',
+                    label: 'Статус',
+                    options: statusFilterOptions,
+                    onChange: value => setSelectedStatus(value),
+                  },
+                ]}
+                defaultValues={{ status: selectedStatus }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <Form
+                key={`gender-${filtersResetKey}`}
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'gender',
+                    label: 'Стать',
+                    options: genderOptions,
+                    onChange: value => setSelectedGender(value),
+                  },
+                ]}
+                defaultValues={{ gender: selectedGender }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <Form
+                key={`work_schedule-${filtersResetKey}`}
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'work_schedule',
+                    label: 'Графік роботи',
+                    options: workScheduleOptions,
+                    onChange: value => setSelectedWorkSchedule(value),
+                  },
+                ]}
+                defaultValues={{ work_schedule: selectedWorkSchedule }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <Form
+                key={`manager-${filtersResetKey}`}
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'manager',
+                    label: 'Керівник',
+                    options: managerOptions,
+                    onChange: value => setSelectedManager(value),
+                  },
+                ]}
+                defaultValues={{ manager: selectedManager }}
+              />
+            </div>
+            <div className={style.selectSlot}>
+              <label className={style.labelContainer}>
+                <input
+                  type="text"
+                  name="tax_id"
+                  className={style.inputContainer}
+                  placeholder="Пошук за ІПН"
+                  value={taxIdSearch}
+                  onChange={e => setTaxIdSearch(e.target.value)}
+                />
+              </label>
+            </div>
           </div>
         )}
 
@@ -526,14 +856,23 @@ const StaffPage = () => {
           visibleColumns={25}
           visibleColumnsMobile={2}
           enableHorizontalScroll={isMobile ? false : true}
+          onRowClick={employee => {
+            if ((employee.assignments || []).length > 1) {
+              toggleRowExpand(employee.id);
+            }
+          }}
         />
       )}
 
       <StaffRateDrawer
-        key={selectedEmployee?.id}
+        key={`${selectedEmployee?.id}-${selectedAssignmentId}`}
         isOpen={!!selectedEmployee}
         employee={selectedEmployee}
-        onClose={() => setSelectedEmployee(null)}
+        initialAssignmentId={selectedAssignmentId}
+        onClose={() => {
+          setSelectedEmployee(null);
+          setSelectedAssignmentId(null);
+        }}
         onSaved={fetchEmployees}
       />
 

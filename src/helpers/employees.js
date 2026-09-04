@@ -29,13 +29,21 @@ const CONFIG_FIELD_LABELS = {
   rate_date: 'Дата початку',
 };
 
-export const getMissingConfigFields = employee =>
+// rate/currency/rate_date належать конкретному призначенню (керівнику), не
+// людині — тому другий аргумент. За замовчуванням він = employee, бо
+// бекенд і так підставляє в employee.rate/currency/rate_date значення з
+// primary-призначення (сумісність для місць, що ще не показують кілька
+// призначень окремо).
+export const getMissingConfigFields = (employee, assignment = employee) =>
   Object.entries(CONFIG_FIELD_LABELS)
-    .filter(([key]) => !employee?.[key])
+    .filter(([key]) => {
+      const value = key === 'payment_details' ? employee?.[key] : assignment?.[key];
+      return !value;
+    })
     .map(([, label]) => label);
 
-export const isEmployeeConfigured = employee =>
-  getMissingConfigFields(employee).length === 0;
+export const isEmployeeConfigured = (employee, assignment = employee) =>
+  getMissingConfigFields(employee, assignment).length === 0;
 
 export const employeeFields = [
   { key: 'unit', label: 'unit' },

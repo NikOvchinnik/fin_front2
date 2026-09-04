@@ -75,6 +75,40 @@
   color: var(--toggle-lang);
 }
 
+.managerTabs {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.managerTab {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--button);
+  color: var(--button);
+  font-size: 16px;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.3s ease;
+}
+
+.managerTab:hover:not(.managerTabActive) {
+  border-color: var(--button-hover);
+  color: var(--button-hover);
+}
+
+.managerTabActive {
+  background: var(--button);
+  color: var(--white);
+}
+
 .infoList {
   display: flex;
   flex-direction: column;
