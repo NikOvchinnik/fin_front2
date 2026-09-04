@@ -21,6 +21,7 @@ const Table = ({
   enableHorizontalScroll = false,
   onPageRowIdsChange,
   onPageChange,
+  onRowClick,
 }) => {
   const [visibleColumnIndex, setVisibleColumnIndex] = useState(0);
   const [needsHorizontalScroll, setNeedsHorizontalScroll] = useState(false);
@@ -254,6 +255,9 @@ const Table = ({
                 <tr
                   key={row.id}
                   className={style[row.original.className] || ''}
+                  onClick={
+                    onRowClick ? () => onRowClick(row.original) : undefined
+                  }
                 >
                   {Array.from({ length: fixedCount }).map((_, i) => {
                     const cell = row.getVisibleCells()[i];

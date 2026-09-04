@@ -58,6 +58,33 @@ export const patchEmployee = async (id, payload) => {
   }
 };
 
+export const postEmployeeAssignment = async (id, payload) => {
+  try {
+    return await axios.post(`/api/employees/${id}/assignments`, payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const patchEmployeeAssignment = async (id, assignmentId, payload) => {
+  try {
+    return await axios.put(
+      `/api/employees/${id}/assignments/${assignmentId}`,
+      payload
+    );
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteEmployeeAssignment = async (id, assignmentId) => {
+  try {
+    return await axios.delete(`/api/employees/${id}/assignments/${assignmentId}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const postEmployeeRate = async (id, payload) => {
   try {
     return await axios.post(`/api/employees/${id}/rate`, payload);

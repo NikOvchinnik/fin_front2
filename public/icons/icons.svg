@@ -3,6 +3,9 @@
 <symbol id="icon-staff-select-arrow" viewBox="0 0 24 24">
 <path d="M7 10l5 5 5-5z"></path>
 </symbol>
+<symbol id="icon-chevron-up" viewBox="0 0 24 24">
+<path d="M6 15l6-6 6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+</symbol>
 <symbol id="icon-staff-chevron-left" viewBox="0 0 28 28">
 <rect width="28" height="28" rx="4.66667" fill="#D6D6D6"></rect>
 <path fill-rule="evenodd" clip-rule="evenodd" d="M17.1581 6.17472C17.6137 6.63033 17.6137 7.36902 17.1581 7.82463L10.9831 13.9997L17.1581 20.1747C17.6137 20.6303 17.6137 21.369 17.1581 21.8246C16.7025 22.2802 15.9638 22.2802 15.5082 21.8246L8.50821 14.8246C8.0526 14.369 8.0526 13.6303 8.50821 13.1747L15.5082 6.17472C15.9638 5.7191 16.7025 5.7191 17.1581 6.17472Z" fill="white"></path>

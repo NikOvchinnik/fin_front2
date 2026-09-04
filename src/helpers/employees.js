@@ -68,6 +68,73 @@ export const requiredEmployeeFields = employeeFields
   .filter(field => field.key !== 'termination_date')
   .map(field => employeeLookupFieldIds[field.key] || field.key);
 
+// "Особисті дані" — заповнюються один раз на людину. "Призначення" —
+// окремий блок на кожного керівника (unit/department/subdivision/посада/
+// графік/дати/сам керівник) — один співробітник може мати кілька таких
+// блоків одночасно (MAX_ASSIGNMENTS_PER_EMPLOYEE = 3, синхронізовано з
+// бекендом).
+export const MAX_ASSIGNMENTS_PER_EMPLOYEE = 3;
+
+export const personFieldKeys = [
+  'full_name',
+  'accounting_full_name',
+  'local_full_name',
+  'payment_form',
+  'payment_details',
+  'tax_id',
+  'gender',
+  'contacts',
+];
+
+export const assignmentFieldKeys = [
+  'manager',
+  'unit',
+  'department',
+  'subdivision',
+  'position',
+  'work_schedule',
+  'hire_date',
+  'termination_date',
+];
+
+export const emptyAssignment = {
+  id: null,
+  manager_id: '',
+  unit_id: '',
+  department_id: '',
+  subdivision_id: '',
+  position: '',
+  work_schedule: '',
+  hire_date: '',
+  termination_date: '',
+};
+
+export const normalizeAssignment = assignment => ({
+  ...emptyAssignment,
+  id: assignment?.id ?? null,
+  manager_id: assignment?.manager_id ?? assignment?.manager_user?.id ?? '',
+  unit_id: assignment?.unit_id ?? assignment?.unit_details?.id ?? '',
+  department_id:
+    assignment?.department_id ?? assignment?.department_details?.id ?? '',
+  subdivision_id:
+    assignment?.subdivision_id ?? assignment?.subdivision_details?.id ?? '',
+  position: assignment?.position ?? '',
+  work_schedule: assignment?.work_schedule ?? '',
+  hire_date: String(assignment?.hire_date ?? '').slice(0, 10),
+  termination_date: String(assignment?.termination_date ?? '').slice(0, 10),
+});
+
+export const buildAssignmentPayload = assignment => ({
+  manager_id: assignment.manager_id || null,
+  unit_id: assignment.unit_id || null,
+  department_id: assignment.department_id || null,
+  subdivision_id: assignment.subdivision_id || null,
+  position: normalizeEmployeeValue(assignment.position),
+  work_schedule: normalizeEmployeeValue(assignment.work_schedule),
+  hire_date: normalizeEmployeeValue(assignment.hire_date),
+  termination_date: normalizeEmployeeValue(assignment.termination_date) || null,
+});
+
 export const genderOptions = [
   { value: 'Ж', label: 'Ж' },
   { value: 'Ч', label: 'Ч' },
@@ -172,22 +239,21 @@ export const normalizeEmployee = employee => ({
   ),
 });
 
+// Тільки особисті дані людини — Unit/Department/Subdivision/Position/
+// керівник/графік/дати тепер належать окремому призначенню
+// (buildAssignmentPayload), не самій людині.
 export const buildEmployeePayload = (data, creationSource = undefined) => {
-  const payload = employeeFields.reduce((acc, field) => {
-    const lookupIdField = employeeLookupFieldIds[field.key];
+  const payload = personFieldKeys.reduce((acc, key) => {
+    const lookupIdField = employeeLookupFieldIds[key];
 
     if (lookupIdField) {
       acc[lookupIdField] = data[lookupIdField] || null;
       return acc;
     }
 
-    acc[field.key] = normalizeEmployeeValue(data[field.key]);
+    acc[key] = normalizeEmployeeValue(data[key]);
     return acc;
   }, {});
-
-  if (!payload.termination_date) {
-    payload.termination_date = null;
-  }
 
   if (creationSource) {
     payload.creation_source = creationSource;

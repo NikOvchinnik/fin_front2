@@ -29,6 +29,10 @@ const Form = ({
   styleForm = 'formContainer',
   fontSize = 16,
   formError = null,
+  // false — рендерити <div> замість <form>. Потрібно, коли цей компонент
+  // використовується як одне поле всередині чужої, уже існуючої <form>
+  // (інакше виходить невалідна вкладеність form-у-form).
+  asForm = true,
 }) => {
   const { t } = useTranslation();
   const {
@@ -888,6 +892,8 @@ const Form = ({
     }
   };
 
+  const FormTag = asForm ? 'form' : 'div';
+
   return (
     <ThemeProvider theme={theme}>
       {title && (
@@ -900,9 +906,11 @@ const Form = ({
         </h2>
       )}
       {formError}
-      <form
+      <FormTag
         className={style[styleForm]}
-        onSubmit={handleSubmit(onSubmit, onInvalid)}
+        {...(asForm
+          ? { onSubmit: handleSubmit(onSubmit, onInvalid) }
+          : {})}
       >
         {fields.map((field, index) => (
           <div
@@ -928,7 +936,7 @@ const Form = ({
             ))}
           </div>
         ) : null}
-      </form>
+      </FormTag>
     </ThemeProvider>
   );
 };
