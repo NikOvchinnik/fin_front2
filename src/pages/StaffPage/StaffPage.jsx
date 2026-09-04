@@ -353,6 +353,23 @@ const StaffPage = () => {
             );
           }
 
+          if (key === 'currency') {
+            return (
+              <div className={style.multiValueCell}>
+                {rateSlots.map((assignment, index) => {
+                  if (index > 0 && !isExpanded) return null;
+                  const rowClassName =
+                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  return (
+                    <div key={assignment?.id ?? index} className={rowClassName}>
+                      {assignment.currency || '-'}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          }
+
           if (key === 'rate') {
             return (
               <div className={style.multiValueCell}>
