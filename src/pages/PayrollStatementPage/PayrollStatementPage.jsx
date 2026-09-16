@@ -167,6 +167,39 @@ const BULK_EDIT_SAVE_FIELDS = ['distribution', 'worked_days', 'bonus'];
 // місяця", і в розрахунку "Нараховано").
 const DEFAULT_MONTH_WORKING_DAYS = 22;
 
+// "Нараховано"/"Податки"/"Всього у валюті нарахування" тепер рахує бекенд
+// (routes/employees.py, той самий формулу погоджено з фінансистом на
+// конкретних прикладах — 734/2759 при ставці 10 000) і віддає готовими
+// числами в employee.payroll_entry.{accrued,taxes,total_accrued_currency}.
+// Тут лишається тільки: (1) визначити, яких вхідних даних бракує — щоб
+// показати "-" з підказкою, і (2) текст для тултіпа з описом формули.
+const getAccruedMissingFields = employee => {
+  const missing = [];
+  if (!employee.rate) missing.push('Ставка');
+  if (employee.payroll_entry?.distribution == null) missing.push('Розподіл');
+  if (employee.payroll_entry?.worked_days == null) {
+    missing.push('Відпрацьовані робочі дні');
+  }
+  return missing;
+};
+
+const getPayrollTotalsMissingFields = employee => {
+  const missing = getAccruedMissingFields(employee);
+  if (!employee.tax_formula) missing.push('Податки');
+  return missing;
+};
+
+// Людською мовою — та сама формула, що рахує бекенд.
+const TAX_FORMULA_DESCRIPTIONS = {
+  'ставка Nett': 'Податки не нараховуються.',
+  'ставка Gross': 'Податки не нараховуються.',
+  'ставка без КП': 'Податки не нараховуються.',
+  'ставка + КП (6%)':
+    'Податки = (Нараховано + Компенсація відпустки + Бонус) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
+  'ставка + КП (6%+ЄСВ)':
+    'Податки = (Нараховано + Компенсація відпустки + Бонус + 1903) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
+};
+
 const PayrollStatementPage = () => {
   const isMobile = useMediaQuery('(max-width: 1024px)');
   const [startDate, setStartDate] = useState(dayjs().startOf('month'));
@@ -573,20 +606,12 @@ const PayrollStatementPage = () => {
             return value ?? DEFAULT_MONTH_WORKING_DAYS;
           }
 
+          // Нараховано/Податки/Всього у валюті нарахування рахує бекенд
+          // (він же "заморожує" ці числа при відправці на перевірку) —
+          // тут лише показуємо готове значення з payroll_entry, або "-" з
+          // підказкою, чого бракує для розрахунку.
           if (key === 'accrued') {
-            const rateValue = employee.rate;
-            const distributionValue = employee.payroll_entry?.distribution;
-            const workedDaysValue = employee.payroll_entry?.worked_days;
-
-            const missingFields = [];
-            if (!rateValue) missingFields.push('Ставка');
-            if (distributionValue === null || distributionValue === undefined) {
-              missingFields.push('Розподіл');
-            }
-            if (workedDaysValue === null || workedDaysValue === undefined) {
-              missingFields.push('Відпрацьовані робочі дні');
-            }
-
+            const missingFields = getAccruedMissingFields(employee);
             if (missingFields.length > 0) {
               return (
                 <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
@@ -595,11 +620,56 @@ const PayrollStatementPage = () => {
               );
             }
 
-            const accrued =
-              (rateValue * (distributionValue / 100) * workedDaysValue) /
-              DEFAULT_MONTH_WORKING_DAYS;
+            return formatRate(
+              Math.round(employee.payroll_entry.accrued * 100) / 100,
+              employee.currency
+            );
+          }
 
-            return formatRate(Math.round(accrued * 100) / 100, employee.currency);
+          // "Всього до виплати на руки" (total_payout) поки НЕ чіпаємо —
+          // лишається старим плейсхолдером (falls through нижче, завжди
+          // "-"), формулу під нього ще не узгоджено.
+          if (key === 'taxes') {
+            const missingFields = getPayrollTotalsMissingFields(employee);
+            if (missingFields.length > 0 || employee.payroll_entry.taxes == null) {
+              return (
+                <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
+                  <span className={style.accruedMissingBadge}>-</span>
+                </Tooltip>
+              );
+            }
+
+            return (
+              <Tooltip
+                title={`${employee.tax_formula}. ${TAX_FORMULA_DESCRIPTIONS[employee.tax_formula]}`}
+              >
+                <span>
+                  {formatRate(
+                    Math.round(employee.payroll_entry.taxes * 100) / 100,
+                    employee.currency
+                  )}
+                </span>
+              </Tooltip>
+            );
+          }
+
+          if (key === 'total_accrued_currency') {
+            const missingFields = getPayrollTotalsMissingFields(employee);
+            if (
+              missingFields.length > 0 ||
+              employee.payroll_entry.total_accrued_currency == null
+            ) {
+              return (
+                <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
+                  <span className={style.accruedMissingBadge}>-</span>
+                </Tooltip>
+              );
+            }
+
+            return formatRate(
+              Math.round(employee.payroll_entry.total_accrued_currency * 100) / 100,
+              employee.currency
+            );
           }
 
           if (EDITABLE_PAYROLL_FIELDS.includes(key)) {
@@ -1024,7 +1094,7 @@ const PayrollStatementPage = () => {
       <Table
         data={filteredEmployees}
         columns={filteredColumns}
-        styles="analyticTable"
+        styles="payrollTable"
         fixedFirstColumn={isMobile ? true : 5}
         visibleColumns={25}
         visibleColumnsMobile={2}

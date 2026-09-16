@@ -53,6 +53,7 @@ const staffColumnKeys = [
   'gender',
   'work_schedule',
   'manager',
+  'taxes',
   'currency',
   'rate',
 ];
@@ -78,6 +79,7 @@ const ASSIGNMENT_DISPLAY_FIELD_KEYS = [
 
 const newStaffFieldLabels = {
   status: 'Статус',
+  taxes: 'Податки',
   currency: 'Валюта',
   rate: 'Ставка',
 };
@@ -349,6 +351,51 @@ const StaffPage = () => {
                     </Tooltip>
                   )}
                 </div>
+              </div>
+            );
+          }
+
+          if (key === 'taxes') {
+            return (
+              <div className={style.multiValueCell}>
+                {rateSlots.map((assignment, index) => {
+                  if (index > 0 && !isExpanded) return null;
+                  const rowClassName =
+                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  return (
+                    <div key={assignment?.id ?? index} className={rowClassName}>
+                      {assignment.tax_formula ? (
+                        <div className={style.rateValueCell}>
+                          <span>{assignment.tax_formula}</span>
+                          <Tooltip title="Редагувати податки" arrow>
+                            <button
+                              type="button"
+                              className={style.rateEditBtn}
+                              onClick={event => {
+                                event.stopPropagation();
+                                openRateDrawer(employee, assignment?.id);
+                              }}
+                            >
+                              <Icon id="edit" className={style.rateEditIcon} />
+                            </button>
+                          </Tooltip>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          className={style.addRateBtn}
+                          onClick={event => {
+                            event.stopPropagation();
+                            openRateDrawer(employee, assignment?.id);
+                          }}
+                        >
+                          <Icon id="add" className={style.addRateIcon} />
+                          Обрати податки
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           }
