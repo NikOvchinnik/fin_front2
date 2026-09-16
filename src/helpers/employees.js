@@ -20,20 +20,21 @@ export const clampToRange = (value, min, max) => {
   return String(Math.min(max, Math.max(min, num)));
 };
 
-// "Налаштовано" — коли призначена ставка, валюта, реквізити та дата, з якої
-// ставка діє. Всі чотири мають бути заповнені одночасно.
+// "Налаштовано" — коли призначена ставка, валюта, реквізити, дата, з якої
+// ставка діє, і обрані податки. Всі п'ять мають бути заповнені одночасно.
 const CONFIG_FIELD_LABELS = {
   rate: 'Ставка',
   currency: 'Валюта',
   payment_details: 'Реквізити',
   rate_date: 'Дата початку',
+  tax_formula: 'Податки',
 };
 
-// rate/currency/rate_date належать конкретному призначенню (керівнику), не
-// людині — тому другий аргумент. За замовчуванням він = employee, бо
-// бекенд і так підставляє в employee.rate/currency/rate_date значення з
-// primary-призначення (сумісність для місць, що ще не показують кілька
-// призначень окремо).
+// rate/currency/rate_date/tax_formula належать конкретному призначенню
+// (керівнику), не людині — тому другий аргумент. За замовчуванням він =
+// employee, бо бекенд і так підставляє в employee.rate/currency/rate_date/
+// tax_formula значення з primary-призначення (сумісність для місць, що ще
+// не показують кілька призначень окремо).
 export const getMissingConfigFields = (employee, assignment = employee) =>
   Object.entries(CONFIG_FIELD_LABELS)
     .filter(([key]) => {
@@ -142,6 +143,17 @@ export const buildAssignmentPayload = assignment => ({
   hire_date: normalizeEmployeeValue(assignment.hire_date),
   termination_date: normalizeEmployeeValue(assignment.termination_date) || null,
 });
+
+// Формула розрахунку поки не зашита на фронті — лише фіксований список назв
+// для вибору фінансистом (StaffRateDrawer), синхронізований з
+// TAX_FORMULA_OPTIONS у fin_bk_back/routes/employees.py.
+export const taxFormulaOptions = [
+  'ставка Nett',
+  'ставка Gross',
+  'ставка без КП',
+  'ставка + КП (6%)',
+  'ставка + КП (6%+ЄСВ)',
+];
 
 export const genderOptions = [
   { value: 'Ж', label: 'Ж' },

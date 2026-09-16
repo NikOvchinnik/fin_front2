@@ -80,6 +80,48 @@ table {
   max-height: 70vh;
 }
 
+/* Той самий вигляд, що .analyticTable, але без переносу тексту в клітинках
+   (як на .staffTable) — для "Зарплатної відомості". Окремий клас, а не
+   правка .analyticTable, бо той спільний ще з 8 іншими сторінками. */
+.payrollTable {
+  width: max-content;
+  min-width: 100%;
+}
+
+.payrollTable th {
+  font-size: 14px;
+  padding: 10px;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  /* Без max-width заголовок просто розтягує колонку на всю довжину тексту
+     (таблиця й так width: max-content) замість переносу — max-width змушує
+     браузер реально перенести текст, а не розширювати таблицю. */
+  max-width: 220px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.payrollTable th.stickyColumn {
+  z-index: 5;
+}
+
+.payrollTable td {
+  font-size: 14px;
+  padding: 8px;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.payrollTable tbody tr:hover td {
+  background: var(--toggle-lang-background);
+  cursor: pointer;
+}
+
+.tableContainer:has(.payrollTable) {
+  max-height: 70vh;
+}
+
 .staffTable {
   width: max-content;
   min-width: 100%;

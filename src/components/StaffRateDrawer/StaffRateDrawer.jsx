@@ -9,8 +9,9 @@ import ModalWindow from '../ModalWindow/ModalWindow';
 import Form from '../Form/Form';
 import Icon from '../Icon/Icon';
 import style from './StaffRateDrawer.module.css';
-import { employeeFields, formatRate } from '../../helpers/employees';
+import { employeeFields, formatRate, taxFormulaOptions } from '../../helpers/employees';
 import {
+  patchEmployeeAssignment,
   postEmployeeRate,
   putEmployeeRate,
 } from '../../helpers/axios/employees';
@@ -84,6 +85,8 @@ const StaffRateDrawer = ({
   const [rateDate, setRateDate] = useState(() => new Date());
   const [rateValue, setRateValue] = useState('');
   const [currency, setCurrency] = useState('UAH');
+  const [taxFormula, setTaxFormula] = useState('');
+  const [savingTaxFormula, setSavingTaxFormula] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
   const [rateHistory, setRateHistory] = useState([]);
@@ -105,6 +108,7 @@ const StaffRateDrawer = ({
     setRateDate(new Date());
     setRateHistory(selectedAssignment?.rate_history || []);
     setEditingEntryId(null);
+    setTaxFormula(selectedAssignment?.tax_formula || '');
   }, [selectedAssignment?.id]);
 
   if (!employee) return null;
@@ -161,6 +165,27 @@ const StaffRateDrawer = ({
       Notify.failure('Не вдалося зберегти ставку.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  // "Податки" — незалежне від ставки поле призначення (як currency), без
+  // власної історії змін: зберігається одразу при виборі, без кнопки
+  // "Зберегти зміни" (та без вимоги спершу заповнити ставку).
+  const handleTaxFormulaChange = async value => {
+    const previousValue = taxFormula;
+    setTaxFormula(value);
+    setSavingTaxFormula(true);
+    try {
+      await patchEmployeeAssignment(employee.id, selectedAssignment.id, {
+        tax_formula: value || null,
+      });
+      Notify.success('Податки оновлено.');
+      await onSaved();
+    } catch {
+      setTaxFormula(previousValue);
+      Notify.failure('Не вдалося оновити податки.');
+    } finally {
+      setSavingTaxFormula(false);
     }
   };
 
@@ -271,6 +296,34 @@ const StaffRateDrawer = ({
 
         <div className={style.section}>
           <p className={style.sectionTitle}>Оплата праці</p>
+          <div className={`${style.field} ${style.styledFormField}`}>
+            <Form
+              // Незалежне від ставки поле — зберігається одразу при виборі
+              // (див. handleTaxFormulaChange), тому key лише прив'язаний до
+              // призначення (щоб показати правильне значення при перемиканні
+              // вкладки керівника), без зв'язку з кнопкою "Зберегти зміни".
+              key={selectedAssignment.id}
+              fields={[
+                {
+                  type: 'select',
+                  name: 'tax_formula',
+                  label: 'Податки',
+                  options: [
+                    { value: '', label: '—' },
+                    ...taxFormulaOptions.map(option => ({
+                      value: option,
+                      label: option,
+                    })),
+                  ],
+                  onChange: handleTaxFormulaChange,
+                },
+              ]}
+              defaultValues={{ tax_formula: taxFormula }}
+            />
+            {savingTaxFormula && (
+              <p className={style.fieldHint}>Зберігаю...</p>
+            )}
+          </div>
           <div className={style.salaryRow}>
             <div className={style.field}>
               <p className={style.fieldLabel}>Ставка</p>
