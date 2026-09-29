@@ -44,9 +44,14 @@
   transition: all 0.3s ease;
 }
 
-.primaryBtn:hover,
-.primaryBtn:focus {
+.primaryBtn:hover:not(:disabled),
+.primaryBtn:focus:not(:disabled) {
   background-color: var(--button-hover);
+}
+
+.primaryBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .plus {
@@ -95,7 +100,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 14px 16px;
+  padding: 8px 16px;
+  min-height: 40px;
   border: 1px solid var(--border);
   border-radius: 8px;
   fill: var(--main-text);
@@ -210,6 +216,72 @@
   min-width: 140px;
 }
 
+/* Підрядки 2-ї й подальшої ставки місяця (employee.extra_payroll_entries) —
+   той самий патерн, що multiValueCell/rateSlots на "Співробітниках"
+   (StaffPage.module.css), навмисно однакові класи/значення для єдиного
+   вигляду. */
+.multiValueCell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.multiValuePrimary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
+.multiValueExtra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  line-height: 24px;
+  color: var(--toggle-lang);
+  white-space: nowrap;
+}
+
+.periodLabel {
+  font-size: 12px;
+  color: var(--toggle-lang);
+}
+
+.nameCellContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rowExpandToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.rowExpandToggle:hover {
+  background: var(--toggle-lang-background);
+}
+
+.multiValueChevron {
+  width: 22px;
+  height: 22px;
+  color: var(--toggle-lang);
+  transition: transform 0.2s ease;
+}
+
+.multiValueChevronCollapsed {
+  transform: rotate(180deg);
+}
+
 .rateEditBtn {
   display: flex;
   align-items: center;
@@ -265,35 +337,6 @@
 }
 
 .sendReviewBtn:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.cancelReviewBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid #b24132;
-  border-radius: 4px;
-  /* icon-x у спільному спрайті має захардкоджений білий колір через
-     inline style="fill: var(--color1, #fff)" — перевизначаємо саме цю
-     CSS-змінну (той самий трюк, що й у .editCellCancelBtn нижче). */
-  --color1: #b24132;
-  fill: #b24132;
-  transition: all 0.3s ease;
-}
-
-.cancelReviewBtn:hover:not(:disabled),
-.cancelReviewBtn:focus:not(:disabled) {
-  --color1: #fff;
-  background: #b24132;
-  border-color: #8a2f22;
-  fill: var(--white);
-}
-
-.cancelReviewBtn:disabled {
   cursor: not-allowed;
   opacity: 0.6;
 }
@@ -468,4 +511,52 @@
     flex: 1 1 160px;
     min-width: 160px;
   }
+}
+
+/* Показуються лише коли в команди керівника 2+ різних Subdivision — див.
+   hasSubdivisionTabs у PayrollStatementPage.jsx. Той самий візуальний
+   патерн (розмітка й класи), що statuscontainer/statusBtn/activeBtn на
+   "Моїх заявках" (MyRequestsPage) — перевикористано навмисно, для єдиного
+   вигляду табів по всьому застосунку. */
+.subdivisionTabs {
+  display: inline-flex;
+  list-style: none;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  margin: 0 0 8px;
+  background: var(--toggle-lang-background);
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.subdivisionTab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 28px;
+  background: transparent;
+  color: var(--main-text);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.subdivisionTab:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
+.subdivisionTabActive {
+  background-color: var(--button);
+  color: var(--white);
 }

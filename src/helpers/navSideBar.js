@@ -250,6 +250,12 @@ export const getNavSideBar = (userId, isPayrollManager) => {
           icon: 'employees',
         },
         {
+          page: 'Перевірка відомостей',
+          pageKey: 'nav.payrollReview',
+          link: `/payroll-review`,
+          icon: 'dollar',
+        },
+        {
           page: 'Пошук',
           pageKey: 'nav.search',
           link: `/search`,
