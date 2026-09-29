@@ -38,6 +38,11 @@ const employeeAssignments = employee =>
 const matchesAnyAssignment = (employee, field, value) =>
   employeeAssignments(employee).some(assignment => assignment[field] === value);
 
+// Підсвітка рядка звільненого співробітника (хоч би одне призначення з
+// termination_date) — row.original.className, читає Table.jsx.
+const isEmployeeTerminated = employee =>
+  employeeAssignments(employee).some(assignment => assignment.termination_date);
+
 // Порядок і набір колонок для сторінки фінансиста — частина полів спільна
 // з карткою співробітника (employeeFields), частина ще не існує в моделі.
 const staffColumnKeys = [
@@ -601,7 +606,10 @@ const StaffPage = () => {
       );
     }
 
-    return rows;
+    return rows.map(employee => ({
+      ...employee,
+      className: isEmployeeTerminated(employee) ? 'terminatedRow' : undefined,
+    }));
   }, [
     employees,
     search,

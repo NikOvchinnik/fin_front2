@@ -692,14 +692,18 @@ const PayrollReviewPage = () => {
         rate_history_id: rateHistoryId,
       });
       applyPayrollEntryUpdate(rowKey, rateHistoryId, result?.payroll_entry);
-      Notify.success(
-        newStatus === PAYROLL_ENTRY_STATUS.APPROVED
-          ? 'Відомість затверджено.'
-          : 'Повернуто керівнику на доопрацювання.'
-      );
+      if (newStatus === PAYROLL_ENTRY_STATUS.APPROVED) {
+        Notify.success('Відомість затверджено.');
+      } else if (newStatus === PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW) {
+        Notify.success('Відправлено на перевірку.');
+      } else {
+        Notify.success('Повернуто керівнику на доопрацювання.');
+      }
     } catch (error) {
       if (error?.response?.status === 409) {
         Notify.warning('Статус уже змінився — онови сторінку.');
+      } else if (error?.response?.data?.code === 'PAYROLL_ENTRY_INCOMPLETE') {
+        Notify.failure(error.response.data.message);
       } else {
         Notify.failure('Не вдалося змінити статус.');
       }
@@ -1320,8 +1324,36 @@ const PayrollReviewPage = () => {
               const statusValue = getStatusForEntry(entryData);
               const isUpdating = statusUpdatingId === unlockKey;
               const isUnlocked = unlockedEmployeeIds.has(unlockKey);
+              const isIncomplete =
+                entryData?.distribution == null || entryData?.worked_days == null;
               return (
                 <div className={style.actionContainer}>
+                  {statusValue === PAYROLL_ENTRY_STATUS.DRAFT && (
+                    <Tooltip
+                      title={
+                        isIncomplete
+                          ? 'Заповніть "Розподіл" і "Відпрацьовані робочі дні"'
+                          : 'Відправити на перевірку'
+                      }
+                    >
+                      <span>
+                        <button
+                          type="button"
+                          className={style.approveBtn}
+                          disabled={isUpdating || isIncomplete}
+                          onClick={() =>
+                            handleChangeStatus(
+                              employee,
+                              rateHistoryId,
+                              PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW
+                            )
+                          }
+                        >
+                          <Icon id="paper-plane" className={style.actionIcon} />
+                        </button>
+                      </span>
+                    </Tooltip>
+                  )}
                   {statusValue === PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW && (
                     <>
                       <Tooltip title="Затвердити">
@@ -1476,7 +1508,6 @@ const PayrollReviewPage = () => {
           <h1 className={style.title}>Перевірка відомостей</h1>
           <p className={style.subtitle}>
             Дані по всіх співробітниках від усіх керівників за обраний місяць
-            — незалежно від статусу й заповненості.
           </p>
         </div>
         <div className={style.headerActionsCol}>
