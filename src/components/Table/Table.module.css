@@ -118,6 +118,38 @@ table {
   cursor: pointer;
 }
 
+/* Підсвітка рядків "Зарплатної відомості"/"Перевірки відомостей" за
+   статусом (row.original.className, задається в PayrollStatementPage.jsx і
+   PayrollReviewPage.jsx). "Чернетка" (DRAFT) навмисно без підсвітки — то й
+   є "стан за замовчуванням", нічого показувати не треба. */
+
+/* "Відправлено на перевірку" — той самий жовтий, що й бейдж статусу. */
+.payrollTable tbody tr.statusSentForReview td {
+  background: #fdf6e0;
+}
+
+.payrollTable tbody tr.statusSentForReview:hover td {
+  background: #faecc0;
+}
+
+/* "Повернуто на доопрацювання" — червоний. */
+.payrollTable tbody tr.statusNeedsRevision td {
+  background: #fdecea;
+}
+
+.payrollTable tbody tr.statusNeedsRevision:hover td {
+  background: #fad3ce;
+}
+
+/* "Затверджено фінансистом" — зелений. */
+.payrollTable tbody tr.statusApproved td {
+  background: #eaf3e1;
+}
+
+.payrollTable tbody tr.statusApproved:hover td {
+  background: #d7e7c7;
+}
+
 .tableContainer:has(.payrollTable) {
   max-height: 70vh;
 }

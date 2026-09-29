@@ -28,6 +28,13 @@ const routesConfig = [
     ),
   },
   {
+    path: 'payroll-review',
+    roles: [UserRole.FINANCE],
+    element: lazy(() =>
+      import('../pages/PayrollReviewPage/PayrollReviewPage')
+    ),
+  },
+  {
     path: 'requests',
     roles: [UserRole.CEO, UserRole.FINANCE, UserRole.ACCOUNTANT],
     element: lazy(() => import('../pages/RequestsPage/RequestsPage')),

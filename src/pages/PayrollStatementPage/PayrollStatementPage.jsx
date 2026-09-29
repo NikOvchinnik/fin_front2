@@ -12,8 +12,10 @@ import BulkEditPayrollForm from '../../components/Forms/BulkEditPayrollForm/Bulk
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import {
   getMyTeamEmployees,
+  getPayrollExpenseItems,
   updateEmployeePayrollEntry,
   updateEmployeePayrollEntryStatus,
+  updateEmployeePayrollExpenseValue,
 } from '../../helpers/axios/employees';
 import { FILTER_ALL } from '../../helpers/status';
 import {
@@ -48,25 +50,65 @@ const PAYROLL_ENTRY_STATUS_META = {
     label: 'Відправлено на перевірку',
     color: '#c79a1b',
   },
-  // Ці два статуси поки нема кому виставляти (чекає на бухгалтерську
-  // сторону флоу) — кольори/назви готові наперед, дії в "Дія" для них нема.
+  // APPROVED/NEEDS_REVISION виставляє фінансист на окремій сторінці огляду
+  // ("Перевірка відомостей", PayrollReviewPage). NEEDS_REVISION тут, на
+  // сторінці керівника, має дію-олівець (повертає запис у DRAFT, щоб
+  // редагувати й надіслати повторно) — див. колонку "Дія" нижче.
   [PAYROLL_ENTRY_STATUS.NEEDS_REVISION]: {
     label: 'Повернуто на доопрацювання',
     color: '#c74736',
   },
   [PAYROLL_ENTRY_STATUS.APPROVED]: {
-    label: 'Затверджено бухгалтерією',
+    label: 'Затверджено фінансистом',
     color: '#6b9429',
   },
 };
 
-const getPayrollEntryStatus = employee =>
-  employee?.payroll_entry?.status ?? PAYROLL_ENTRY_STATUS.DRAFT;
+// entryData — сирий запис (employee.payroll_entry або один з
+// employee.extra_payroll_entries) — щоб один і той самий код визначав
+// статус/блокування незалежно від того, який саме відрізок місяця це.
+const getEntryStatus = entryData => entryData?.status ?? PAYROLL_ENTRY_STATUS.DRAFT;
+const isEntryLocked = entryData => getEntryStatus(entryData) !== PAYROLL_ENTRY_STATUS.DRAFT;
+
+const getPayrollEntryStatus = employee => getEntryStatus(employee?.payroll_entry);
+
+// Клас підсвітки рядка (row.original.className, читає Table.jsx) — див.
+// відповідні класи в Table.module.css. "Чернетка" навмисно без класу
+// (default look).
+const STATUS_ROW_CLASS_NAME = {
+  [PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW]: 'statusSentForReview',
+  [PAYROLL_ENTRY_STATUS.NEEDS_REVISION]: 'statusNeedsRevision',
+  [PAYROLL_ENTRY_STATUS.APPROVED]: 'statusApproved',
+};
+
+const getRowClassName = employee => STATUS_ROW_CLASS_NAME[getPayrollEntryStatus(employee)];
 
 // Заблоковано для inline/масового редагування — дані вже відправлені й
-// очікують рішення бухгалтерії.
-const isPayrollEntryLocked = employee =>
-  getPayrollEntryStatus(employee) !== PAYROLL_ENTRY_STATUS.DRAFT;
+// очікують рішення бухгалтерії. Дивиться лише на ПЕРШИЙ відрізок місяця —
+// вибір рядка чекбоксом і масове редагування навмисно стосуються лише його
+// (див. коментар біля selectableEmployees нижче).
+const isPayrollEntryLocked = employee => isEntryLocked(employee?.payroll_entry);
+
+// Якщо ставку міняли ВСЕРЕДИНІ місяця — бекенд віддає employee.payroll_entry
+// (перший відрізок) + employee.extra_payroll_entries (2-й і подальші,
+// _resolve_rate_periods_for_month). Кожен відрізок — незалежний запис зі
+// своїми полями/статусом, "рядок" на екрані лишається один (стек підрядків,
+// той самий патерн, що rateSlots на "Співробітниках").
+const getEntrySlots = employee => [
+  employee.payroll_entry,
+  ...(employee.extra_payroll_entries || []),
+];
+
+const hasMultiplePeriods = employee =>
+  (employee.extra_payroll_entries || []).length > 0;
+
+// rate_history_id самого запису однозначно ідентифікує відрізок — null для
+// першого (як і завжди було), id рядка EmployeeRateHistory для 2-го й
+// подальших.
+const getPeriodKey = entryData => entryData?.rate_history_id ?? null;
+
+const formatEffectiveDate = isoDate =>
+  isoDate ? dayjs(isoDate).format('DD.MM.YYYY') : null;
 
 const employeeFieldByKey = employeeFields.reduce((acc, field) => {
   acc[field.key] = field;
@@ -85,13 +127,6 @@ const payrollFieldLabels = {
   bonus: 'Бонус',
   taxes: 'Податки',
   total_accrued_currency: 'Всього у валюті нарахування',
-  // TODO: назви цих 3 колонок мають, ймовірно, формуватись динамічно (за
-  // підрозділом/статтею бюджету), а не бути статичними — поки лишили як у
-  // макеті, узгодити з бізнесом пізніше.
-  salary_brand_management: 'ЗП персоналу Brand Management / Salary Brand Management',
-  performance_bonus_brand_management:
-    'Бонус за результат Brand Management / Performance bonus Brand Management',
-  benefits: "Бенефіти (моб.зв'язок, податки..) / Benefits (mobile communication, taxes..)",
   total_payout: 'Всього до виплати на руки',
   currency: 'Валюта',
   payment_form: 'Форма оплати',
@@ -103,7 +138,11 @@ const payrollFieldLabels = {
   action: 'Дія',
 };
 
-const payrollColumnKeys = [
+// Колонки до/після блоку "статей витрат" — той блок не фіксований за
+// кількістю (2-9 колонок залежно від Subdivision, з payroll_expense_items
+// на бекенді, див. buildPayrollColumnKeys нижче), тому payrollColumnKeys
+// більше не стала константа, а функція.
+const PAYROLL_COLUMN_KEYS_BEFORE_EXPENSE_ITEMS = [
   'unit',
   'department',
   'subdivision',
@@ -118,9 +157,8 @@ const payrollColumnKeys = [
   'bonus',
   'taxes',
   'total_accrued_currency',
-  'salary_brand_management',
-  'performance_bonus_brand_management',
-  'benefits',
+];
+const PAYROLL_COLUMN_KEYS_AFTER_EXPENSE_ITEMS = [
   'total_payout',
   'currency',
   'payment_form',
@@ -129,23 +167,71 @@ const payrollColumnKeys = [
   'action',
 ];
 
+const EXPENSE_ITEM_KEY_PREFIX = 'expense_item_';
+const toExpenseItemKey = id => `${EXPENSE_ITEM_KEY_PREFIX}${id}`;
+
+// Людські назви змінних для тултіпа з формулою на клітинці — синхронізовано
+// зі словником у _formula_variables (fin_bk_back/routes/employees.py).
+// "gross_factor" сюди навмисно НЕ входить — його підставляємо конкретним
+// числом (чи прибираємо) для кожного співробітника окремо, до перекладу
+// решти змінних, див. describeFormulaForEmployee.
+const FORMULA_VARIABLE_LABELS = {
+  rate: 'Ставка',
+  distribution: 'Розподіл',
+  worked_days: 'Відпрацьовані дні',
+  vacation_compensation: 'Компенсація відпустки',
+  bonus: 'Бонус',
+  accrued: 'Нараховано',
+  taxes: 'Податки',
+  month_working_days: 'Робочі дні місяця',
+};
+
+const GROSS_TAX_FORMULA = 'ставка Gross';
+const GROSS_FACTOR = 0.95;
+
+// "* gross_factor" — множення на 1 (не-Gross) прибираємо повністю замість
+// показу "* 1", щоб формула читалась природно; для Gross підставляємо
+// конкретне число 0.95 замість символьної назви змінної.
+const resolveGrossFactor = (formula, isGross) => {
+  if (!isGross) {
+    return formula
+      .replace(/\*\s*gross_factor\b/g, '')
+      .replace(/\bgross_factor\s*\*/g, '')
+      .trim();
+  }
+  return formula.replace(/\bgross_factor\b/g, String(GROSS_FACTOR));
+};
+
+const describeFormulaForEmployee = (formula, taxFormula) => {
+  const resolved = resolveGrossFactor(formula, taxFormula === GROSS_TAX_FORMULA);
+  return Object.entries(FORMULA_VARIABLE_LABELS).reduce(
+    (text, [variable, label]) =>
+      text.replace(new RegExp(`\\b${variable}\\b`, 'g'), label),
+    resolved
+  );
+};
+
+const buildPayrollColumnKeys = expenseItemKeys => [
+  ...PAYROLL_COLUMN_KEYS_BEFORE_EXPENSE_ITEMS,
+  ...expenseItemKeys,
+  ...PAYROLL_COLUMN_KEYS_AFTER_EXPENSE_ITEMS,
+];
+
 // Перші 5 колонок зафіксовані (fixedFirstColumn={5} у Table) — ховати їх
 // через фільтр колонок не можна (інакше «прилипне» вже інша колонка на їхньому
 // місці), тож у списку хідебл-колонок їх не буде. Той самий підхід, що й на
 // «Співробітниках» (fixedColumnKeys = staffColumnKeys.slice(0, 2)).
 const fixedColumnKeys = ['select', 'unit', 'department', 'subdivision', 'local_full_name'];
-const hideableColumnKeys = payrollColumnKeys.filter(
-  key => !fixedColumnKeys.includes(key)
-);
 
 // За замовчуванням (поки немає збереженого вибору в localStorage) ці
-// колонки вимкнені — решта увімкнена.
+// колонки вимкнені — решта увімкнена (включно зі статтями витрат).
 const DEFAULT_HIDDEN_COLUMN_KEYS = ['tax_id', 'month_working_days'];
-const defaultVisibleColumnKeys = hideableColumnKeys.filter(
-  key => !DEFAULT_HIDDEN_COLUMN_KEYS.includes(key)
-);
 
-const VISIBLE_COLUMNS_STORAGE_KEY = 'payrollVisibleColumns';
+// Новий ключ (не "payrollVisibleColumns") — семантика зберігання змінилась
+// зі "список видимих" на "список схованих" (див. hiddenColumnKeys вище),
+// стара збережена в браузерах команди пара ключ/значення інакше
+// прочиталась би навпаки.
+const HIDDEN_COLUMNS_STORAGE_KEY = 'payrollHiddenColumns';
 
 // Поля, які керівник може редагувати inline прямо в комірці таблиці.
 const EDITABLE_PAYROLL_FIELDS = [
@@ -173,18 +259,21 @@ const DEFAULT_MONTH_WORKING_DAYS = 22;
 // числами в employee.payroll_entry.{accrued,taxes,total_accrued_currency}.
 // Тут лишається тільки: (1) визначити, яких вхідних даних бракує — щоб
 // показати "-" з підказкою, і (2) текст для тултіпа з описом формули.
-const getAccruedMissingFields = employee => {
+// entryData — конкретний відрізок ставки місяця (employee.payroll_entry або
+// один з employee.extra_payroll_entries), щоб та сама перевірка працювала
+// незалежно від того, скільки їх у цього рядка.
+const getAccruedMissingFieldsForEntry = entryData => {
   const missing = [];
-  if (!employee.rate) missing.push('Ставка');
-  if (employee.payroll_entry?.distribution == null) missing.push('Розподіл');
-  if (employee.payroll_entry?.worked_days == null) {
+  if (!entryData?.rate) missing.push('Ставка');
+  if (entryData?.distribution == null) missing.push('Розподіл');
+  if (entryData?.worked_days == null) {
     missing.push('Відпрацьовані робочі дні');
   }
   return missing;
 };
 
-const getPayrollTotalsMissingFields = employee => {
-  const missing = getAccruedMissingFields(employee);
+const getPayrollTotalsMissingFieldsForEntry = (employee, entryData) => {
+  const missing = getAccruedMissingFieldsForEntry(entryData);
   if (!employee.tax_formula) missing.push('Податки');
   return missing;
 };
@@ -214,12 +303,24 @@ const PayrollStatementPage = () => {
   const [showAllFilters, setShowAllFilters] = useState(false);
   const [filtersResetKey, setFiltersResetKey] = useState(0);
   const [employees, setEmployees] = useState([]);
-  const [visibleColumnKeys, setVisibleColumnKeys] = useState(() => {
-    const saved = localStorage.getItem(VISIBLE_COLUMNS_STORAGE_KEY);
-    return saved ? JSON.parse(saved) : defaultVisibleColumnKeys;
+  // { [subdivisionName]: [{id, name, description}, ...] } — з бекенду
+  // (payroll_expense_items), не залежить від місяця, тож завантажується
+  // один раз при монтуванні.
+  const [expenseItemsBySubdivision, setExpenseItemsBySubdivision] = useState({});
+  // Доки не true — ще не знаємо, чи в активного Subdivision взагалі є
+  // Список СХОВАНИХ (не видимих!) колонок — навмисно навпаки, ніж
+  // здавалося б природним, саме через динамічні expense_item_* колонки:
+  // їхні ключі (id статей) різні для кожного Subdivision/табу, тож
+  // "список видимих" довелось би постійно досинхронізовувати з тим, які
+  // колонки взагалі зараз існують. Список схованих натомість — стабільний:
+  // нова динамічна колонка просто ніколи туди й не потрапляє, тобто вона
+  // видима за замовчуванням без жодної спеціальної логіки.
+  const [hiddenColumnKeys, setHiddenColumnKeys] = useState(() => {
+    const saved = localStorage.getItem(HIDDEN_COLUMNS_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : DEFAULT_HIDDEN_COLUMN_KEYS;
   });
   const [isColumnsModalOpen, setColumnsModalOpen] = useState(false);
-  const [editingCell, setEditingCell] = useState(null); // { employeeId, field } | null
+  const [editingCell, setEditingCell] = useState(null); // { employeeId, field, rateHistoryId } | null
   const [editingValue, setEditingValue] = useState('');
   const [savingCell, setSavingCell] = useState(false);
   const editingCellRef = useRef(null);
@@ -227,34 +328,62 @@ const PayrollStatementPage = () => {
   const [isBulkEditModalOpen, setBulkEditModalOpen] = useState(false);
   const [isBulkSaving, setBulkSaving] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
+  // Рядки з розгорнутим підрядком другої (і подальшої) ставки місяця — той
+  // самий патерн, що rowExpandToggle на "Співробітниках" (StaffPage), тільки
+  // тут відрізки не керівників, а зміни ставки ВСЕРЕДИНІ місяця
+  // (employee.extra_payroll_entries, бекенд _resolve_rate_periods_for_month).
+  const [expandedRowIds, setExpandedRowIds] = useState(() => new Set());
 
-  const monthParam = startDate.format('MM.YYYY');
-
-  const handleColumnToggle = accessorKey => {
-    setVisibleColumnKeys(prev => {
-      const current = prev === 'All' ? hideableColumnKeys : prev;
-      const updated = current.includes(accessorKey)
-        ? current.filter(key => key !== accessorKey)
-        : [...current, accessorKey];
-      const next =
-        updated.length === hideableColumnKeys.length ? 'All' : updated;
-      localStorage.setItem(VISIBLE_COLUMNS_STORAGE_KEY, JSON.stringify(next));
+  const toggleRowExpand = employeeId => {
+    setExpandedRowIds(prev => {
+      const next = new Set(prev);
+      if (next.has(employeeId)) next.delete(employeeId);
+      else next.add(employeeId);
       return next;
     });
   };
 
-  useEffect(() => {
-    const fetchMyTeam = async () => {
-      try {
-        const result = await getMyTeamEmployees(monthParam);
-        setEmployees(result?.employees || []);
-      } catch {
-        Notify.failure('Не вдалося завантажити список співробітників.');
-      }
-    };
+  const monthParam = startDate.format('MM.YYYY');
 
+  const handleColumnToggle = accessorKey => {
+    setHiddenColumnKeys(prev => {
+      const next = prev.includes(accessorKey)
+        ? prev.filter(key => key !== accessorKey)
+        : [...prev, accessorKey];
+      localStorage.setItem(HIDDEN_COLUMNS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Винесено з useEffect (а не inline) — потрібна ще й для повторного
+  // завантаження після масового редагування, не лише при зміні місяця.
+  const fetchMyTeam = async () => {
+    try {
+      const result = await getMyTeamEmployees(monthParam);
+      const list = result?.employees || [];
+      // Table (Table.jsx) читає className рядка з row.original.className —
+      // саме так підсвічуємо рядки за статусом узгодження, див.
+      // getRowClassName.
+      setEmployees(
+        list.map(employee => ({
+          ...employee,
+          className: getRowClassName(employee),
+        }))
+      );
+    } catch {
+      Notify.failure('Не вдалося завантажити список співробітників.');
+    }
+  };
+
+  useEffect(() => {
     fetchMyTeam();
   }, [monthParam]);
+
+  useEffect(() => {
+    getPayrollExpenseItems()
+      .then(result => setExpenseItemsBySubdivision(result || {}))
+      .catch(() => setExpenseItemsBySubdivision({}));
+  }, []);
 
   // Вибір рядків скидається при зміні місяця — обране стосується конкретної
   // відомості, не має "переживати" перехід в інший місяць.
@@ -291,52 +420,85 @@ const PayrollStatementPage = () => {
     };
   }, [editingCell]);
 
-  const handleStartEdit = (employeeId, field, currentValue) => {
+  // Оновлює правильний "відрізок" рядка після збереження: rateHistoryId
+  // null — це employee.payroll_entry (перший відрізок, разом з дзеркальними
+  // top-level employee.rate/currency і підсвіткою рядка за статусом), інакше
+  // шукає відповідний запис в employee.extra_payroll_entries за
+  // rate_history_id.
+  const applyPayrollEntryUpdate = (employeeId, rateHistoryId, updatedEntry) => {
+    setEmployees(prev =>
+      prev.map(item => {
+        if (item.id !== employeeId) return item;
+        if (rateHistoryId === null) {
+          const next = {
+            ...item,
+            payroll_entry: updatedEntry,
+            rate: updatedEntry?.rate,
+            currency: updatedEntry?.currency,
+          };
+          return { ...next, className: getRowClassName(next) };
+        }
+        return {
+          ...item,
+          extra_payroll_entries: (item.extra_payroll_entries || []).map(entry =>
+            getPeriodKey(entry) === rateHistoryId ? updatedEntry : entry
+          ),
+        };
+      })
+    );
+  };
+
+  const handleStartEdit = (employeeId, rateHistoryId, field, currentValue) => {
     if (editingCell) {
       Notify.warning(UNSAVED_EDIT_WARNING);
       return;
     }
     const employee = employees.find(item => item.id === employeeId);
-    if (employee && isPayrollEntryLocked(employee)) {
+    const entryData = employee
+      ? getEntrySlots(employee).find(entry => getPeriodKey(entry) === rateHistoryId)
+      : null;
+    if (entryData && isEntryLocked(entryData)) {
       Notify.warning('Рядок заблокований — дані вже відправлені на перевірку.');
       return;
     }
-    setEditingCell({ employeeId, field });
+    setEditingCell({ employeeId, rateHistoryId, field });
     setEditingValue(currentValue ?? '');
   };
 
   // Єдина дія, доступна керівнику зараз: відправити на перевірку або
   // скасувати відправку. "Повернуто на доопрацювання"/"Затверджено" — це
   // рішення бухгалтерії, звідси їх виставити не можна (бекенд це теж
-  // перевіряє й відхилить будь-який інший перехід).
-  const handleChangeEntryStatus = async (employee, newStatus) => {
-    setStatusUpdatingId(employee.id);
+  // перевіряє й відхилить будь-який інший перехід). rateHistoryId —
+  // кожен відрізок ставки місяця має свій НЕЗАЛЕЖНИЙ статус, той самий
+  // підхід, що вже застосований до кількох керівників одного співробітника.
+  const handleChangeEntryStatus = async (employee, rateHistoryId, newStatus) => {
+    const statusKey = `${employee.id}:${rateHistoryId ?? 'primary'}`;
+    setStatusUpdatingId(statusKey);
     try {
       const result = await updateEmployeePayrollEntryStatus(employee.id, {
         month: monthParam,
         status: newStatus,
+        rate_history_id: rateHistoryId,
       });
-      setEmployees(prev =>
-        prev.map(item =>
-          item.id === employee.id
-            ? { ...item, payroll_entry: result?.payroll_entry }
-            : item
-        )
-      );
+      applyPayrollEntryUpdate(employee.id, rateHistoryId, result?.payroll_entry);
       if (newStatus !== PAYROLL_ENTRY_STATUS.DRAFT) {
-        setSelectedEmployeeIds(prev => {
-          if (!prev.has(employee.id)) return prev;
-          const next = new Set(prev);
-          next.delete(employee.id);
-          return next;
-        });
+        if (rateHistoryId === null) {
+          setSelectedEmployeeIds(prev => {
+            if (!prev.has(employee.id)) return prev;
+            const next = new Set(prev);
+            next.delete(employee.id);
+            return next;
+          });
+        }
         Notify.success('Відправлено на перевірку.');
       } else {
-        Notify.success('Відправку скасовано.');
+        Notify.success('Можна редагувати — запис знову в чернетках.');
       }
     } catch (error) {
       if (error?.response?.status === 409) {
         Notify.warning('Статус уже змінився — онови сторінку.');
+      } else if (error?.response?.data?.code === 'PAYROLL_ENTRY_INCOMPLETE') {
+        Notify.failure(error.response.data.message);
       } else {
         Notify.failure('Не вдалося змінити статус.');
       }
@@ -354,22 +516,38 @@ const PayrollStatementPage = () => {
     if (!editingCell) return;
     setSavingCell(true);
     try {
-      const result = await updateEmployeePayrollEntry(editingCell.employeeId, {
-        month: monthParam,
-        field: editingCell.field,
-        value: editingValue,
-      });
-      setEmployees(prev =>
-        prev.map(employee =>
-          employee.id === editingCell.employeeId
-            ? { ...employee, payroll_entry: result?.payroll_entry }
-            : employee
-        )
+      // Ручні статті витрат (calc_type="manual") живуть в окремій таблиці
+      // (employee_payroll_expense_values), не в employee_payroll_entry —
+      // тому окремий ендпоінт, той самий UI редагування (isEditing тощо).
+      // Вони НЕ прив'язані до відрізка ставки (спільні на весь місяць),
+      // тому rate_history_id тут не передається.
+      const result = editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX)
+        ? await updateEmployeePayrollExpenseValue(editingCell.employeeId, {
+            month: monthParam,
+            expense_item_id: Number(
+              editingCell.field.slice(EXPENSE_ITEM_KEY_PREFIX.length)
+            ),
+            value: editingValue,
+          })
+        : await updateEmployeePayrollEntry(editingCell.employeeId, {
+            month: monthParam,
+            field: editingCell.field,
+            value: editingValue,
+            rate_history_id: editingCell.rateHistoryId,
+          });
+      applyPayrollEntryUpdate(
+        editingCell.employeeId,
+        editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? null : editingCell.rateHistoryId,
+        result?.payroll_entry
       );
       setEditingCell(null);
       setEditingValue('');
-    } catch {
-      Notify.failure('Не вдалося зберегти значення.');
+    } catch (error) {
+      if (error?.response?.data?.code === 'WORKED_DAYS_EXCEEDS_MONTH') {
+        Notify.failure(error.response.data.message);
+      } else {
+        Notify.failure('Не вдалося зберегти значення.');
+      }
     } finally {
       setSavingCell(false);
     }
@@ -387,6 +565,64 @@ const PayrollStatementPage = () => {
     () => withAllOption(buildEmployeeFieldOptions(employees, 'subdivision')),
     [employees]
   );
+  // Таби показуємо лише коли в команди керівника є 2+ різних Subdivision —
+  // якщо він один (типовий випадок), таблиця лишається як була, без табів.
+  const subdivisionTabs = useMemo(
+    () => subdivisionOptions.slice(1),
+    [subdivisionOptions]
+  );
+  const hasSubdivisionTabs = subdivisionTabs.length > 1;
+
+  // Коли з'явились/змінились таби (інший місяць — інша команда), а поточний
+  // вибір Subdivision більше не серед них (типово — щойно завантажились,
+  // FILTER_ALL) — перемикаємось на перший таб, щоб одразу було видно дані,
+  // а не порожню таблицю чи неактивний жоден таб.
+  useEffect(() => {
+    if (
+      hasSubdivisionTabs &&
+      !subdivisionTabs.some(tab => tab.value === selectedSubdivision)
+    ) {
+      setSelectedSubdivision(subdivisionTabs[0].value);
+    }
+  }, [hasSubdivisionTabs, subdivisionTabs]);
+
+  // Активний Subdivision для блоку "статей витрат" (колонки з
+  // payroll_expense_items): якщо табів кілька — це обраний таб (у ньому всі
+  // рядки гарантовано одного Subdivision); якщо один/жодного — весь
+  // fetched-список і так одного Subdivision, беремо його з першого рядка.
+  const activeSubdivisionName = hasSubdivisionTabs
+    ? selectedSubdivision
+    : employees[0]?.subdivision || null;
+
+  const activeExpenseItems = useMemo(
+    () =>
+      (activeSubdivisionName &&
+        expenseItemsBySubdivision[activeSubdivisionName]) ||
+      [],
+    [activeSubdivisionName, expenseItemsBySubdivision]
+  );
+  const expenseItemKeys = useMemo(
+    () => activeExpenseItems.map(item => toExpenseItemKey(item.id)),
+    [activeExpenseItems]
+  );
+  const expenseItemByKey = useMemo(
+    () =>
+      Object.fromEntries(
+        activeExpenseItems.map(item => [toExpenseItemKey(item.id), item])
+      ),
+    [activeExpenseItems]
+  );
+
+  const payrollColumnKeys = useMemo(
+    () => buildPayrollColumnKeys(expenseItemKeys),
+    [expenseItemKeys]
+  );
+  const hideableColumnKeys = useMemo(
+    () => payrollColumnKeys.filter(key => !fixedColumnKeys.includes(key)),
+    [payrollColumnKeys]
+  );
+
+
   const currencyOptions = useMemo(
     () => withAllOption(buildEmployeeFieldOptions(employees, 'currency')),
     [employees]
@@ -501,7 +737,8 @@ const PayrollStatementPage = () => {
     if (selectedEmployeesList.length === 0) return DEFAULT_MONTH_WORKING_DAYS;
     return Math.min(
       ...selectedEmployeesList.map(
-        employee => employee.month_working_days ?? DEFAULT_MONTH_WORKING_DAYS
+        employee =>
+          employee.payroll_entry?.month_working_days ?? DEFAULT_MONTH_WORKING_DAYS
       )
     );
   }, [selectedEmployeesList]);
@@ -561,6 +798,49 @@ const PayrollStatementPage = () => {
     }
   };
 
+  // Стекує значення клітинки по ВСІХ відрізках ставки місяця цього рядка
+  // (employee.payroll_entry + employee.extra_payroll_entries) — той самий
+  // патерн, що rateSlots/multiValueCell на "Співробітниках". Для звичайного
+  // випадку "одна ставка на місяць" (99% рядків) повертає renderSlot(...)
+  // напряму, без жодної обгортки — вигляд і розмітка лишаються точно такими,
+  // як до підтримки кількох ставок на місяць.
+  const renderStackedSlots = (employee, renderSlot) => {
+    const slots = getEntrySlots(employee);
+    if (slots.length <= 1) {
+      return renderSlot(slots[0], false, 0);
+    }
+    const isExpanded = expandedRowIds.has(employee.id);
+    return (
+      <div className={style.multiValueCell}>
+        {slots.map((entryData, index) => {
+          if (index > 0 && !isExpanded) return null;
+          return (
+            <div
+              key={entryData?.id ?? getPeriodKey(entryData) ?? index}
+              className={index === 0 ? style.multiValuePrimary : style.multiValueExtra}
+            >
+              {renderSlot(entryData, index > 0, index)}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  // "Всього у валюті нарахування"/статті витрат, порахован formулою/"Всього
+  // до виплати на руки" — на відміну від решти полів (Ставка/Розподіл/
+  // Відпрацьовані дні/Нараховано/Податки — лишаються показані ОКРЕМО на
+  // кожен відрізок, renderStackedSlots), тут потрібне ОДНЕ підсумкове число
+  // за весь місяць одразу по всіх відрізках (узгоджено з фінансистом): для
+  // звичайного випадку "одна ставка на місяць" — renderSlot(...) напряму
+  // (жодних змін), інакше — renderCombined(employee.combined_totals).
+  const renderTotalCell = (employee, renderSlot, renderCombined) => {
+    if (!hasMultiplePeriods(employee)) {
+      return renderSlot(employee.payroll_entry);
+    }
+    return renderCombined(employee.combined_totals || {});
+  };
+
   const columns = useMemo(
     () => [
       {
@@ -592,6 +872,12 @@ const PayrollStatementPage = () => {
                 <Icon id="info" className={style.headerHintIcon} />
               </span>
             </Tooltip>
+          ) : key.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? (
+            // Динамічна колонка "статті витрат" (payroll_expense_items) —
+            // назва залежить від активного Subdivision, не статична, тому
+            // береться з expenseItemByKey, а не з payrollFieldLabels. Без
+            // тултіпа з описом — не потрібен.
+            expenseItemByKey[key]?.name
           ) : (
             employeeFieldByKey[key]?.label || payrollFieldLabels[key]
           ),
@@ -599,11 +885,69 @@ const PayrollStatementPage = () => {
           const employee = row.original;
           const value = employee[key];
 
+          // Ім'я — тут же шеврон розгортання підрядків 2-ї й подальшої
+          // ставки місяця (employee.extra_payroll_entries), той самий
+          // патерн, що rowExpandToggle на "Співробітниках".
+          if (key === 'local_full_name') {
+            const isExpanded = expandedRowIds.has(employee.id);
+            const extraCount = (employee.extra_payroll_entries || []).length;
+            return (
+              <div className={style.nameCellContainer}>
+                {hasMultiplePeriods(employee) && (
+                  <Tooltip
+                    title={
+                      isExpanded
+                        ? 'Згорнути'
+                        : `Ставку міняли всередині місяця — ще ${extraCount} ${
+                            extraCount === 1 ? 'відрізок' : 'відрізки'
+                          }`
+                    }
+                  >
+                    <button
+                      type="button"
+                      className={style.rowExpandToggle}
+                      onClick={event => {
+                        event.stopPropagation();
+                        toggleRowExpand(employee.id);
+                      }}
+                    >
+                      <Icon
+                        id="chevron-up"
+                        className={`${style.multiValueChevron} ${
+                          isExpanded ? '' : style.multiValueChevronCollapsed
+                        }`}
+                      />
+                    </button>
+                  </Tooltip>
+                )}
+                <span>{value || '-'}</span>
+              </div>
+            );
+          }
+
           if (key === 'rate') {
-            return value ? formatRate(value, employee.currency) : '-';
+            return renderStackedSlots(employee, (entryData, isExtra) => (
+              <>
+                {entryData?.rate ? formatRate(entryData.rate, entryData.currency) : '-'}
+                {isExtra && entryData?.period_effective_date && (
+                  <span className={style.periodLabel}>
+                    {' '}
+                    з {formatEffectiveDate(entryData.period_effective_date)}
+                  </span>
+                )}
+              </>
+            ));
+          }
+          if (key === 'currency') {
+            return renderStackedSlots(employee, entryData => entryData?.currency || '-');
           }
           if (key === 'month_working_days') {
-            return value ?? DEFAULT_MONTH_WORKING_DAYS;
+            // Спільне на весь місяць (обидва відрізки ставки рахуються в
+            // межах одного й того самого "Робочі дні місяця") — виставляє
+            // фінансист на "Перевірці відомостей", не сам керівник. Для
+            // заморожених записів це те, що реально застосувалось при
+            // відправці, не поточне значення (див. _serialize_payroll_entry).
+            return employee.payroll_entry?.month_working_days ?? DEFAULT_MONTH_WORKING_DAYS;
           }
 
           // Нараховано/Податки/Всього у валюті нарахування рахує бекенд
@@ -611,86 +955,225 @@ const PayrollStatementPage = () => {
           // тут лише показуємо готове значення з payroll_entry, або "-" з
           // підказкою, чого бракує для розрахунку.
           if (key === 'accrued') {
-            const missingFields = getAccruedMissingFields(employee);
-            if (missingFields.length > 0) {
-              return (
-                <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
-                  <span className={style.accruedMissingBadge}>-</span>
-                </Tooltip>
+            return renderStackedSlots(employee, entryData => {
+              const missingFields = getAccruedMissingFieldsForEntry(entryData);
+              if (missingFields.length > 0) {
+                return (
+                  <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
+                    <span className={style.accruedMissingBadge}>-</span>
+                  </Tooltip>
+                );
+              }
+              return formatRate(
+                Math.round(entryData.accrued * 100) / 100,
+                entryData.currency
               );
-            }
-
-            return formatRate(
-              Math.round(employee.payroll_entry.accrued * 100) / 100,
-              employee.currency
-            );
+            });
           }
 
-          // "Всього до виплати на руки" (total_payout) поки НЕ чіпаємо —
-          // лишається старим плейсхолдером (falls through нижче, завжди
-          // "-"), формулу під нього ще не узгоджено.
           if (key === 'taxes') {
-            const missingFields = getPayrollTotalsMissingFields(employee);
-            if (missingFields.length > 0 || employee.payroll_entry.taxes == null) {
+            return renderStackedSlots(employee, entryData => {
+              const missingFields = getPayrollTotalsMissingFieldsForEntry(employee, entryData);
+              if (missingFields.length > 0 || entryData?.taxes == null) {
+                return (
+                  <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
+                    <span className={style.accruedMissingBadge}>-</span>
+                  </Tooltip>
+                );
+              }
               return (
-                <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
-                  <span className={style.accruedMissingBadge}>-</span>
+                <Tooltip
+                  title={`${employee.tax_formula}. ${TAX_FORMULA_DESCRIPTIONS[employee.tax_formula]}`}
+                >
+                  <span>
+                    {formatRate(
+                      Math.round(entryData.taxes * 100) / 100,
+                      entryData.currency
+                    )}
+                  </span>
                 </Tooltip>
               );
-            }
-
-            return (
-              <Tooltip
-                title={`${employee.tax_formula}. ${TAX_FORMULA_DESCRIPTIONS[employee.tax_formula]}`}
-              >
-                <span>
-                  {formatRate(
-                    Math.round(employee.payroll_entry.taxes * 100) / 100,
-                    employee.currency
-                  )}
-                </span>
-              </Tooltip>
-            );
+            });
           }
 
           if (key === 'total_accrued_currency') {
-            const missingFields = getPayrollTotalsMissingFields(employee);
-            if (
-              missingFields.length > 0 ||
-              employee.payroll_entry.total_accrued_currency == null
-            ) {
-              return (
-                <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
-                  <span className={style.accruedMissingBadge}>-</span>
-                </Tooltip>
-              );
-            }
-
-            return formatRate(
-              Math.round(employee.payroll_entry.total_accrued_currency * 100) / 100,
-              employee.currency
+            return renderTotalCell(
+              employee,
+              entryData => {
+                const missingFields = getPayrollTotalsMissingFieldsForEntry(employee, entryData);
+                if (missingFields.length > 0 || entryData?.total_accrued_currency == null) {
+                  return (
+                    <Tooltip title={`Немає даних: ${missingFields.join(', ')}`}>
+                      <span className={style.accruedMissingBadge}>-</span>
+                    </Tooltip>
+                  );
+                }
+                return formatRate(
+                  Math.round(entryData.total_accrued_currency * 100) / 100,
+                  entryData.currency
+                );
+              },
+              combined => {
+                if (combined.total_accrued_currency == null) {
+                  const missingByPeriod = getEntrySlots(employee)
+                    .map(entryData => ({
+                      rate: entryData?.rate,
+                      currency: entryData?.currency,
+                      missing: getPayrollTotalsMissingFieldsForEntry(employee, entryData),
+                    }))
+                    .filter(item => item.missing.length > 0);
+                  return (
+                    <Tooltip
+                      title={
+                        <>
+                          <div>Немає даних для розрахунку по одній зі ставок:</div>
+                          {missingByPeriod.map((item, index) => (
+                            <div key={index}>
+                              {item.rate ? formatRate(item.rate, item.currency) : 'ставка не вказана'}:{' '}
+                              {item.missing.join(', ')}
+                            </div>
+                          ))}
+                        </>
+                      }
+                    >
+                      <span className={style.accruedMissingBadge}>-</span>
+                    </Tooltip>
+                  );
+                }
+                const breakdown = combined.total_accrued_currency_breakdown || [];
+                const tooltipText = `${breakdown
+                  .map(item =>
+                    formatRate(Math.round((item.value ?? 0) * 100) / 100, item.currency || employee.currency)
+                  )
+                  .join(' + ')} = ${formatRate(
+                  Math.round(combined.total_accrued_currency * 100) / 100,
+                  employee.currency
+                )}`;
+                return (
+                  <Tooltip title={tooltipText}>
+                    <span>
+                      {formatRate(
+                        Math.round(combined.total_accrued_currency * 100) / 100,
+                        employee.currency
+                      )}
+                    </span>
+                  </Tooltip>
+                );
+              }
             );
           }
 
-          if (EDITABLE_PAYROLL_FIELDS.includes(key)) {
+          // "Всього до виплати на руки" = сума всіх колонок статей витрат
+          // (тих самих expense_item_*) — рахує бекенд (_sum_expense_items),
+          // тут лише показуємо готове число. Якщо хоч одна стаття ще не
+          // порахована (formula без вхідних даних) — сума теж "-", не
+          // занижена мовчки. При кількох ставках місяця — одне підсумкове
+          // число по всіх відрізках разом (renderTotalCell).
+          if (key === 'total_payout') {
+            return renderTotalCell(
+              employee,
+              entryData => {
+                const totalPayout = entryData?.total_payout;
+                if (totalPayout === null || totalPayout === undefined) {
+                  return (
+                    <Tooltip title="Немає даних для розрахунку деяких статей витрат">
+                      <span className={style.accruedMissingBadge}>-</span>
+                    </Tooltip>
+                  );
+                }
+                return formatRate(
+                  Math.round(totalPayout * 100) / 100,
+                  entryData.currency
+                );
+              },
+              combined => {
+                if (combined.total_payout == null) {
+                  return (
+                    <Tooltip title="Немає даних для розрахунку деяких статей витрат по одній зі ставок">
+                      <span className={style.accruedMissingBadge}>-</span>
+                    </Tooltip>
+                  );
+                }
+                return (
+                  <Tooltip title="Сума по всіх ставках місяця">
+                    <span>{formatRate(Math.round(combined.total_payout * 100) / 100, employee.currency)}</span>
+                  </Tooltip>
+                );
+              }
+            );
+          }
+
+          // Динамічна колонка "статті витрат" — calc_type визначає, як
+          // показувати значення: "formula" готове рахує бекенд (тільки
+          // читання, окремо для кожного відрізка ставки — формула могла
+          // включати rate), "manual" — керівник вводить сам, ОДНЕ спільне
+          // значення на весь місяць (не прив'язане до відрізка ставки, тому
+          // без стекування — об'єднано з EDITABLE_PAYROLL_FIELDS нижче, щоб
+          // не дублювати UI редагування клітинки), не визначено (ще) — "-".
+          const expenseItemKeyId = key.startsWith(EXPENSE_ITEM_KEY_PREFIX)
+            ? key.slice(EXPENSE_ITEM_KEY_PREFIX.length)
+            : null;
+          const expenseItem = expenseItemKeyId
+            ? expenseItemByKey[key]
+            : null;
+
+          if (expenseItem && expenseItem.calc_type !== 'manual') {
+            return renderTotalCell(
+              employee,
+              entryData => {
+                const computedValue = entryData?.expense_items?.[expenseItemKeyId];
+                if (
+                  expenseItem.calc_type !== 'formula' ||
+                  computedValue === null ||
+                  computedValue === undefined
+                ) {
+                  return '-';
+                }
+                return (
+                  <Tooltip
+                    title={describeFormulaForEmployee(
+                      expenseItem.formula,
+                      employee.tax_formula
+                    )}
+                  >
+                    <span>
+                      {formatRate(
+                        Math.round(computedValue * 100) / 100,
+                        entryData.currency
+                      )}
+                    </span>
+                  </Tooltip>
+                );
+              },
+              combined => {
+                const computedValue = combined.expense_items?.[expenseItemKeyId];
+                if (
+                  expenseItem.calc_type !== 'formula' ||
+                  computedValue === null ||
+                  computedValue === undefined
+                ) {
+                  return '-';
+                }
+                return (
+                  <Tooltip
+                    title={`Сума по всіх ставках місяця. ${describeFormulaForEmployee(
+                      expenseItem.formula,
+                      employee.tax_formula
+                    )}`}
+                  >
+                    <span>{formatRate(Math.round(computedValue * 100) / 100, employee.currency)}</span>
+                  </Tooltip>
+                );
+              }
+            );
+          }
+
+          if (expenseItem && expenseItem.calc_type === 'manual') {
             const isEditing =
               editingCell?.employeeId === employee.id &&
+              editingCell?.rateHistoryId === null &&
               editingCell?.field === key;
-            const savedValue = employee.payroll_entry?.[key];
-
-            // "Розподіл" — відсоток (0-100), "Відпрацьовані робочі дні" — не
-            // може перевищувати "Робочі дні місяця" цього співробітника
-            // (поки завжди DEFAULT_MONTH_WORKING_DAYS, але читаємо з поля,
-            // щоб підхопити реальне значення, коли воно з'явиться).
-            const editLimits =
-              key === 'distribution'
-                ? { min: 0, max: 100 }
-                : key === 'worked_days'
-                ? {
-                    min: 0,
-                    max: employee.month_working_days ?? DEFAULT_MONTH_WORKING_DAYS,
-                  }
-                : null;
+            const savedValue = employee.payroll_entry?.expense_items?.[expenseItemKeyId];
 
             if (isEditing) {
               return (
@@ -701,15 +1184,7 @@ const PayrollStatementPage = () => {
                     value={editingValue}
                     autoFocus
                     disabled={savingCell}
-                    min={editLimits?.min}
-                    max={editLimits?.max}
-                    onChange={e =>
-                      setEditingValue(
-                        editLimits
-                          ? clampToRange(e.target.value, editLimits.min, editLimits.max)
-                          : e.target.value
-                      )
-                    }
+                    onChange={e => setEditingValue(e.target.value)}
                   />
                   <Tooltip title="Зберегти">
                     <span>
@@ -739,12 +1214,7 @@ const PayrollStatementPage = () => {
               );
             }
 
-            const displayValue =
-              savedValue === null || savedValue === undefined
-                ? '-'
-                : key === 'distribution'
-                ? `${savedValue}%`
-                : savedValue;
+            const displayValue = savedValue === null || savedValue === undefined ? '-' : savedValue;
 
             return (
               <div className={style.viewCellContainer}>
@@ -753,9 +1223,7 @@ const PayrollStatementPage = () => {
                   <button
                     type="button"
                     className={style.rateEditBtn}
-                    onClick={() =>
-                      handleStartEdit(employee.id, key, savedValue)
-                    }
+                    onClick={() => handleStartEdit(employee.id, null, key, savedValue)}
                   >
                     <Icon id="edit" className={style.rateEditIcon} />
                   </button>
@@ -764,78 +1232,200 @@ const PayrollStatementPage = () => {
             );
           }
 
-          if (key === 'payroll_status') {
-            const statusMeta =
-              PAYROLL_ENTRY_STATUS_META[getPayrollEntryStatus(employee)];
-            return (
-              <span
-                className={style.statusBadge}
-                style={{
-                  borderLeft: `4px solid ${statusMeta.color}`,
-                  color: statusMeta.color,
-                }}
-              >
-                {statusMeta.label}
-              </span>
-            );
+          if (EDITABLE_PAYROLL_FIELDS.includes(key)) {
+            return renderStackedSlots(employee, entryData => {
+              const rateHistoryId = getPeriodKey(entryData);
+              const isEditing =
+                editingCell?.employeeId === employee.id &&
+                editingCell?.rateHistoryId === rateHistoryId &&
+                editingCell?.field === key;
+              const savedValue = entryData?.[key];
+
+              // "Розподіл" — відсоток (0-100), "Відпрацьовані робочі дні" —
+              // не може перевищувати "Робочі дні місяця" (payroll-month-
+              // settings, виставляє фінансист на "Перевірці відомостей");
+              // при кількох відрізках ставки бекенд додатково перевіряє, щоб
+              // СУМА відпрацьованих днів усіх відрізків не перевищила це
+              // число (див. WORKED_DAYS_EXCEEDS_MONTH).
+              const editLimits =
+                key === 'distribution'
+                  ? { min: 0, max: 100 }
+                  : key === 'worked_days'
+                  ? {
+                      min: 0,
+                      max:
+                        employee.payroll_entry?.month_working_days ??
+                        DEFAULT_MONTH_WORKING_DAYS,
+                    }
+                  : null;
+
+              if (isEditing) {
+                return (
+                  <div ref={editingCellRef} className={style.editCellContainer}>
+                    <input
+                      type="number"
+                      className={style.editCellInput}
+                      value={editingValue}
+                      autoFocus
+                      disabled={savingCell}
+                      min={editLimits?.min}
+                      max={editLimits?.max}
+                      onChange={e =>
+                        setEditingValue(
+                          editLimits
+                            ? clampToRange(e.target.value, editLimits.min, editLimits.max)
+                            : e.target.value
+                        )
+                      }
+                    />
+                    <Tooltip title="Зберегти">
+                      <span>
+                        <button
+                          type="button"
+                          className={style.editCellSaveBtn}
+                          onClick={handleSaveEdit}
+                          disabled={savingCell}
+                        >
+                          <Icon id="check" className={style.editCellIcon} />
+                        </button>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Скасувати">
+                      <span>
+                        <button
+                          type="button"
+                          className={style.editCellCancelBtn}
+                          onClick={handleCancelEdit}
+                          disabled={savingCell}
+                        >
+                          <Icon id="x" className={style.editCellIcon} />
+                        </button>
+                      </span>
+                    </Tooltip>
+                  </div>
+                );
+              }
+
+              const displayValue =
+                savedValue === null || savedValue === undefined
+                  ? '-'
+                  : key === 'distribution'
+                  ? `${savedValue}%`
+                  : savedValue;
+
+              return (
+                <div className={style.viewCellContainer}>
+                  <span>{displayValue}</span>
+                  {!isEntryLocked(entryData) && (
+                    <button
+                      type="button"
+                      className={style.rateEditBtn}
+                      onClick={() =>
+                        handleStartEdit(employee.id, rateHistoryId, key, savedValue)
+                      }
+                    >
+                      <Icon id="edit" className={style.rateEditIcon} />
+                    </button>
+                  )}
+                </div>
+              );
+            });
           }
 
-          // Керівник поки може лише відправити на перевірку або скасувати
-          // відправку — "Повернуто на доопрацювання"/"Затверджено" виставляє
-          // бухгалтерія, цього флоу ще нема, тому дій для них немає.
+          if (key === 'payroll_status') {
+            return renderStackedSlots(employee, entryData => {
+              const statusMeta = PAYROLL_ENTRY_STATUS_META[getEntryStatus(entryData)];
+              return (
+                <span
+                  className={style.statusBadge}
+                  style={{
+                    borderLeft: `4px solid ${statusMeta.color}`,
+                    color: statusMeta.color,
+                  }}
+                >
+                  {statusMeta.label}
+                </span>
+              );
+            });
+          }
+
           if (key === 'action') {
-            const statusValue = getPayrollEntryStatus(employee);
-            const isUpdating = statusUpdatingId === employee.id;
+            return renderStackedSlots(employee, entryData => {
+              const rateHistoryId = getPeriodKey(entryData);
+              const statusValue = getEntryStatus(entryData);
+              const isUpdating =
+                statusUpdatingId === `${employee.id}:${rateHistoryId ?? 'primary'}`;
 
-            if (statusValue === PAYROLL_ENTRY_STATUS.DRAFT) {
-              return (
-                <div className={style.actionContainer}>
-                  <Tooltip title="Відправити на перевірку">
-                    <span>
-                      <button
-                        type="button"
-                        className={style.sendReviewBtn}
-                        disabled={isUpdating}
-                        onClick={() =>
-                          handleChangeEntryStatus(
-                            employee,
-                            PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW
-                          )
-                        }
-                      >
-                        <Icon id="paper-plane" className={style.editIcon} />
-                      </button>
-                    </span>
-                  </Tooltip>
-                </div>
-              );
-            }
+              if (statusValue === PAYROLL_ENTRY_STATUS.DRAFT) {
+                // Відправити на перевірку можна лише коли керівник заповнив
+                // те, за що сам відповідає (Розподіл/Відпрацьовані робочі
+                // дні) — бекенд це теж перевіряє (PAYROLL_ENTRY_INCOMPLETE),
+                // тут лише проактивно блокуємо кнопку, щоб не було сюрпризу
+                // після кліку.
+                const isIncomplete =
+                  entryData?.distribution == null || entryData?.worked_days == null;
+                return (
+                  <div className={style.actionContainer}>
+                    <Tooltip
+                      title={
+                        isIncomplete
+                          ? 'Заповніть "Розподіл" і "Відпрацьовані робочі дні"'
+                          : 'Відправити на перевірку'
+                      }
+                    >
+                      <span>
+                        <button
+                          type="button"
+                          className={style.sendReviewBtn}
+                          disabled={isUpdating || isIncomplete}
+                          onClick={() =>
+                            handleChangeEntryStatus(
+                              employee,
+                              rateHistoryId,
+                              PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW
+                            )
+                          }
+                        >
+                          <Icon id="paper-plane" className={style.editIcon} />
+                        </button>
+                      </span>
+                    </Tooltip>
+                  </div>
+                );
+              }
 
-            if (statusValue === PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW) {
-              return (
-                <div className={style.actionContainer}>
-                  <Tooltip title="Скасувати відправку">
-                    <span>
-                      <button
-                        type="button"
-                        className={style.cancelReviewBtn}
-                        disabled={isUpdating}
-                        onClick={() =>
-                          handleChangeEntryStatus(
-                            employee,
-                            PAYROLL_ENTRY_STATUS.DRAFT
-                          )
-                        }
-                      >
-                        <Icon id="x" className={style.editIcon} />
-                      </button>
-                    </span>
-                  </Tooltip>
-                </div>
-              );
-            }
+              // "Повернуто на доопрацювання" — олівець переводить запис
+              // назад у DRAFT (розблоковує поля для редагування), а вже
+              // звідти керівник надсилає повторно тією самою кнопкою вище.
+              if (statusValue === PAYROLL_ENTRY_STATUS.NEEDS_REVISION) {
+                return (
+                  <div className={style.actionContainer}>
+                    <Tooltip title="Редагувати">
+                      <span>
+                        <button
+                          type="button"
+                          className={style.rateEditBtn}
+                          disabled={isUpdating}
+                          onClick={() =>
+                            handleChangeEntryStatus(
+                              employee,
+                              rateHistoryId,
+                              PAYROLL_ENTRY_STATUS.DRAFT
+                            )
+                          }
+                        >
+                          <Icon id="edit" className={style.rateEditIcon} />
+                        </button>
+                      </span>
+                    </Tooltip>
+                  </div>
+                );
+              }
 
-            return <div className={style.actionContainer}>-</div>;
+              // "Відправлено на перевірку"/"Затверджено" — дій нема, єдиний
+              // вихід тепер лише через рішення фінансиста на PayrollReviewPage.
+              return <div className={style.actionContainer}>-</div>;
+            });
           }
 
           return value || '-';
@@ -843,6 +1433,8 @@ const PayrollStatementPage = () => {
       })),
     ],
     [
+      payrollColumnKeys,
+      expenseItemByKey,
       editingCell,
       editingValue,
       savingCell,
@@ -850,27 +1442,34 @@ const PayrollStatementPage = () => {
       isAllSelected,
       isSomeSelected,
       statusUpdatingId,
+      expandedRowIds,
     ]
   );
 
-  const filteredColumns = useMemo(() => {
-    if (visibleColumnKeys === 'All') return columns;
-    return columns.filter(
-      col =>
-        fixedColumnKeys.includes(col.accessorKey) ||
-        visibleColumnKeys.includes(col.accessorKey)
-    );
-  }, [columns, visibleColumnKeys]);
+  const filteredColumns = useMemo(
+    () =>
+      columns.filter(
+        col =>
+          fixedColumnKeys.includes(col.accessorKey) ||
+          !hiddenColumnKeys.includes(col.accessorKey)
+      ),
+    [columns, hiddenColumnKeys]
+  );
 
   const hideableColumns = useMemo(
     () => columns.filter(col => hideableColumnKeys.includes(col.accessorKey)),
-    [columns]
+    [columns, hideableColumnKeys]
   );
 
-  const visibleColumnsCount =
-    visibleColumnKeys === 'All'
-      ? hideableColumnKeys.length
-      : visibleColumnKeys.length;
+  // Для ModalColumnsForm — воно очікує саме СПИСОК ВИДИМИХ (той самий
+  // спільний компонент, що й на "Співробітниках"), тому рахуємо тут, а не
+  // зберігаємо як стейт.
+  const visibleColumnKeysForModal = useMemo(
+    () => hideableColumnKeys.filter(key => !hiddenColumnKeys.includes(key)),
+    [hideableColumnKeys, hiddenColumnKeys]
+  );
+
+  const visibleColumnsCount = visibleColumnKeysForModal.length;
 
   // "Статус" сюди не входить — поки він лише візуальний і завжди FILTER_ALL.
   const activeAdditionalFiltersCount = [
@@ -879,18 +1478,22 @@ const PayrollStatementPage = () => {
     selectedPaymentDetails,
   ].filter(value => value !== FILTER_ALL).length;
 
+  // Коли є таби Subdivision — вибір одного з них обов'язковий (немає режиму
+  // "усі підрозділи разом"), тому це не "активний фільтр", який можна
+  // скинути, а обов'язкова навігація — не враховуємо тут і не чіпаємо в
+  // handleResetFilters нижче.
   const hasActiveFilters =
     search.trim() !== '' ||
     selectedUnit !== FILTER_ALL ||
     selectedDepartment !== FILTER_ALL ||
-    selectedSubdivision !== FILTER_ALL ||
+    (!hasSubdivisionTabs && selectedSubdivision !== FILTER_ALL) ||
     activeAdditionalFiltersCount > 0;
 
   const handleResetFilters = () => {
     setSearch('');
     setSelectedUnit(FILTER_ALL);
     setSelectedDepartment(FILTER_ALL);
-    setSelectedSubdivision(FILTER_ALL);
+    if (!hasSubdivisionTabs) setSelectedSubdivision(FILTER_ALL);
     setSelectedCurrency(FILTER_ALL);
     setSelectedPaymentForm(FILTER_ALL);
     setSelectedPaymentDetails(FILTER_ALL);
@@ -917,10 +1520,17 @@ const PayrollStatementPage = () => {
             setEndDate={setEndDate}
             onLoading={() => {}}
           />
-          <button type="button" className={style.primaryBtn}>
-            <span className={style.plus}>+</span>
-            Додати співробітника
-          </button>
+          {/* Тимчасово вимкнено — кейс "співробітник на 1 місяць" відкладено
+              (сама форма/бекенд-ендпоінт приберені, поки не повернемось до
+              цього кейсу — повертати доведеться разом). */}
+          <Tooltip title="Тимчасово недоступно">
+            <span>
+              <button type="button" className={style.primaryBtn} disabled>
+                <span className={style.plus}>+</span>
+                Додати співробітника
+              </button>
+            </span>
+          </Tooltip>
         </div>
       </div>
 
@@ -969,21 +1579,26 @@ const PayrollStatementPage = () => {
               defaultValues={{ department: selectedDepartment }}
             />
           </div>
-          <div className={style.selectSlot}>
-            <Form
-              key={`subdivision-${filtersResetKey}`}
-              fields={[
-                {
-                  type: 'select',
-                  name: 'subdivision',
-                  label: 'Subdivision',
-                  options: subdivisionOptions,
-                  onChange: value => setSelectedSubdivision(value),
-                },
-              ]}
-              defaultValues={{ subdivision: selectedSubdivision }}
-            />
-          </div>
+          {/* Коли підрозділів кілька — їх обирають табами над таблицею
+              (нижче), а не цим дропдауном, щоб не дублювати той самий
+              фільтр двома контролами одночасно. */}
+          {!hasSubdivisionTabs && (
+            <div className={style.selectSlot}>
+              <Form
+                key={`subdivision-${filtersResetKey}`}
+                fields={[
+                  {
+                    type: 'select',
+                    name: 'subdivision',
+                    label: 'Subdivision',
+                    options: subdivisionOptions,
+                    onChange: value => setSelectedSubdivision(value),
+                  },
+                ]}
+                defaultValues={{ subdivision: selectedSubdivision }}
+              />
+            </div>
+          )}
         </div>
 
         {showAllFilters && (
@@ -1091,6 +1706,26 @@ const PayrollStatementPage = () => {
         )}
       </div>
 
+      {hasSubdivisionTabs && (
+        <ul className={style.subdivisionTabs}>
+          {subdivisionTabs.map(tab => (
+            <li key={tab.value}>
+              <button
+                type="button"
+                className={`${style.subdivisionTab} ${
+                  tab.value === selectedSubdivision
+                    ? style.subdivisionTabActive
+                    : ''
+                }`}
+                onClick={() => setSelectedSubdivision(tab.value)}
+              >
+                {tab.label}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
       <Table
         data={filteredEmployees}
         columns={filteredColumns}
@@ -1107,7 +1742,7 @@ const PayrollStatementPage = () => {
       >
         <ModalColumnsForm
           columns={hideableColumns}
-          visibleColumns={visibleColumnKeys}
+          visibleColumns={visibleColumnKeysForModal}
           handleColumnToggle={handleColumnToggle}
         />
       </ModalWindow>

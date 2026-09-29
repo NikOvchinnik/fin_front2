@@ -1,0 +1,598 @@
+/* Той самий візуальний патерн, що PayrollStatementPage.module.css — навмисно,
+   для єдиного вигляду сторінок роботи з зарплатними відомостями. */
+.mainContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.headerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.headerText {
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--heading-text);
+}
+
+/* Права колонка headerRow — "Робочі дні місяця" одразу над пагінацією по
+   місяцям (DateNavigator), а не окремим рядком на всю ширину. */
+.headerActionsCol {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* "Робочі дні місяця" (payroll-month-settings) — окреме число на кожен
+   місяць, редагує лише фінансист. Той самий візуал редагування клітинки, що
+   на "Зарплатній відомості" керівника (rateEditBtn/editCellSaveBtn/
+   editCellCancelBtn нижче — скопійовано з PayrollStatementPage.module.css). */
+.monthWorkingDaysRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.monthWorkingDaysLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  color: var(--main-text);
+}
+
+.monthWorkingDaysInput {
+  width: 70px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font: inherit;
+  color: var(--main-text);
+  background: var(--white);
+}
+
+.monthWorkingDaysInput:focus {
+  border-color: var(--button);
+  outline: none;
+}
+
+.rateEditBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  fill: var(--main-text);
+  transition: all 0.3s ease;
+}
+
+.rateEditBtn:hover {
+  background: var(--button);
+  border-color: var(--button);
+  fill: var(--white);
+}
+
+/* Стан "рядок розблокований для редагування" — той самий олівець у колонці
+   "Дія", але візуально відрізняється (залитий), щоб було видно, які рядки
+   зараз редаговані. */
+.rateEditBtnActive {
+  background: var(--button);
+  border-color: var(--button);
+  fill: var(--white);
+}
+
+.rateEditIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.editCellSaveBtn,
+.editCellCancelBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--border);
+  background: var(--white);
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.06);
+  transition: all 0.2s ease;
+}
+
+.editCellSaveBtn {
+  fill: #6b9429;
+}
+
+.editCellSaveBtn:hover {
+  background: #6b9429;
+  border-color: #6b9429;
+  fill: var(--white);
+}
+
+.editCellCancelBtn {
+  /* icon-x у спільному спрайті має захардкоджений білий колір через inline
+     style="fill: var(--color1, #fff)" — перевизначаємо саме цю CSS-змінну
+     (той самий трюк, що й на .returnBtn нижче). */
+  --color1: #b24132;
+  fill: #b24132;
+}
+
+.editCellCancelBtn:hover {
+  --color1: #fff;
+  background: #b24132;
+  border-color: #8a2f22;
+  fill: var(--white);
+}
+
+.editCellSaveBtn:disabled,
+.editCellCancelBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.editCellIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Inline-редагування клітинок таблиці (Розподіл/Відпрацьовані дні/
+   Компенсація відпустки/Бонус/статті з calc_type="manual") — той самий
+   вигляд, що на "Зарплатній відомості" керівника. */
+.viewCellContainer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 140px;
+}
+
+/* Підрядки 2-ї й подальшої ставки місяця (employee.extra_payroll_entries) —
+   той самий патерн/класи, що на "Зарплатній відомості" керівника і на
+   "Співробітниках" (StaffPage.module.css), навмисно однакові значення для
+   єдиного вигляду. */
+.multiValueCell {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.multiValuePrimary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  line-height: 24px;
+  white-space: nowrap;
+}
+
+.multiValueExtra {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  line-height: 24px;
+  color: var(--toggle-lang);
+  white-space: nowrap;
+}
+
+.periodLabel {
+  font-size: 12px;
+  color: var(--toggle-lang);
+}
+
+.nameCellContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rowExpandToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.rowExpandToggle:hover {
+  background: var(--toggle-lang-background);
+}
+
+.multiValueChevron {
+  width: 22px;
+  height: 22px;
+  color: var(--toggle-lang);
+  transition: transform 0.2s ease;
+}
+
+.multiValueChevronCollapsed {
+  transform: rotate(180deg);
+}
+
+.editCellContainer {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 140px;
+  margin: -8px;
+  padding: 8px;
+  background-color: #f1eefc;
+}
+
+.editCellInput {
+  width: 100%;
+  min-width: 60px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font: inherit;
+  color: var(--main-text);
+  background: var(--white);
+}
+
+.editCellInput:focus {
+  border-color: var(--button);
+  outline: none;
+}
+
+/* Підказка "чого бракує для розрахунку" на Нараховано/Податки/Всього/Всього
+   до виплати — той самий вигляд, що на "Зарплатній відомості" керівника. */
+.accruedMissingBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background-color: #fae8e6;
+  color: #a71916;
+  cursor: help;
+}
+
+.headerWithHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: help;
+}
+
+.headerHintIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: var(--toggle-lang);
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-weight: 500;
+  color: var(--toggle-lang);
+}
+
+.subdivisionAllHint {
+  margin: 8px 0;
+  font-size: 13px;
+  color: var(--toggle-lang);
+}
+
+.emptyText {
+  padding: 40px 0;
+  text-align: center;
+  color: var(--toggle-lang);
+}
+
+/* Панель пошуку/фільтрів + фільтр колонок — той самий візуал і класи, що на
+   "Зарплатній відомості" керівника (PayrollStatementPage.module.css). */
+.filterContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.formsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.searchContainer {
+  display: flex;
+  width: 100%;
+}
+
+.labelContainer {
+  width: 100%;
+}
+
+.inputContainer {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 14px;
+  font-weight: 500;
+  color: var(--main-text);
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.inputContainer:hover,
+.inputContainer:focus {
+  border: 1px solid var(--border-hover);
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  fill: var(--main-text);
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.filterBtn:hover,
+.filterBtn:focus {
+  fill: var(--button);
+  color: var(--button);
+  border-color: var(--button);
+}
+
+.filterCountBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--button);
+  color: var(--white);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.resetFiltersBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 8px;
+  background: var(--button);
+  fill: var(--white);
+  color: var(--white);
+  white-space: nowrap;
+  transition: background-color 0.3s ease;
+}
+
+.resetFiltersBtn:hover,
+.resetFiltersBtn:focus {
+  background: var(--button-hover);
+}
+
+.columnsFilterRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.displayedCountText {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #5331b2;
+  font-weight: 500;
+}
+
+.displayedCountBadge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 100px;
+  background-color: var(--button);
+  color: var(--white);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filterIcon {
+  width: 16px;
+  height: 16px;
+}
+
+@media screen and (min-width: 1024px) {
+  .formsContainer {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .searchContainer {
+    flex: 1 1 220px;
+    min-width: 220px;
+  }
+
+  .selectSlot {
+    flex: 1 1 160px;
+    min-width: 160px;
+  }
+}
+
+/* Таби підрозділів — той самий класи/розмітка (ul/li/button), що на
+   "Моїх заявках" і на "Зарплатній відомості" керівника. */
+.subdivisionTabs {
+  display: inline-flex;
+  list-style: none;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  margin: 0;
+  background: var(--toggle-lang-background);
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.subdivisionTab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 28px;
+  background: transparent;
+  color: var(--main-text);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.subdivisionTab:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
+.subdivisionTabActive {
+  background-color: var(--button);
+  color: var(--white);
+}
+
+.statusBadge {
+  padding-left: 6px;
+  font-weight: 700;
+}
+
+.actionContainer {
+  display: flex;
+  gap: 8px;
+}
+
+.actionIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.approveBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #81c784;
+  border-radius: 4px;
+  fill: #81c784;
+  transition: all 0.3s ease;
+}
+
+.approveBtn:hover:not(:disabled),
+.approveBtn:focus:not(:disabled) {
+  background: #81c784;
+  fill: var(--white);
+}
+
+.approveBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.returnBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #b24132;
+  border-radius: 4px;
+  /* icon-x у спільному спрайті має захардкоджений білий колір через inline
+     style="fill: var(--color1, #fff)" — перевизначаємо саме цю CSS-змінну
+     (той самий трюк, що на "Зарплатній відомості" керівника). */
+  --color1: #b24132;
+  fill: #b24132;
+  transition: all 0.3s ease;
+}
+
+.returnBtn:hover:not(:disabled),
+.returnBtn:focus:not(:disabled) {
+  --color1: #fff;
+  background: #b24132;
+  border-color: #8a2f22;
+  fill: var(--white);
+}
+
+.returnBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Звичайна кнопка над таблицею (у ряду з "Фільтр колонок"/"Більше
+   фільтрів"), не плаваюча панель — вмикається, коли обрано хоч один рядок
+   чекбоксом. Той самий вигляд, що кнопка "Імпорт з Google Sheets" у
+   кадровика (EmployeesPage.module.css: .secondaryBtn/.btnIcon) — біла
+   заливка, фіолетова рамка й текст, іконка "upload". Тут це масовий
+   ЕКСПОРТ обраних рядків (не імпорт), сама дія — окремий наступний крок. */
+.exportBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 14px;
+  min-height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--button);
+  background: var(--white);
+  color: var(--button);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.exportBtn:hover:not(:disabled),
+.exportBtn:focus:not(:disabled) {
+  border-color: var(--button-hover);
+  color: var(--button-hover);
+}
+
+.exportBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btnIcon {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}

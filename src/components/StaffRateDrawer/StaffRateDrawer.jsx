@@ -89,6 +89,10 @@ const StaffRateDrawer = ({
   const [savingTaxFormula, setSavingTaxFormula] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
+  // Попередження "ця дата дії потрапляє у вже оброблений місяць" —
+  // { message, onConfirm } | null. onConfirm повторює той самий запит із
+  // confirm_retroactive: true.
+  const [retroactiveWarning, setRetroactiveWarning] = useState(null);
   const [rateHistory, setRateHistory] = useState([]);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [editRateValue, setEditRateValue] = useState('');
@@ -150,19 +154,28 @@ const StaffRateDrawer = ({
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async ({ confirmRetroactive = false } = {}) => {
     setSaving(true);
     try {
       await postEmployeeRate(employee.id, selectedAssignment.id, {
         rate: rateValue,
         currency,
         rate_date: dayjs(rateDate).format('DD.MM.YYYY'),
+        ...(confirmRetroactive ? { confirm_retroactive: true } : {}),
       });
+      setRetroactiveWarning(null);
       Notify.success('Ставку збережено.');
       await onSaved();
       onClose();
-    } catch {
-      Notify.failure('Не вдалося зберегти ставку.');
+    } catch (error) {
+      if (!confirmRetroactive && error?.response?.data?.code === 'RATE_AFFECTS_PROCESSED_MONTH') {
+        setRetroactiveWarning({
+          message: error.response.data.message,
+          onConfirm: () => handleSave({ confirmRetroactive: true }),
+        });
+      } else {
+        Notify.failure('Не вдалося зберегти ставку.');
+      }
     } finally {
       setSaving(false);
     }
@@ -200,7 +213,7 @@ const StaffRateDrawer = ({
     setEditingEntryId(null);
   };
 
-  const handleSaveEntryEdit = async entryId => {
+  const handleSaveEntryEdit = async (entryId, { confirmRetroactive = false } = {}) => {
     setEditSaving(true);
     try {
       const updatedEmployee = await putEmployeeRate(
@@ -211,6 +224,7 @@ const StaffRateDrawer = ({
           rate: editRateValue,
           currency: editCurrency,
           rate_date: dayjs(editRateDate).format('DD.MM.YYYY'),
+          ...(confirmRetroactive ? { confirm_retroactive: true } : {}),
         }
       );
       const updatedAssignment = (updatedEmployee.assignments || []).find(
@@ -218,11 +232,19 @@ const StaffRateDrawer = ({
       );
       setRateHistory(updatedAssignment?.rate_history || []);
       setEditingEntryId(null);
+      setRetroactiveWarning(null);
       Notify.success('Запис оновлено.');
       // Оновлюємо таблицю на фоні — дровер лишається відкритим.
       onSaved();
-    } catch {
-      Notify.failure('Не вдалося оновити запис.');
+    } catch (error) {
+      if (!confirmRetroactive && error?.response?.data?.code === 'RATE_AFFECTS_PROCESSED_MONTH') {
+        setRetroactiveWarning({
+          message: error.response.data.message,
+          onConfirm: () => handleSaveEntryEdit(entryId, { confirmRetroactive: true }),
+        });
+      } else {
+        Notify.failure('Не вдалося оновити запис.');
+      }
     } finally {
       setEditSaving(false);
     }
@@ -480,7 +502,7 @@ const StaffRateDrawer = ({
             type="button"
             className={style.saveBtn}
             disabled={!canSave || saving}
-            onClick={handleSave}
+            onClick={() => handleSave()}
           >
             {saving ? 'Зберігаю...' : 'Зберегти зміни'}
           </button>
@@ -527,6 +549,42 @@ const StaffRateDrawer = ({
               {pendingTabIndex !== null
                 ? 'Перейти без збереження'
                 : 'Закрити без збереження'}
+            </button>
+          </div>
+        </div>
+      </ModalWindow>
+
+      <ModalWindow
+        isModalOpen={!!retroactiveWarning}
+        onCloseModal={() => setRetroactiveWarning(null)}
+        closeBtn={false}
+      >
+        <div className={style.unsavedConfirm}>
+          <div className={style.unsavedConfirmHeader}>
+            <p className={style.unsavedConfirmTitle}>Місяць уже оброблено</p>
+            <button
+              type="button"
+              className={style.unsavedConfirmCloseBtn}
+              onClick={() => setRetroactiveWarning(null)}
+            >
+              <Icon id="close" className={style.unsavedConfirmCloseIcon} />
+            </button>
+          </div>
+          <p className={style.unsavedConfirmText}>{retroactiveWarning?.message}</p>
+          <div className={style.unsavedConfirmActions}>
+            <button
+              type="button"
+              className={style.unsavedConfirmSecondaryBtn}
+              onClick={() => setRetroactiveWarning(null)}
+            >
+              Скасувати
+            </button>
+            <button
+              type="button"
+              className={style.unsavedConfirmPrimaryBtn}
+              onClick={() => retroactiveWarning?.onConfirm()}
+            >
+              Все одно зберегти
             </button>
           </div>
         </div>

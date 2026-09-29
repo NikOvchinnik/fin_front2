@@ -16,6 +16,50 @@ export const getEmployeeLookups = async () => {
   }
 };
 
+export const getPayrollExpenseItems = async () => {
+  try {
+    return await axios.get('/api/employees/payroll-expense-items');
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPayrollReview = async month => {
+  try {
+    return await axios.get('/api/employees/payroll-review', {
+      params: month ? { month } : {},
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getPayrollMonthSettings = async month => {
+  try {
+    return await axios.get('/api/employees/payroll-month-settings', {
+      params: { month },
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updatePayrollMonthSettings = async payload => {
+  try {
+    return await axios.put('/api/employees/payroll-month-settings', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportPayrollReviewToGoogle = async payload => {
+  try {
+    return await axios.post('/api/employees/payroll-review/export-to-google', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const getMyTeamEmployees = async month => {
   try {
     return await axios.get('/api/employees/my-team', {
@@ -29,6 +73,14 @@ export const getMyTeamEmployees = async month => {
 export const updateEmployeePayrollEntry = async (id, payload) => {
   try {
     return await axios.put(`/api/employees/${id}/payroll-entry`, payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateEmployeePayrollExpenseValue = async (id, payload) => {
+  try {
+    return await axios.put(`/api/employees/${id}/payroll-expense-value`, payload);
   } catch (error) {
     throw error;
   }
