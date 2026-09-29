@@ -209,6 +209,17 @@ table {
   background: var(--toggle-lang-background);
 }
 
+/* Звільнений співробітник (row.original.className, задається в
+   StaffPage.jsx) — сірий, як і в решти неактивних елементів застосунку. */
+.staffTable tbody tr.terminatedRow td {
+  background: #f1f1f1;
+  color: var(--toggle-lang);
+}
+
+.staffTable tbody tr.terminatedRow:hover td {
+  background: #e4e4e4;
+}
+
 .calendarTable td {
   padding: 0;
   border-top: 1px solid var(--main-text);
