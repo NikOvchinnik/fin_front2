@@ -52,6 +52,16 @@ export const updatePayrollMonthSettings = async payload => {
   }
 };
 
+export const getNbuRates = async (refresh = false) => {
+  try {
+    return await axios.get('/api/employees/nbu-rates', {
+      params: refresh ? { refresh: 'true' } : {},
+    });
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const exportPayrollReviewToGoogle = async payload => {
   try {
     return await axios.post('/api/employees/payroll-review/export-to-google', payload);

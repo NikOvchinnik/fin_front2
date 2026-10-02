@@ -596,3 +596,61 @@
   height: 18px;
   fill: currentColor;
 }
+
+.nbuModalContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.nbuModalTitle {
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--heading-text);
+}
+
+.nbuModalList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nbuModalRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--toggle-lang-background);
+}
+
+.nbuModalCurrency {
+  font-weight: 500;
+}
+
+.nbuModalRate {
+  font-weight: 700;
+  color: var(--heading-text);
+}
+
+.nbuModalHint {
+  color: var(--toggle-lang);
+}
+
+.nbuModalStale {
+  color: #c79a1b;
+}
+
+.esvChoiceButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.nbuModalError {
+  color: #a71916;
+}

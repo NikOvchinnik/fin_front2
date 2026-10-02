@@ -11,6 +11,7 @@ import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColum
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import {
   exportPayrollReviewToGoogle,
+  getNbuRates,
   getPayrollExpenseItems,
   getPayrollMonthSettings,
   getPayrollReview,
@@ -59,6 +60,9 @@ const PAYROLL_ENTRY_STATUS_META = {
     color: '#6b9429',
   },
 };
+
+const NBU_CURRENCY_LABELS = { USD: 'Долар США', EUR: 'Євро' };
+const TAX_FORMULA_KP_ESV = 'ставка + КП (6%+ЄСВ)';
 
 const EXPENSE_ITEM_KEY_PREFIX = 'expense_item_';
 const toExpenseItemKey = id => `${EXPENSE_ITEM_KEY_PREFIX}${id}`;
@@ -303,6 +307,11 @@ const PayrollReviewPage = () => {
     return saved ? JSON.parse(saved) : DEFAULT_HIDDEN_COLUMN_KEYS;
   });
   const [isColumnsModalOpen, setColumnsModalOpen] = useState(false);
+  const [isNbuModalOpen, setNbuModalOpen] = useState(false);
+  const [nbuRates, setNbuRates] = useState(null);
+  const [nbuRatesLoading, setNbuRatesLoading] = useState(false);
+  const [nbuRatesError, setNbuRatesError] = useState(false);
+  const [esvRateChoice, setEsvRateChoice] = useState(null); // { oldRate, newRate, currency } | null
   const [monthWorkingDays, setMonthWorkingDays] = useState(DEFAULT_MONTH_WORKING_DAYS);
   const [isEditingMonthWorkingDays, setIsEditingMonthWorkingDays] = useState(false);
   const [monthWorkingDaysInput, setMonthWorkingDaysInput] = useState('');
@@ -542,7 +551,10 @@ const PayrollReviewPage = () => {
   // незбережені зміни замість тихого скидання (той самий підхід, що на
   // "Зарплатній відомості" керівника).
   useEffect(() => {
-    if (!editingCell) return undefined;
+    // esvRateChoice — модалка вибору курсу рендериться в портал поза цим DOM
+    // (react-modal), інакше клік по її кнопках ловився б тут як "поза
+    // клітинкою" і скасовував редагування раніше, ніж спрацює сама кнопка.
+    if (!editingCell || esvRateChoice) return undefined;
 
     const handleOutsideInteraction = event => {
       if (
@@ -563,7 +575,7 @@ const PayrollReviewPage = () => {
       document.removeEventListener('mousedown', handleOutsideInteraction, true);
       document.removeEventListener('click', handleOutsideInteraction, true);
     };
-  }, [editingCell]);
+  }, [editingCell, esvRateChoice]);
 
   const toggleRowUnlocked = unlockKey => {
     setUnlockedEmployeeIds(prev => {
@@ -634,7 +646,7 @@ const PayrollReviewPage = () => {
     );
   };
 
-  const handleSaveEdit = async () => {
+  const performSaveEdit = async esvRateMode => {
     if (!editingCell) return;
     setSavingCell(true);
     try {
@@ -655,6 +667,7 @@ const PayrollReviewPage = () => {
             field: editingCell.field,
             value: editingValue,
             rate_history_id: editingCell.rateHistoryId,
+            ...(esvRateMode ? { esv_rate_mode: esvRateMode } : {}),
           });
       applyPayrollEntryUpdate(
         editingCell.rowKey,
@@ -663,10 +676,14 @@ const PayrollReviewPage = () => {
       );
       setEditingCell(null);
       setEditingValue('');
+      setEsvRateChoice(null);
     } catch (error) {
       if (error?.response?.status === 409) {
         Notify.warning('Статус уже змінився — онови сторінку.');
-      } else if (error?.response?.data?.code === 'WORKED_DAYS_EXCEEDS_MONTH') {
+      } else if (
+        error?.response?.data?.code === 'WORKED_DAYS_EXCEEDS_MONTH' ||
+        error?.response?.data?.code === 'NBU_RATE_UNAVAILABLE'
+      ) {
         Notify.failure(error.response.data.message);
       } else {
         Notify.failure('Не вдалося зберегти значення.');
@@ -674,6 +691,43 @@ const PayrollReviewPage = () => {
     } finally {
       setSavingCell(false);
     }
+  };
+
+  // Якщо запис уже заморожений (надісланий/затверджений) і формула —
+  // "ставка + КП (6%+ЄСВ)" у не-гривневій валюті, спершу питаємо, яким
+  // курсом рахувати ЄСВ — тим, що був, чи сьогоднішнім.
+  const handleSaveEdit = async () => {
+    if (!editingCell) return;
+
+    if (!editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX)) {
+      const employee = employees.find(item => getRowKey(item) === editingCell.rowKey);
+      const entryData = employee
+        ? getEntrySlots(employee).find(entry => getPeriodKey(entry) === editingCell.rateHistoryId)
+        : null;
+      const needsEsvChoice =
+        getStatusForEntry(entryData) !== PAYROLL_ENTRY_STATUS.DRAFT &&
+        employee?.tax_formula === TAX_FORMULA_KP_ESV &&
+        entryData?.currency &&
+        entryData.currency !== 'UAH';
+
+      if (needsEsvChoice) {
+        let newRate = null;
+        try {
+          const rates = await getNbuRates();
+          newRate = rates?.rates?.[entryData.currency] ?? null;
+        } catch {
+          newRate = null;
+        }
+        setEsvRateChoice({
+          oldRate: entryData.esv_exchange_rate,
+          newRate,
+          currency: entryData.currency,
+        });
+        return;
+      }
+    }
+
+    await performSaveEdit(null);
   };
 
   // rateHistoryId — кожен відрізок ставки місяця має свій НЕЗАЛЕЖНИЙ статус
@@ -778,6 +832,25 @@ const PayrollReviewPage = () => {
     } finally {
       setExportingToGoogle(false);
     }
+  };
+
+  const fetchNbuRates = async (refresh = false) => {
+    setNbuRatesLoading(true);
+    setNbuRatesError(false);
+    try {
+      const result = await getNbuRates(refresh);
+      setNbuRates(result);
+    } catch {
+      setNbuRatesError(true);
+      if (nbuRates) Notify.failure('Не вдалося оновити курс НБУ.');
+    } finally {
+      setNbuRatesLoading(false);
+    }
+  };
+
+  const handleOpenNbuModal = () => {
+    setNbuModalOpen(true);
+    fetchNbuRates();
   };
 
   // Стекує значення клітинки по ВСІХ відрізках ставки місяця цього рядка
@@ -1760,6 +1833,9 @@ const PayrollReviewPage = () => {
             </span>
           )}
         </button>
+        <button type="button" className={style.exportBtn} onClick={handleOpenNbuModal}>
+          Курси НБУ
+        </button>
       </div>
 
       {hasSubdivisionTabs && (
@@ -1814,6 +1890,87 @@ const PayrollReviewPage = () => {
           visibleColumns={visibleColumnKeysForModal}
           handleColumnToggle={handleColumnToggle}
         />
+      </ModalWindow>
+
+      <ModalWindow
+        isModalOpen={isNbuModalOpen}
+        onCloseModal={() => setNbuModalOpen(false)}
+        customStyles={{ width: '440px' }}
+      >
+        <div className={style.nbuModalContainer}>
+          <h2 className={style.nbuModalTitle}>Курси НБУ на сьогодні</h2>
+
+          {nbuRatesLoading && !nbuRates ? (
+            <p className={style.nbuModalHint}>Завантаження…</p>
+          ) : nbuRatesError && !nbuRates ? (
+            <p className={style.nbuModalError}>
+              Не вдалося отримати курс НБУ. Спробуйте ще раз.
+            </p>
+          ) : nbuRates ? (
+            <>
+              {nbuRates.stale && (
+                <p className={style.nbuModalStale}>
+                  Курс застарів — останнє успішне оновлення на {nbuRates.date}.
+                </p>
+              )}
+              <ul className={style.nbuModalList}>
+                {Object.entries(nbuRates.rates).map(([currency, rate]) => (
+                  <li key={currency} className={style.nbuModalRow}>
+                    <span className={style.nbuModalCurrency}>
+                      {currency} — {NBU_CURRENCY_LABELS[currency] || currency}
+                    </span>
+                    <span className={style.nbuModalRate}>{rate.toFixed(4)} грн</span>
+                  </li>
+                ))}
+              </ul>
+              {!nbuRates.stale && (
+                <p className={style.nbuModalHint}>Курс на {nbuRates.date}.</p>
+              )}
+            </>
+          ) : null}
+
+          <button
+            type="button"
+            className={style.exportBtn}
+            disabled={nbuRatesLoading}
+            onClick={() => fetchNbuRates(true)}
+          >
+            {nbuRatesLoading ? 'Оновлюємо…' : 'Оновити'}
+          </button>
+        </div>
+      </ModalWindow>
+
+      <ModalWindow
+        isModalOpen={!!esvRateChoice}
+        onCloseModal={() => setEsvRateChoice(null)}
+        customStyles={{ width: '440px' }}
+      >
+        <div className={style.nbuModalContainer}>
+          <h2 className={style.nbuModalTitle}>Яким курсом порахувати ЄСВ?</h2>
+          <p className={style.nbuModalHint}>
+            Курс, застосований раніше: {esvRateChoice?.oldRate != null ? `${esvRateChoice.oldRate.toFixed(4)} грн` : '—'}
+            <br />
+            Сьогоднішній курс: {esvRateChoice?.newRate != null ? `${esvRateChoice.newRate.toFixed(4)} грн` : '—'}
+          </p>
+          <div className={style.esvChoiceButtons}>
+            <button
+              type="button"
+              className={style.exportBtn}
+              disabled={savingCell}
+              onClick={() => performSaveEdit('keep')}
+            >
+              Лишити попередній курс
+            </button>
+            <button
+              type="button"
+              className={style.exportBtn}
+              disabled={savingCell}
+              onClick={() => performSaveEdit('refresh')}
+            >
+              Перерахувати за сьогоднішнім
+            </button>
+          </div>
+        </div>
       </ModalWindow>
 
     </section>
