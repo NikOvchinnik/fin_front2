@@ -38,10 +38,14 @@ const employeeAssignments = employee =>
 const matchesAnyAssignment = (employee, field, value) =>
   employeeAssignments(employee).some(assignment => assignment[field] === value);
 
-// Підсвітка рядка звільненого співробітника (хоч би одне призначення з
-// termination_date) — row.original.className, читає Table.jsx.
-const isEmployeeTerminated = employee =>
-  employeeAssignments(employee).some(assignment => assignment.termination_date);
+// Підсвітка ВСЬОГО рядка — тільки якщо звільнені геть усі призначення
+// (людина повністю пішла) — row.original.className, читає Table.jsx. Якщо
+// звільнене лише одне з кількох, рядок лишається звичайним — підсвічується
+// (нижче, isAssignmentTerminated) лише той конкретний "слот" у комірці.
+const isEmployeeFullyTerminated = employee =>
+  employeeAssignments(employee).every(assignment => assignment.termination_date);
+
+const isAssignmentTerminated = assignment => Boolean(assignment?.termination_date);
 
 // Порядок і набір колонок для сторінки фінансиста — частина полів спільна
 // з карткою співробітника (employeeFields), частина ще не існує в моделі.
@@ -276,6 +280,10 @@ const StaffPage = () => {
           // employee з одним призначенням це просто один "слот", для
           // кількох — по одному на кожного керівника.
           const rateSlots = assignments.length ? assignments : [employee];
+          const slotClassName = (index, assignment) =>
+            `${index === 0 ? style.multiValuePrimary : style.multiValueExtra} ${
+              isAssignmentTerminated(assignment) ? style.multiValueTerminated : ''
+            }`;
 
           if (key === 'status') {
             return (
@@ -365,8 +373,7 @@ const StaffPage = () => {
               <div className={style.multiValueCell}>
                 {rateSlots.map((assignment, index) => {
                   if (index > 0 && !isExpanded) return null;
-                  const rowClassName =
-                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  const rowClassName = slotClassName(index, assignment);
                   return (
                     <div key={assignment?.id ?? index} className={rowClassName}>
                       {assignment.tax_formula ? (
@@ -410,8 +417,7 @@ const StaffPage = () => {
               <div className={style.multiValueCell}>
                 {rateSlots.map((assignment, index) => {
                   if (index > 0 && !isExpanded) return null;
-                  const rowClassName =
-                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  const rowClassName = slotClassName(index, assignment);
                   return (
                     <div key={assignment?.id ?? index} className={rowClassName}>
                       {assignment.currency || '-'}
@@ -427,8 +433,7 @@ const StaffPage = () => {
               <div className={style.multiValueCell}>
                 {rateSlots.map((assignment, index) => {
                   if (index > 0 && !isExpanded) return null;
-                  const rowClassName =
-                    index === 0 ? style.multiValuePrimary : style.multiValueExtra;
+                  const rowClassName = slotClassName(index, assignment);
                   return (
                     <div key={assignment?.id ?? index} className={rowClassName}>
                       {assignment.rate ? (
@@ -608,7 +613,7 @@ const StaffPage = () => {
 
     return rows.map(employee => ({
       ...employee,
-      className: isEmployeeTerminated(employee) ? 'terminatedRow' : undefined,
+      className: isEmployeeFullyTerminated(employee) ? 'terminatedRow' : undefined,
     }));
   }, [
     employees,
