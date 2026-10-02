@@ -173,6 +173,16 @@
   white-space: nowrap;
 }
 
+/* Підсвітка ОДНОГО звільненого призначення (не всього рядка) — коли в
+   людини кілька керівників і звільнена лише в одного з них. */
+.multiValueTerminated {
+  background: #f1f1f1;
+  color: var(--toggle-lang);
+  border-radius: 6px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+}
+
 .addRateBtn {
   display: flex;
   align-items: center;
