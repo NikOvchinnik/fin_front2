@@ -17,6 +17,11 @@ import { isDeletedRecord } from '../../../helpers/softDelete';
 import { useTranslation } from 'react-i18next';
 import { translateOptions } from '../../../helpers/i18nOptions';
 
+// Cloudinary (Free-план) приймає raw-файли лише до 10 МБ — та сама межа,
+// що й на бекенді (routes/financial_request.py: MAX_UPLOAD_FILE_SIZE_MB).
+const MAX_UPLOAD_FILE_SIZE_MB = 10;
+const MAX_UPLOAD_FILE_SIZE_BYTES = MAX_UPLOAD_FILE_SIZE_MB * 1024 * 1024;
+
 const SendFilesForm = ({
   request,
   closeModal,
@@ -230,6 +235,16 @@ const SendFilesForm = ({
                 const links = documentLinks
                   .map(link => link.trim())
                   .filter(Boolean);
+
+                const oversizedFile = files.find(
+                  file => file.size > MAX_UPLOAD_FILE_SIZE_BYTES
+                );
+                if (oversizedFile) {
+                  Notify.failure(
+                    `Файл "${oversizedFile.name}" завеликий (максимум ${MAX_UPLOAD_FILE_SIZE_MB} МБ). Завантажте його на Google Диск і додайте посилання вище замість файлу.`
+                  );
+                  return;
+                }
                 const statusId = Number(
                   data.status_id ??
                     requestData?.status_id ??
