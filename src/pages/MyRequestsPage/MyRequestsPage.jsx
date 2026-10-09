@@ -1141,7 +1141,9 @@ const MyRequestsPage = () => {
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(
+        error?.response?.data?.message || 'Сталася помилка, спробуйте ще раз'
+      );
       console.error('Error: ', error);
     }
   };
@@ -1187,13 +1189,25 @@ const MyRequestsPage = () => {
     };
 
     try {
-      await changeFinStatusBulk(payload);
+      const result = await changeFinStatusBulk(payload);
       await fetchData();
       closeModalSendBulk();
       resetSelection();
-      Notify.success('Заявки відправлено!');
+      const failedDetails = result?.failed_details || [];
+      if (failedDetails.length === 0) {
+        Notify.success('Заявки відправлено!');
+      } else if (result?.updated_ids?.length) {
+        const reasons = failedDetails.map(item => item.message).join('; ');
+        Notify.warning(
+          `Відправлено ${result.updated_ids.length} заявок, не вдалося відправити ${failedDetails.length}: ${reasons}`
+        );
+      } else {
+        Notify.failure(failedDetails[0]?.message || 'Не вдалося відправити заявки');
+      }
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(
+        error?.response?.data?.message || 'Сталася помилка, спробуйте ще раз'
+      );
       console.error('Error: ', error);
     }
   };

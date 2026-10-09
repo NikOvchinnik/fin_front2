@@ -509,7 +509,9 @@ const RequestSearch = ({ dataRequests, onRefresh, deletedFilter }) => {
       closeModalConfirm();
       Notify.success(t('notifications.requestSent'));
     } catch (error) {
-      Notify.failure(t('notifications.genericError'));
+      Notify.failure(
+        error?.response?.data?.message || t('notifications.genericError')
+      );
       console.error('Error: ', error);
     }
   };

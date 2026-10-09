@@ -945,7 +945,9 @@ const MyRefundsPage = () => {
       closeModalConfirm();
       Notify.success('Заявку відправлено!');
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(
+        error?.response?.data?.message || 'Сталася помилка, спробуйте ще раз'
+      );
       console.error('Error: ', error);
     }
   };
