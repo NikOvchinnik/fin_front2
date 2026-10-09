@@ -645,12 +645,6 @@
   color: #c79a1b;
 }
 
-.esvChoiceButtons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
 .nbuModalError {
   color: #a71916;
 }

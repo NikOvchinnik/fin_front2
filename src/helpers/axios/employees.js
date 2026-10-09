@@ -52,11 +52,12 @@ export const updatePayrollMonthSettings = async payload => {
   }
 };
 
-export const getNbuRates = async (refresh = false) => {
+export const getNbuRates = async (month, refresh = false) => {
   try {
-    return await axios.get('/api/employees/nbu-rates', {
-      params: refresh ? { refresh: 'true' } : {},
-    });
+    const params = {};
+    if (month) params.month = month;
+    if (refresh) params.refresh = 'true';
+    return await axios.get('/api/employees/nbu-rates', { params });
   } catch (error) {
     throw error;
   }
