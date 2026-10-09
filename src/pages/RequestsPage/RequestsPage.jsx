@@ -1191,13 +1191,25 @@ const RequestsPage = () => {
     };
 
     try {
-      await changeFinStatusBulk(payload);
+      const result = await changeFinStatusBulk(payload);
       await fetchData();
-      Notify.success('Статус заявок змінено!');
       closeModalBulk();
       resetSelection();
+      const failedDetails = result?.failed_details || [];
+      if (failedDetails.length === 0) {
+        Notify.success('Статус заявок змінено!');
+      } else if (result?.updated_ids?.length) {
+        const reasons = failedDetails.map(item => item.message).join('; ');
+        Notify.warning(
+          `Змінено статус у ${result.updated_ids.length} заявках, не вдалося у ${failedDetails.length}: ${reasons}`
+        );
+      } else {
+        Notify.failure(failedDetails[0]?.message || 'Не вдалося змінити статус');
+      }
     } catch (error) {
-      Notify.failure('Сталася помилка, спробуйте ще раз');
+      Notify.failure(
+        error?.response?.data?.message || 'Сталася помилка, спробуйте ще раз'
+      );
       console.error('Error: ', error);
     }
   };
