@@ -62,7 +62,6 @@ const PAYROLL_ENTRY_STATUS_META = {
 };
 
 const NBU_CURRENCY_LABELS = { USD: 'Долар США', EUR: 'Євро' };
-const TAX_FORMULA_KP_ESV = 'ставка + КП (6%+ЄСВ)';
 
 const EXPENSE_ITEM_KEY_PREFIX = 'expense_item_';
 const toExpenseItemKey = id => `${EXPENSE_ITEM_KEY_PREFIX}${id}`;
@@ -76,7 +75,7 @@ const FORMULA_VARIABLE_LABELS = {
   vacation_compensation: 'Компенсація відпустки',
   bonus: 'Бонус',
   accrued: 'Нараховано',
-  taxes: 'Податки',
+  taxes: 'Бенефіти',
   month_working_days: 'Робочі дні місяця',
 };
 const GROSS_TAX_FORMULA = 'ставка Gross';
@@ -109,7 +108,7 @@ const PAYROLL_FIELD_LABELS = {
   accrued: 'Нараховано',
   vacation_compensation: 'Компенсація відпустки',
   bonus: 'Бонус',
-  taxes: 'Податки',
+  taxes: 'Бенефіти',
   total_accrued_currency: 'Всього у валюті нарахування',
   total_payout: 'Всього до виплати на руки',
   currency: 'Валюта',
@@ -189,18 +188,18 @@ const getAccruedMissingFieldsForEntry = entryData => {
 
 const getPayrollTotalsMissingFieldsForEntry = (employee, entryData) => {
   const missing = getAccruedMissingFieldsForEntry(entryData);
-  if (!employee.tax_formula) missing.push('Податки');
+  if (!employee.tax_formula) missing.push('Бенефіти');
   return missing;
 };
 
 const TAX_FORMULA_DESCRIPTIONS = {
-  'ставка Nett': 'Податки не нараховуються.',
-  'ставка Gross': 'Податки не нараховуються.',
-  'ставка без КП': 'Податки не нараховуються.',
+  'ставка Nett': 'Бенефіти не нараховуються.',
+  'ставка Gross': 'Бенефіти не нараховуються.',
+  'ставка без КП': 'Бенефіти не нараховуються.',
   'ставка + КП (6%)':
-    'Податки = (Нараховано + Компенсація відпустки + Бонус) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
+    'Бенефіти = (Нараховано + Компенсація відпустки + Бонус) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
   'ставка + КП (6%+ЄСВ)':
-    'Податки = (Нараховано + Компенсація відпустки + Бонус + 1903) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
+    'Бенефіти = (Нараховано + Компенсація відпустки + Бонус + 1903) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
 };
 
 // Завжди видимі, не пропонуються у "Фільтр колонок" — той самий підхід, що
@@ -311,7 +310,6 @@ const PayrollReviewPage = () => {
   const [nbuRates, setNbuRates] = useState(null);
   const [nbuRatesLoading, setNbuRatesLoading] = useState(false);
   const [nbuRatesError, setNbuRatesError] = useState(false);
-  const [esvRateChoice, setEsvRateChoice] = useState(null); // { oldRate, newRate, currency } | null
   const [monthWorkingDays, setMonthWorkingDays] = useState(DEFAULT_MONTH_WORKING_DAYS);
   const [isEditingMonthWorkingDays, setIsEditingMonthWorkingDays] = useState(false);
   const [monthWorkingDaysInput, setMonthWorkingDaysInput] = useState('');
@@ -551,10 +549,7 @@ const PayrollReviewPage = () => {
   // незбережені зміни замість тихого скидання (той самий підхід, що на
   // "Зарплатній відомості" керівника).
   useEffect(() => {
-    // esvRateChoice — модалка вибору курсу рендериться в портал поза цим DOM
-    // (react-modal), інакше клік по її кнопках ловився б тут як "поза
-    // клітинкою" і скасовував редагування раніше, ніж спрацює сама кнопка.
-    if (!editingCell || esvRateChoice) return undefined;
+    if (!editingCell) return undefined;
 
     const handleOutsideInteraction = event => {
       if (
@@ -575,7 +570,7 @@ const PayrollReviewPage = () => {
       document.removeEventListener('mousedown', handleOutsideInteraction, true);
       document.removeEventListener('click', handleOutsideInteraction, true);
     };
-  }, [editingCell, esvRateChoice]);
+  }, [editingCell]);
 
   const toggleRowUnlocked = unlockKey => {
     setUnlockedEmployeeIds(prev => {
@@ -646,7 +641,7 @@ const PayrollReviewPage = () => {
     );
   };
 
-  const performSaveEdit = async esvRateMode => {
+  const handleSaveEdit = async () => {
     if (!editingCell) return;
     setSavingCell(true);
     try {
@@ -667,7 +662,6 @@ const PayrollReviewPage = () => {
             field: editingCell.field,
             value: editingValue,
             rate_history_id: editingCell.rateHistoryId,
-            ...(esvRateMode ? { esv_rate_mode: esvRateMode } : {}),
           });
       applyPayrollEntryUpdate(
         editingCell.rowKey,
@@ -676,7 +670,6 @@ const PayrollReviewPage = () => {
       );
       setEditingCell(null);
       setEditingValue('');
-      setEsvRateChoice(null);
     } catch (error) {
       if (error?.response?.status === 409) {
         Notify.warning('Статус уже змінився — онови сторінку.');
@@ -691,43 +684,6 @@ const PayrollReviewPage = () => {
     } finally {
       setSavingCell(false);
     }
-  };
-
-  // Якщо запис уже заморожений (надісланий/затверджений) і формула —
-  // "ставка + КП (6%+ЄСВ)" у не-гривневій валюті, спершу питаємо, яким
-  // курсом рахувати ЄСВ — тим, що був, чи сьогоднішнім.
-  const handleSaveEdit = async () => {
-    if (!editingCell) return;
-
-    if (!editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX)) {
-      const employee = employees.find(item => getRowKey(item) === editingCell.rowKey);
-      const entryData = employee
-        ? getEntrySlots(employee).find(entry => getPeriodKey(entry) === editingCell.rateHistoryId)
-        : null;
-      const needsEsvChoice =
-        getStatusForEntry(entryData) !== PAYROLL_ENTRY_STATUS.DRAFT &&
-        employee?.tax_formula === TAX_FORMULA_KP_ESV &&
-        entryData?.currency &&
-        entryData.currency !== 'UAH';
-
-      if (needsEsvChoice) {
-        let newRate = null;
-        try {
-          const rates = await getNbuRates();
-          newRate = rates?.rates?.[entryData.currency] ?? null;
-        } catch {
-          newRate = null;
-        }
-        setEsvRateChoice({
-          oldRate: entryData.esv_exchange_rate,
-          newRate,
-          currency: entryData.currency,
-        });
-        return;
-      }
-    }
-
-    await performSaveEdit(null);
   };
 
   // rateHistoryId — кожен відрізок ставки місяця має свій НЕЗАЛЕЖНИЙ статус
@@ -838,7 +794,7 @@ const PayrollReviewPage = () => {
     setNbuRatesLoading(true);
     setNbuRatesError(false);
     try {
-      const result = await getNbuRates(refresh);
+      const result = await getNbuRates(monthParam, refresh);
       setNbuRates(result);
     } catch {
       setNbuRatesError(true);
@@ -1898,7 +1854,9 @@ const PayrollReviewPage = () => {
         customStyles={{ width: '440px' }}
       >
         <div className={style.nbuModalContainer}>
-          <h2 className={style.nbuModalTitle}>Курси НБУ на сьогодні</h2>
+          <h2 className={style.nbuModalTitle}>
+            Курси НБУ на {startDate.format('01.MM.YYYY')}
+          </h2>
 
           {nbuRatesLoading && !nbuRates ? (
             <p className={style.nbuModalHint}>Завантаження…</p>
@@ -1935,41 +1893,8 @@ const PayrollReviewPage = () => {
             disabled={nbuRatesLoading}
             onClick={() => fetchNbuRates(true)}
           >
-            {nbuRatesLoading ? 'Оновлюємо…' : 'Оновити'}
+            {nbuRatesLoading ? 'Пробуємо ще раз…' : 'Спробувати ще раз'}
           </button>
-        </div>
-      </ModalWindow>
-
-      <ModalWindow
-        isModalOpen={!!esvRateChoice}
-        onCloseModal={() => setEsvRateChoice(null)}
-        customStyles={{ width: '440px' }}
-      >
-        <div className={style.nbuModalContainer}>
-          <h2 className={style.nbuModalTitle}>Яким курсом порахувати ЄСВ?</h2>
-          <p className={style.nbuModalHint}>
-            Курс, застосований раніше: {esvRateChoice?.oldRate != null ? `${esvRateChoice.oldRate.toFixed(4)} грн` : '—'}
-            <br />
-            Сьогоднішній курс: {esvRateChoice?.newRate != null ? `${esvRateChoice.newRate.toFixed(4)} грн` : '—'}
-          </p>
-          <div className={style.esvChoiceButtons}>
-            <button
-              type="button"
-              className={style.exportBtn}
-              disabled={savingCell}
-              onClick={() => performSaveEdit('keep')}
-            >
-              Лишити попередній курс
-            </button>
-            <button
-              type="button"
-              className={style.exportBtn}
-              disabled={savingCell}
-              onClick={() => performSaveEdit('refresh')}
-            >
-              Перерахувати за сьогоднішнім
-            </button>
-          </div>
         </div>
       </ModalWindow>
 

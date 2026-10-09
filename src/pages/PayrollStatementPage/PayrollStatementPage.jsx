@@ -125,7 +125,7 @@ const payrollFieldLabels = {
   accrued: 'Нараховано',
   vacation_compensation: 'Компенсація відпустки',
   bonus: 'Бонус',
-  taxes: 'Податки',
+  taxes: 'Бенефіти',
   total_accrued_currency: 'Всього у валюті нарахування',
   total_payout: 'Всього до виплати на руки',
   currency: 'Валюта',
@@ -182,7 +182,7 @@ const FORMULA_VARIABLE_LABELS = {
   vacation_compensation: 'Компенсація відпустки',
   bonus: 'Бонус',
   accrued: 'Нараховано',
-  taxes: 'Податки',
+  taxes: 'Бенефіти',
   month_working_days: 'Робочі дні місяця',
 };
 
@@ -274,19 +274,19 @@ const getAccruedMissingFieldsForEntry = entryData => {
 
 const getPayrollTotalsMissingFieldsForEntry = (employee, entryData) => {
   const missing = getAccruedMissingFieldsForEntry(entryData);
-  if (!employee.tax_formula) missing.push('Податки');
+  if (!employee.tax_formula) missing.push('Бенефіти');
   return missing;
 };
 
 // Людською мовою — та сама формула, що рахує бекенд.
 const TAX_FORMULA_DESCRIPTIONS = {
-  'ставка Nett': 'Податки не нараховуються.',
-  'ставка Gross': 'Податки не нараховуються.',
-  'ставка без КП': 'Податки не нараховуються.',
+  'ставка Nett': 'Бенефіти не нараховуються.',
+  'ставка Gross': 'Бенефіти не нараховуються.',
+  'ставка без КП': 'Бенефіти не нараховуються.',
   'ставка + КП (6%)':
-    'Податки = (Нараховано + Компенсація відпустки + Бонус) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
+    'Бенефіти = (Нараховано + Компенсація відпустки + Бонус) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
   'ставка + КП (6%+ЄСВ)':
-    'Податки = (Нараховано + Компенсація відпустки + Бонус + 1903) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
+    'Бенефіти = (Нараховано + Компенсація відпустки + Бонус + 1903) / 0,94 − (Нараховано + Компенсація відпустки + Бонус)',
 };
 
 const PayrollStatementPage = () => {
@@ -1358,20 +1358,16 @@ const PayrollStatementPage = () => {
 
               if (statusValue === PAYROLL_ENTRY_STATUS.DRAFT) {
                 // Відправити на перевірку можна лише коли керівник заповнив
-                // те, за що сам відповідає (Розподіл/Відпрацьовані робочі
-                // дні) — бекенд це теж перевіряє (PAYROLL_ENTRY_INCOMPLETE),
-                // тут лише проактивно блокуємо кнопку, щоб не було сюрпризу
-                // після кліку.
-                const isIncomplete =
-                  entryData?.distribution == null || entryData?.worked_days == null;
+                // те, за що сам відповідає (Розподіл) — бекенд це теж
+                // перевіряє (PAYROLL_ENTRY_INCOMPLETE), тут лише проактивно
+                // блокуємо кнопку, щоб не було сюрпризу після кліку.
+                // "Відпрацьовані робочі дні" тут більше не перевіряємо — це
+                // поле завжди має дефолт (= "Робочі дні місяця").
+                const isIncomplete = entryData?.distribution == null;
                 return (
                   <div className={style.actionContainer}>
                     <Tooltip
-                      title={
-                        isIncomplete
-                          ? 'Заповніть "Розподіл" і "Відпрацьовані робочі дні"'
-                          : 'Відправити на перевірку'
-                      }
+                      title={isIncomplete ? 'Заповніть "Розподіл"' : 'Відправити на перевірку'}
                     >
                       <span>
                         <button
