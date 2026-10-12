@@ -98,6 +98,19 @@
   color: var(--warning-hover);
 }
 
+.deleteBtn:disabled {
+  border-color: var(--main-text);
+  color: var(--main-text);
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.deleteBtn:disabled:hover,
+.deleteBtn:disabled:focus {
+  border-color: var(--main-text);
+  color: var(--main-text);
+}
+
 .editBtn {
   width: 100%;
   display: flex;

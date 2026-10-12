@@ -930,6 +930,7 @@ const Form = ({
                 type={button.type || 'button'}
                 className={`${style[button.className] || ''}`}
                 onClick={button.onClick}
+                disabled={button.disabled || false}
               >
                 {button.label}
               </button>

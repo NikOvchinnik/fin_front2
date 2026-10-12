@@ -42,6 +42,49 @@
   height: 24px;
 }
 
+.statusTabs {
+  display: inline-flex;
+  list-style: none;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-radius: 12px;
+  padding: 4px;
+  margin: 0;
+  background: var(--toggle-lang-background);
+  overflow-x: auto;
+  overflow-y: hidden;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.statusTab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 8px;
+  padding: 8px 28px;
+  background: transparent;
+  color: var(--main-text);
+  font-size: 15px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex: 0 0 auto;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.statusTab:hover {
+  background-color: var(--button-hover);
+  color: var(--white);
+}
+
+.statusTabActive {
+  background-color: var(--button);
+  color: var(--white);
+}
+
 @media screen and (min-width: 1024px) {
   .mainContainer {
     gap: 24px;

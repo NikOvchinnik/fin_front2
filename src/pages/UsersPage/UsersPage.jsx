@@ -21,11 +21,12 @@ const UsersPage = () => {
   const [dataUsers, setDataUsers] = useState([]);
   const [rolesMap, setRolesMap] = useState({});
   const [sortOrder, setSortOrder] = useState({});
+  const [activeTab, setActiveTab] = useState('active');
   const userRole = useSelector(selectUserRole);
 
   const fetchData = useCallback(async () => {
     try {
-      const users = await getUsers();
+      const users = await getUsers('all');
       setDataUsers(users);
 
       const roles = await getRoles();
@@ -68,17 +69,28 @@ const UsersPage = () => {
         : b.user_last_name.localeCompare(a.user_last_name)
     );
 
+  const visibleUsers = useMemo(
+    () =>
+      dataUsers.filter(user =>
+        activeTab === 'active' ? user.user_is_active !== false : user.user_is_active === false
+      ),
+    [dataUsers, activeTab]
+  );
+
   const usersByRole = useMemo(() => {
     return Object.entries(rolesMap).reduce((acc, [key, { id }]) => {
       acc[key] = sortByName(
-        dataUsers.filter(user => user.user_role_id === id),
+        visibleUsers.filter(user => user.user_role_id === id),
         sortOrder[key]
       );
       return acc;
     }, {});
-  }, [dataUsers, sortOrder, rolesMap]);
+  }, [visibleUsers, sortOrder, rolesMap]);
 
-  const maxLength = Math.max(...Object.values(usersByRole).map(u => u.length));
+  const maxLength = Object.values(usersByRole).reduce(
+    (max, u) => Math.max(max, u.length),
+    0
+  );
 
   const filteredUsers = useMemo(() => {
     return Array.from({ length: maxLength }).map((_, i) => {
@@ -119,6 +131,30 @@ const UsersPage = () => {
       ) : (
         <section className={style.mainContainer}>
           <DocTitle>Users</DocTitle>
+          <ul className={style.statusTabs}>
+            <li>
+              <button
+                type="button"
+                className={`${style.statusTab} ${
+                  activeTab === 'active' ? style.statusTabActive : ''
+                }`}
+                onClick={() => setActiveTab('active')}
+              >
+                {t('filters.active')}
+              </button>
+            </li>
+            <li>
+              <button
+                type="button"
+                className={`${style.statusTab} ${
+                  activeTab === 'inactive' ? style.statusTabActive : ''
+                }`}
+                onClick={() => setActiveTab('inactive')}
+              >
+                {t('filters.deactivated')}
+              </button>
+            </li>
+          </ul>
           <button onClick={openModal} className={style.addUserBtn}>
             {t('forms.addNewUser')} <span>+</span>
           </button>

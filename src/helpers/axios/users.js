@@ -27,9 +27,11 @@ export const resetPassword = async formData => {
   }
 };
 
-export const getUsers = async () => {
+export const getUsers = async (status = null) => {
   try {
-    return await axios.get('/api/auth/get-users');
+    return await axios.get('/api/auth/get-users', {
+      params: status ? { status } : {},
+    });
   } catch (error) {
     throw error;
   }
@@ -54,6 +56,14 @@ export const patchUser = async (id, credentials) => {
 export const deleteUser = async id => {
   try {
     return await axios.delete(`/api/auth/delete-user/${id}`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const transferUserData = async payload => {
+  try {
+    return await axios.post('/api/auth/transfer-user-data', payload);
   } catch (error) {
     throw error;
   }

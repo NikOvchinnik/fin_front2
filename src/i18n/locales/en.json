@@ -26,7 +26,8 @@
   "filters": {
     "all": "All",
     "active": "Active",
-    "deleted": "Deleted"
+    "deleted": "Deleted",
+    "deactivated": "Deactivated"
   },
   "labels": {
     "id": "ID",
@@ -150,7 +151,8 @@
     "importing": "Importing...",
     "export": "Export",
     "saveAll": "Save all",
-    "returnToRevision": "Return for revision"
+    "returnToRevision": "Return for revision",
+    "transfer": "Transfer"
   },
   "validation": {
     "required": "This field is required",
@@ -244,7 +246,24 @@
     "addFileLink": "Add file link",
     "fileLink": "Link: {{url}}",
     "chooseColumns": "Choose columns",
-    "selectedRows": "Selected rows: {{count}}"
+    "selectedRows": "Selected rows: {{count}}",
+    "transferUserData": "Transfer requests and budgets"
+  },
+  "userTransfer": {
+    "description": "User {{name}} has been deactivated. You can transfer their requests and/or budgets to another active user.",
+    "requests": "Requests",
+    "budgets": "Budgets",
+    "newResponsibleForRequests": "New responsible person for requests",
+    "newResponsibleForBudgets": "New responsible person for budgets",
+    "skip": "Skip",
+    "selectAtLeastOne": "Select at least one data type to transfer",
+    "selectUserForRequests": "Select a new responsible person for requests",
+    "selectUserForBudgets": "Select a new responsible person for budgets",
+    "success": "Transferred requests: {{requests}}, budgets: {{budgets}}",
+    "requestsDone": "Requests transferred: {{count}}.",
+    "budgetsDone": "Budgets transferred: {{count}}.",
+    "requestsFailed": "Failed to transfer requests.",
+    "budgetsFailed": "Failed to transfer budgets."
   },
   "modals": {
     "deleteUserTitle": "Delete user",
@@ -319,7 +338,8 @@
     "firstName": "First name",
     "lastName": "Last name",
     "role": "Role",
-    "isPayrollManager": "Enable if this user is a manager and submits a payroll statement"
+    "isPayrollManager": "Enable if this user is a manager and submits a payroll statement",
+    "isActive": "Active user"
   },
   "months": {
     "january": "January",

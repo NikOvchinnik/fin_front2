@@ -26,7 +26,8 @@
   "filters": {
     "all": "Усі",
     "active": "Активні",
-    "deleted": "Видалені"
+    "deleted": "Видалені",
+    "deactivated": "Деактивовані"
   },
   "labels": {
     "id": "ID",
@@ -114,7 +115,8 @@
     "importing": "Імпортуємо...",
     "export": "Експорт",
     "saveAll": "Зберегти всі",
-    "returnToRevision": "Повернути на доопрацювання"
+    "returnToRevision": "Повернути на доопрацювання",
+    "transfer": "Перенести"
   },
   "validation": {
     "required": "Це поле обов'язкове",
@@ -208,7 +210,24 @@
     "addFileLink": "Додати посилання на файл",
     "fileLink": "Посилання: {{url}}",
     "chooseColumns": "Вибір колонок",
-    "selectedRows": "Обрано рядків: {{count}}"
+    "selectedRows": "Обрано рядків: {{count}}",
+    "transferUserData": "Передати заявки та бюджети"
+  },
+  "userTransfer": {
+    "description": "Користувача {{name}} деактивовано. Можна передати його заявки та/або бюджети іншому активному користувачу.",
+    "requests": "Заявки",
+    "budgets": "Бюджети",
+    "newResponsibleForRequests": "Новий відповідальний за заявки",
+    "newResponsibleForBudgets": "Новий відповідальний за бюджети",
+    "skip": "Пропустити",
+    "selectAtLeastOne": "Оберіть хоча б один тип даних для перенесення",
+    "selectUserForRequests": "Оберіть нового відповідального за заявки",
+    "selectUserForBudgets": "Оберіть нового відповідального за бюджети",
+    "success": "Перенесено заявок: {{requests}}, бюджетів: {{budgets}}",
+    "requestsDone": "Заявок перенесено: {{count}}.",
+    "budgetsDone": "Бюджетів перенесено: {{count}}.",
+    "requestsFailed": "Не вдалося перенести заявки.",
+    "budgetsFailed": "Не вдалося перенести бюджети."
   },
   "modals": {
     "deleteUserTitle": "Видалити користувача",
@@ -319,7 +338,8 @@
     "firstName": "Ім'я",
     "lastName": "Прізвище",
     "role": "Роль",
-    "isPayrollManager": "Увімкніть, якщо цей користувач є керівником і подає зарплатну відомість"
+    "isPayrollManager": "Увімкніть, якщо цей користувач є керівником і подає зарплатну відомість",
+    "isActive": "Активний користувач"
   },
   "months": {
     "january": "Січень",

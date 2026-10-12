@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import Form from '../../Form/Form';
-import ModalWindow from '../../ModalWindow/ModalWindow';
 import style from './UserEditForm.module.css';
-import ConfirmModal from '../../ConfirmModal/ConfirmModal';
 import { Notify } from 'notiflix';
-import { deleteUser, patchUser } from '../../../helpers/axios/users';
+import { patchUser } from '../../../helpers/axios/users';
 import { getRoles } from '../../../helpers/axios/roles';
 import { getDepartments } from '../../../helpers/axios/departments';
 import { getUnits } from '../../../helpers/axios/units';
@@ -12,17 +10,16 @@ import { getSubdivisions } from '../../../helpers/axios/subdivisions';
 import { UserRole } from '../../../helpers/enums';
 import { useTranslation } from 'react-i18next';
 
-const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
+const UserEditForm = ({ user, closeModal, onRefresh, userRole, onDeactivated }) => {
   const { t } = useTranslation();
   const [rolesOptions, setRolesOptions] = useState([]);
   const [departmentsOptions, setDepartmentsOptions] = useState([]);
   const [unitOptions, setUnitOptions] = useState([]);
   const [subdivisionOptions, setSubdivisionOptions] = useState([]);
-  const [isModalConfirmOpen, setModalConfirmOpen] = useState(false);
   const canManageUserRole = [UserRole.CEO, UserRole.FINANCE].includes(
     Number(userRole)
   );
-  const canDeleteUser = [UserRole.CEO, UserRole.FINANCE].includes(
+  const canManageActiveStatus = [UserRole.CEO, UserRole.FINANCE].includes(
     Number(userRole)
   );
 
@@ -66,23 +63,6 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
     };
     fetchData();
   }, [t]);
-
-  const closeModalConfirm = () => {
-    setModalConfirmOpen(false);
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteUser(user.user_id);
-      setModalConfirmOpen(false);
-      onRefresh();
-      closeModal();
-      Notify.success(t('notifications.userDeleted'));
-    } catch (error) {
-      Notify.failure(t('notifications.genericError'));
-      console.error('Error: ', error);
-    }
-  };
 
   const fields = [
     {
@@ -140,15 +120,23 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
       label: t('user.isPayrollManager'),
       readOnly: !canManageUserRole,
     },
+    {
+      type: 'switch',
+      name: 'is_active',
+      label: t('user.isActive'),
+      readOnly: !canManageActiveStatus,
+    },
   ];
 
   const buttons = [
-    ...(canDeleteUser
+    ...(canManageActiveStatus
       ? [
           {
             label: t('actions.delete'),
             className: 'deleteBtn',
-            onClick: () => setModalConfirmOpen(true),
+            // Поки не підключено — див. нотатку в коді. Деактивація тепер
+            // робиться через перемикач "Активний користувач" вище.
+            disabled: true,
           },
         ]
       : []),
@@ -181,8 +169,21 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
             });
 
             await patchUser(user.user_id, formData);
-            onRefresh();
-            closeModal();
+
+            const justDeactivated =
+              user.user_is_active !== false && data.is_active === false;
+            if (justDeactivated && onDeactivated) {
+              // onRefresh() навмисно НЕ викликаємо тут — він одразу прибрав
+              // би цього користувача з поточного таба "Активні" на сторінці
+              // Users, через що демонтувався б і цей компонент разом з
+              // модалкою перенесення, яка має зʼявитись. Оновлюємо список
+              // лише після завершення (чи пропуску) перенесення (у
+              // TransferUserDataForm, яку рендерить батьківський UserCard).
+              onDeactivated(user);
+            } else {
+              onRefresh();
+              closeModal();
+            }
             Notify.success(t('notifications.infoChanged'));
           } catch (error) {
             Notify.failure(t('notifications.genericError'));
@@ -199,21 +200,9 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole }) => {
           unit_id: user.user_unit_id || '',
           subdivision_id: user.user_subdivision_id || '',
           is_payroll_manager: Boolean(user.user_is_payroll_manager),
+          is_active: user.user_is_active !== false,
         }}
       />
-      <ModalWindow
-        isModalOpen={isModalConfirmOpen}
-        onCloseModal={closeModalConfirm}
-      >
-        <ConfirmModal
-          title={t('modals.deleteUserTitle')}
-          message={t('modals.deleteUserMessage', {
-            name: `${user.user_first_name} ${user.user_last_name}`,
-          })}
-          onConfirm={handleDelete}
-          onClose={closeModalConfirm}
-        />
-      </ModalWindow>
     </div>
   );
 };

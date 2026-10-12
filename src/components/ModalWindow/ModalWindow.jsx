@@ -13,6 +13,7 @@ const ModalWindow = ({
   children,
   customStyles = {},
   closeBtn = true,
+  closeOnDismiss = true,
 }) => {
   useEffect(() => {
     if (isModalOpen) {
@@ -52,8 +53,8 @@ const ModalWindow = ({
       isOpen={isModalOpen}
       onRequestClose={onCloseModal}
       shouldFocusAfterRender={true}
-      shouldCloseOnOverlayClick={true}
-      shouldCloseOnEsc={true}
+      shouldCloseOnOverlayClick={closeOnDismiss}
+      shouldCloseOnEsc={closeOnDismiss}
       style={mergedStyles(customStyles)}
     >
       {closeBtn && (
