@@ -4,9 +4,11 @@ import { useSelector } from 'react-redux';
 import {
   canAccessGoogleSheetsAnalytics,
   canAccessPayrollStatement,
+  canAccessStaffAndPayrollReview,
 } from './helpers/featureAccess';
 import routesConfig from './helpers/routerPath';
 import {
+  selectHasFinanceStaffAccess,
   selectIsAuthenticated,
   selectIsPayrollManager,
   selectUserId,
@@ -22,6 +24,7 @@ const App = () => {
   const userId = useSelector(selectUserId);
   const userRole = useSelector(selectUserRole);
   const isPayrollManager = useSelector(selectIsPayrollManager);
+  const hasFinanceStaffAccess = useSelector(selectHasFinanceStaffAccess);
 
   const filteredRoutes = routesConfig.filter(route => {
     if (
@@ -34,6 +37,13 @@ const App = () => {
     if (
       route.path === 'payroll-statement' &&
       !canAccessPayrollStatement({ isPayrollManager })
+    ) {
+      return false;
+    }
+
+    if (
+      (route.path === 'staff' || route.path === 'payroll-review') &&
+      !canAccessStaffAndPayrollReview({ hasFinanceStaffAccess })
     ) {
       return false;
     }

@@ -126,6 +126,12 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole, onDeactivated }) 
       label: t('user.isActive'),
       readOnly: !canManageActiveStatus,
     },
+    {
+      type: 'switch',
+      name: 'has_finance_staff_access',
+      label: t('user.hasFinanceStaffAccess'),
+      readOnly: !canManageUserRole,
+    },
   ];
 
   const buttons = [
@@ -201,6 +207,7 @@ const UserEditForm = ({ user, closeModal, onRefresh, userRole, onDeactivated }) 
           subdivision_id: user.user_subdivision_id || '',
           is_payroll_manager: Boolean(user.user_is_payroll_manager),
           is_active: user.user_is_active !== false,
+          has_finance_staff_access: Boolean(user.user_has_finance_staff_access),
         }}
       />
     </div>

@@ -7,3 +7,5 @@ export const selectUserDepartmentId = state => state.auth.user.departmentId;
 export const selectUserUnitId = state => state.auth.user.unitId;
 export const selectIsPayrollManager = state =>
   state.auth.user.isPayrollManager;
+export const selectHasFinanceStaffAccess = state =>
+  state.auth.user.hasFinanceStaffAccess;
