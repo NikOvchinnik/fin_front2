@@ -22,3 +22,9 @@ export const canAccessGoogleSheetsAnalytics = ({ userRole }) => {
 // керівника при створенні/редагуванні в "Користувачах").
 export const canAccessPayrollStatement = ({ isPayrollManager }) =>
   Boolean(isPayrollManager);
+
+// Доступ до "Співробітники" (Staff) і "Перевірка відомостей" — той самий
+// підхід: не роль FINANCE, а точковий прапорець has_finance_staff_access,
+// який CEO/FINANCE вмикають вручну конкретним людям незалежно від ролі.
+export const canAccessStaffAndPayrollReview = ({ hasFinanceStaffAccess }) =>
+  Boolean(hasFinanceStaffAccess);

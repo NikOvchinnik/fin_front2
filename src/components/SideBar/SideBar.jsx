@@ -4,6 +4,7 @@ import style from './SideBar.module.css';
 import { NavLink, useLocation } from 'react-router-dom';
 import { getNavSideBar } from '../../helpers/navSideBar';
 import {
+  selectHasFinanceStaffAccess,
   selectIsPayrollManager,
   selectUserId,
   selectUserName,
@@ -26,6 +27,7 @@ const SideBar = () => {
   const userName = useSelector(selectUserName);
   const userId = useSelector(selectUserId);
   const isPayrollManager = useSelector(selectIsPayrollManager);
+  const hasFinanceStaffAccess = useSelector(selectHasFinanceStaffAccess);
 
   const dispatch = useDispatch();
   const location = useLocation();
@@ -53,7 +55,11 @@ const SideBar = () => {
     localStorage.setItem('language', lang);
   };
 
-  const filteredPages = getNavSideBar(userId, isPayrollManager)
+  const filteredPages = getNavSideBar(
+    userId,
+    isPayrollManager,
+    hasFinanceStaffAccess
+  )
     .filter(item => item.roles.includes(userRole))
     .flatMap(item => item.pages);
 

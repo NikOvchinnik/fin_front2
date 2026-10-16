@@ -9,6 +9,7 @@ const initialState = {
     departmentId: null,
     unitId: null,
     isPayrollManager: false,
+    hasFinanceStaffAccess: false,
   },
   token: null,
 };
@@ -28,6 +29,7 @@ const authSlice = createSlice({
         departmentId: user.user_department_id,
         unitId: user.user_unit_id,
         isPayrollManager: Boolean(user.user_is_payroll_manager),
+        hasFinanceStaffAccess: Boolean(user.user_has_finance_staff_access),
       };
     },
     logout: () => initialState,

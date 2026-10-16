@@ -339,7 +339,8 @@
     "lastName": "Last name",
     "role": "Role",
     "isPayrollManager": "Enable if this user is a manager and submits a payroll statement",
-    "isActive": "Active user"
+    "isActive": "Active user",
+    "hasFinanceStaffAccess": "Access to \"Staff\" and \"Payroll Review\""
   },
   "months": {
     "january": "January",
