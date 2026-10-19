@@ -7,8 +7,17 @@ import {
 } from '@tanstack/react-table';
 import style from './Table.module.css';
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
-import { useMediaQuery } from '@mui/material';
+import { useMediaQuery, Tooltip } from '@mui/material';
 import Icon from '../Icon/Icon';
+
+const renderColumnHeader = col =>
+  col?.headerTooltip ? (
+    <Tooltip title={col.headerTooltip} arrow>
+      <span>{col.header}</span>
+    </Tooltip>
+  ) : (
+    col?.header
+  );
 
 const Table = ({
   data,
@@ -215,7 +224,7 @@ const Table = ({
                   className={style.stickyColumn}
                   style={{ left: stickyOffsets[i] || 0 }}
                 >
-                  {columns[i]?.header}
+                  {renderColumnHeader(columns[i])}
                 </th>
               ))}
               {columns
@@ -230,7 +239,7 @@ const Table = ({
                     : visibleColumnIndex + visibleColumnsCount
                 )
                 .map((header, index) => (
-                  <th key={index}>{header.header}</th>
+                  <th key={index}>{renderColumnHeader(header)}</th>
                 ))}
             </tr>
           </thead>
