@@ -509,6 +509,10 @@ const RequestsPage = () => {
               : '';
           case 'status':
             return req.status?.name || '';
+          case 'file1':
+            return req.file1 && req.file1.length > 0 ? 1 : 0;
+          case 'file2':
+            return req.file2 && req.file2.length > 0 ? 1 : 0;
           default:
             return req[key] ?? '';
         }
@@ -678,9 +682,9 @@ const RequestsPage = () => {
       tech_plain: request.payment_date_await
         ? request.payment_date_await.slice(0, 7)
         : '',
-      files: (
+      file1: (
         <div className={style.linkContainer}>
-          {request.files?.map((file, index) => (
+          {request.file1?.map((file, index) => (
             <a
               key={file.id || index}
               href={file.file_url}
@@ -692,7 +696,22 @@ const RequestsPage = () => {
           ))}
         </div>
       ),
-      files_plain: request.files?.map(file => file.file_url) || '',
+      file1_plain: request.file1?.map(file => file.file_url) || '',
+      file2: (
+        <div className={style.linkContainer}>
+          {request.file2?.map((file, index) => (
+            <a
+              key={file.id || index}
+              href={file.file_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Link {index + 1}
+            </a>
+          ))}
+        </div>
+      ),
+      file2_plain: request.file2?.map(file => file.file_url) || '',
       status: (
         <span
           style={{
@@ -1103,8 +1122,34 @@ const RequestsPage = () => {
       ),
     },
     {
-      accessorKey: 'files',
-      header: t('labels.files'),
+      accessorKey: 'file1',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.file1')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('file1')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+      headerTooltip: t('labels.file1Tooltip'),
+    },
+    {
+      accessorKey: 'file2',
+      header: (
+        <div className={style.sortContainer}>
+          <p>{t('labels.file2')}</p>
+          <button
+            className={style.btnContainer}
+            onClick={() => handleSort('file2')}
+          >
+            <Icon id="sort" className={style.sortIcon} />
+          </button>
+        </div>
+      ),
+      headerTooltip: t('labels.file2Tooltip'),
     },
     {
       accessorKey: 'status',
