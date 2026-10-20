@@ -266,10 +266,10 @@ export const approveStatus = [
 
 export const approveFilesFin = [
   {
-    value: FinancialRequestStatus.FINANCE_PAID,
+    value: FinancialRequestStatus.FINANCE_PAID_ALL_DOCUMENTS_ADDED,
     label: 'Всі документи додано',
     labelKey: 'financialStatus.allDocumentsAdded',
-  }, //Фінанси: Сплачено
+  }, //Фінанси: Сплачено. Всі документи додані.
   {
     value: FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS,
     label: 'Очікуються ще документи',
@@ -279,10 +279,10 @@ export const approveFilesFin = [
 
 export const approveFilesBuh = [
   {
-    value: FinancialRequestStatus.ACCOUNTANT_PAID,
+    value: FinancialRequestStatus.ACCOUNTANT_PAID_ALL_DOCUMENTS_ADDED,
     label: 'Всі документи додано',
     labelKey: 'financialStatus.allDocumentsAdded',
-  }, //Бухгалтер: Сплачено
+  }, //Бухгалтерія: Сплачено. Всі документи додані.
   {
     value: FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS,
     label: 'Очікуються ще документи',
