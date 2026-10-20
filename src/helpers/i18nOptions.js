@@ -16,6 +16,10 @@ const financialStatusKeyById = {
   [FinancialRequestStatus.FINANCE_PAID]: 'financialStatus.financePaid',
   [FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS]:
     'financialStatus.financePaidAwaitingDocuments',
+  [FinancialRequestStatus.FINANCE_PAID_ALL_DOCUMENTS_ADDED]:
+    'financialStatus.financePaidAllDocumentsAdded',
+  [FinancialRequestStatus.ACCOUNTANT_PAID_ALL_DOCUMENTS_ADDED]:
+    'financialStatus.accountantPaidAllDocumentsAdded',
   [FinancialRequestStatus.EXECUTIVE_CANCELED]:
     'financialStatus.executiveCanceled',
 };
@@ -35,6 +39,10 @@ const financialStatusKeyByName = {
   'Фінанси: Сплачено': 'financialStatus.financePaid',
   'Фінанси: Сплачено, очікуються документи':
     'financialStatus.financePaidAwaitingDocuments',
+  'Фінанси: Сплачено. Всі документи додані.':
+    'financialStatus.financePaidAllDocumentsAdded',
+  'Бухгалтерія: Сплачено. Всі документи додані.':
+    'financialStatus.accountantPaidAllDocumentsAdded',
   'CEO/COO/CFO: Скасовано': 'financialStatus.executiveCanceled',
 };
 
