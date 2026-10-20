@@ -11,6 +11,7 @@ export const FinancialStatusFilter = Object.freeze({
   SENT_TO_PAYMENT: 'sent_to_payment',
   PAID: 'paid',
   AWAITING_DOCUMENTS: 'awaiting_documents',
+  ALL_DOCUMENTS_ADDED: 'all_documents_added',
   NEEDS_REVISION: 'needs_revision',
   CANCELED: 'canceled',
   DELETED: FILTER_DELETED,
@@ -43,6 +44,11 @@ export const getStatusStyle = status => {
     case FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS:
     case 'Фінанси: Сплачено, очікуються документи':
     case 'Бухгалтер: Сплачено, очікуються документи':
+      return { color: '#6b9429' };
+    case FinancialRequestStatus.FINANCE_PAID_ALL_DOCUMENTS_ADDED:
+    case FinancialRequestStatus.ACCOUNTANT_PAID_ALL_DOCUMENTS_ADDED:
+    case 'Фінанси: Сплачено. Всі документи додані.':
+    case 'Бухгалтерія: Сплачено. Всі документи додані.':
       return { color: '#6b9429' };
     case FinancialRequestStatus.NEEDS_REVISION:
     case 'Потребує виправлень':
@@ -82,8 +88,13 @@ export const statusSelectorFin = [
   },
   {
     value: FinancialStatusFilter.AWAITING_DOCUMENTS,
-    label: 'Очікуються документи',
+    label: 'Сплачено. Очікують документи',
     labelKey: 'financialStatus.awaitingDocuments',
+  },
+  {
+    value: FinancialStatusFilter.ALL_DOCUMENTS_ADDED,
+    label: 'Сплачено. Всі документи додано',
+    labelKey: 'financialStatus.paidAllDocumentsAdded',
   },
   {
     value: FinancialStatusFilter.NEEDS_REVISION,
@@ -116,8 +127,13 @@ export const statusSelectorBuh = [
   },
   {
     value: FinancialStatusFilter.AWAITING_DOCUMENTS,
-    label: 'Очікуються документи',
+    label: 'Сплачено. Очікують документи',
     labelKey: 'financialStatus.awaitingDocuments',
+  },
+  {
+    value: FinancialStatusFilter.ALL_DOCUMENTS_ADDED,
+    label: 'Сплачено. Всі документи додано',
+    labelKey: 'financialStatus.paidAllDocumentsAdded',
   },
   {
     value: FinancialStatusFilter.CANCELED,
@@ -160,8 +176,13 @@ export const statusSelectorUser = [
   },
   {
     value: FinancialStatusFilter.AWAITING_DOCUMENTS,
-    label: 'Очікуються документи',
+    label: 'Сплачено. Очікують документи',
     labelKey: 'financialStatus.awaitingDocuments',
+  },
+  {
+    value: FinancialStatusFilter.ALL_DOCUMENTS_ADDED,
+    label: 'Сплачено. Всі документи додано',
+    labelKey: 'financialStatus.paidAllDocumentsAdded',
   },
   {
     value: FinancialStatusFilter.NEEDS_REVISION,
@@ -373,6 +394,9 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
     case FinancialRequestStatus.FINANCE_PAID_AWAITING_DOCUMENTS:
     case FinancialRequestStatus.ACCOUNTANT_PAID_AWAITING_DOCUMENTS:
       return FinancialStatusFilter.AWAITING_DOCUMENTS;
+    case FinancialRequestStatus.FINANCE_PAID_ALL_DOCUMENTS_ADDED:
+    case FinancialRequestStatus.ACCOUNTANT_PAID_ALL_DOCUMENTS_ADDED:
+      return FinancialStatusFilter.ALL_DOCUMENTS_ADDED;
     case FinancialRequestStatus.NEEDS_REVISION:
       return FinancialStatusFilter.NEEDS_REVISION;
     case FinancialRequestStatus.FINANCE_CANCELED:
@@ -392,6 +416,11 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
     'Бухгалтер: Сплачено, очікуються документи',
   ];
 
+  const allDocumentsAddedStatuses = [
+    'Фінанси: Сплачено. Всі документи додані.',
+    'Бухгалтерія: Сплачено. Всі документи додані.',
+  ];
+
   const canceledStatuses = [
     'Фінанси: Скасовано',
     'Бухгалтер: Скасовано',
@@ -404,6 +433,10 @@ export const getActiveStatus = (statusIdOrName, statusName) => {
 
   if (awaitStatuses.includes(fallbackStatusName)) {
     return FinancialStatusFilter.AWAITING_DOCUMENTS;
+  }
+
+  if (allDocumentsAddedStatuses.includes(fallbackStatusName)) {
+    return FinancialStatusFilter.ALL_DOCUMENTS_ADDED;
   }
 
   if (canceledStatuses.includes(fallbackStatusName)) {
