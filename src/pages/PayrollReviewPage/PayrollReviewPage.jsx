@@ -1169,6 +1169,12 @@ const PayrollReviewPage = () => {
                     autoFocus
                     disabled={savingCell}
                     onChange={e => setEditingValue(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !savingCell) {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }
+                    }}
                   />
                   <Tooltip title="Зберегти">
                     <span>
@@ -1265,6 +1271,12 @@ const PayrollReviewPage = () => {
                             : e.target.value
                         )
                       }
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !savingCell) {
+                          e.preventDefault();
+                          handleSaveEdit();
+                        }
+                      }}
                     />
                     <Tooltip title="Зберегти">
                       <span>
@@ -1552,6 +1564,12 @@ const PayrollReviewPage = () => {
                     className={style.monthWorkingDaysInput}
                     value={monthWorkingDaysInput}
                     onChange={e => setMonthWorkingDaysInput(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !savingMonthWorkingDays) {
+                        e.preventDefault();
+                        handleSaveMonthWorkingDays();
+                      }
+                    }}
                     disabled={savingMonthWorkingDays}
                   />
                 </label>

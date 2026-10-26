@@ -31,22 +31,14 @@ const PERSON_FIELD_DEFS = [
   { key: 'full_name', label: 'Full Name', type: 'text' },
   { key: 'accounting_full_name', label: 'ПІБ 1С', type: 'text', required: true },
   { key: 'local_full_name', label: 'ПІБ', type: 'text', required: true },
-  {
-    key: 'payment_form_id',
-    label: 'Форма оплати',
-    type: 'select',
-    optionsKey: 'payment_forms',
-    required: true,
-    searchable: true,
-  },
-  { key: 'payment_details', label: 'Реквізити', type: 'textarea' },
-  { key: 'tax_id', label: 'ІПН', type: 'text' },
+  { key: 'tax_id', label: 'ІПН', type: 'text', required: true },
+  { key: 'payment_details', label: 'Реквізити', type: 'textarea', required: true },
   { key: 'gender', label: 'Стать', type: 'select', options: genderOptions },
   { key: 'contacts', label: 'Контакти', type: 'textarea' },
 ];
 
 // "Призначення" — окремий блок на кожного керівника: де саме людина працює
-// під ним і з якої дати.
+// під ним і з якої дати. Необов'язкове при створенні.
 const ASSIGNMENT_FIELD_DEFS = [
   {
     key: 'manager_id',
@@ -84,6 +76,13 @@ const ASSIGNMENT_FIELD_DEFS = [
     type: 'select',
     options: workScheduleOptions,
   },
+  {
+    key: 'payment_form_id',
+    label: 'Форма оплати',
+    type: 'select',
+    optionsKey: 'payment_forms',
+    searchable: true,
+  },
   { key: 'hire_date', label: 'Дата прийому', type: 'date', required: true },
   { key: 'termination_date', label: 'Дата звільнення', type: 'date' },
 ];
@@ -92,7 +91,6 @@ const emptyPersonValues = {
   full_name: '',
   accounting_full_name: '',
   local_full_name: '',
-  payment_form_id: '',
   payment_details: '',
   tax_id: '',
   gender: '',
@@ -106,7 +104,6 @@ const buildPersonValues = employee => {
     full_name: normalized.full_name || '',
     accounting_full_name: normalized.accounting_full_name || '',
     local_full_name: normalized.local_full_name || '',
-    payment_form_id: normalized.payment_form_id || '',
     payment_details: normalized.payment_details || '',
     tax_id: normalized.tax_id || '',
     gender: normalized.gender || '',
@@ -130,7 +127,7 @@ const buildAssignmentBlocks = employee => {
       __clientKey: `assignment-${item.id}`,
     }));
   }
-  return [{ ...normalizeAssignment(null), __clientKey: createLocalAssignmentKey() }];
+  return [];
 };
 
 const extractLookupOptions = items => {
@@ -233,6 +230,12 @@ const EmployeeForm = ({
   const handleConfirmAddToExisting = () => {
     setAddingToExisting(true);
     setSubmitErrors([]);
+    // Мета кроку — додати призначення, тож має бути хоча б один блок.
+    setAssignmentBlocks(prev =>
+      prev.length > 0
+        ? prev
+        : [{ ...emptyAssignment, __clientKey: createLocalAssignmentKey() }]
+    );
   };
 
   const validate = () => {
@@ -244,6 +247,8 @@ const EmployeeForm = ({
           errors.push(`${field.label}: обов'язкове поле.`);
         }
       });
+    } else if (assignmentBlocks.length === 0) {
+      errors.push('Потрібно заповнити хоча б одне призначення.');
     }
 
     assignmentBlocks.forEach((block, index) => {
@@ -471,7 +476,7 @@ const EmployeeForm = ({
               <span className={style.assignmentBlockTitle}>
                 Призначення {index + 1}
               </span>
-              {assignmentBlocks.length > 1 && !block.id && (
+              {!block.id && (
                 <button
                   type="button"
                   className={style.removeAssignmentBtn}

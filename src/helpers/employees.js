@@ -20,21 +20,25 @@ export const clampToRange = (value, min, max) => {
   return String(Math.min(max, Math.max(min, num)));
 };
 
-// "Налаштовано" — коли призначена ставка, валюта, реквізити, дата, з якої
-// ставка діє, і обрані податки. Всі п'ять мають бути заповнені одночасно.
+// "Налаштовано" — коли заповнені організаційні поля призначення (unit,
+// department, subdivision, керівник, дата прийому) і фінансові (ставка,
+// валюта, форма оплати, дата дії ставки, податки, реквізити).
 const CONFIG_FIELD_LABELS = {
+  unit: 'unit',
+  department: 'Department',
+  subdivision: 'Subdivision',
+  manager: 'Керівник',
+  hire_date: 'Дата прийому',
   rate: 'Ставка',
   currency: 'Валюта',
+  payment_form: 'Форма оплати',
   payment_details: 'Реквізити',
   rate_date: 'Дата початку',
   tax_formula: 'Податки',
 };
 
-// rate/currency/rate_date/tax_formula належать конкретному призначенню
-// (керівнику), не людині — тому другий аргумент. За замовчуванням він =
-// employee, бо бекенд і так підставляє в employee.rate/currency/rate_date/
-// tax_formula значення з primary-призначення (сумісність для місць, що ще
-// не показують кілька призначень окремо).
+// Усі поля, крім payment_details, належать конкретному призначенню, не
+// людині — тому другий аргумент.
 export const getMissingConfigFields = (employee, assignment = employee) =>
   Object.entries(CONFIG_FIELD_LABELS)
     .filter(([key]) => {
@@ -45,6 +49,20 @@ export const getMissingConfigFields = (employee, assignment = employee) =>
 
 export const isEmployeeConfigured = (employee, assignment = employee) =>
   getMissingConfigFields(employee, assignment).length === 0;
+
+// Один статус на всього співробітника — "Налаштовано" лише коли ВСІ його
+// призначення повністю заповнені, не хоча б одне.
+export const getEmployeeMissingConfigFields = employee => {
+  const slots = employee?.assignments?.length ? employee.assignments : [employee];
+  const missing = new Set();
+  slots.forEach(assignment => {
+    getMissingConfigFields(employee, assignment).forEach(label => missing.add(label));
+  });
+  return [...missing];
+};
+
+export const isEmployeeFullyConfigured = employee =>
+  getEmployeeMissingConfigFields(employee).length === 0;
 
 export const employeeFields = [
   { key: 'unit', label: 'unit' },
@@ -73,22 +91,25 @@ export const employeeLookupFieldIds = {
   manager: 'manager_id',
 };
 
-export const requiredEmployeeFields = employeeFields
-  .filter(field => field.key !== 'termination_date')
-  .map(field => employeeLookupFieldIds[field.key] || field.key);
+// Мінімальний набір для створення кадровиком — решта необов'язкові.
+export const requiredEmployeeFields = [
+  'local_full_name',
+  'accounting_full_name',
+  'tax_id',
+  'payment_details',
+];
 
 // "Особисті дані" — заповнюються один раз на людину. "Призначення" —
 // окремий блок на кожного керівника (unit/department/subdivision/посада/
-// графік/дати/сам керівник) — один співробітник може мати кілька таких
-// блоків одночасно (MAX_ASSIGNMENTS_PER_EMPLOYEE = 3, синхронізовано з
-// бекендом).
+// графік/дати/форма оплати/сам керівник) — один співробітник може мати
+// кілька таких блоків одночасно (MAX_ASSIGNMENTS_PER_EMPLOYEE = 3,
+// синхронізовано з бекендом).
 export const MAX_ASSIGNMENTS_PER_EMPLOYEE = 3;
 
 export const personFieldKeys = [
   'full_name',
   'accounting_full_name',
   'local_full_name',
-  'payment_form',
   'payment_details',
   'tax_id',
   'gender',
@@ -102,6 +123,7 @@ export const assignmentFieldKeys = [
   'subdivision',
   'position',
   'work_schedule',
+  'payment_form',
   'hire_date',
   'termination_date',
 ];
@@ -114,6 +136,7 @@ export const emptyAssignment = {
   subdivision_id: '',
   position: '',
   work_schedule: '',
+  payment_form_id: '',
   hire_date: '',
   termination_date: '',
 };
@@ -129,6 +152,8 @@ export const normalizeAssignment = assignment => ({
     assignment?.subdivision_id ?? assignment?.subdivision_details?.id ?? '',
   position: assignment?.position ?? '',
   work_schedule: assignment?.work_schedule ?? '',
+  payment_form_id:
+    assignment?.payment_form_id ?? assignment?.payment_form_details?.id ?? '',
   hire_date: String(assignment?.hire_date ?? '').slice(0, 10),
   termination_date: String(assignment?.termination_date ?? '').slice(0, 10),
 });
@@ -140,6 +165,7 @@ export const buildAssignmentPayload = assignment => ({
   subdivision_id: assignment.subdivision_id || null,
   position: normalizeEmployeeValue(assignment.position),
   work_schedule: normalizeEmployeeValue(assignment.work_schedule),
+  payment_form_id: assignment.payment_form_id || null,
   hire_date: normalizeEmployeeValue(assignment.hire_date),
   termination_date: normalizeEmployeeValue(assignment.termination_date) || null,
 });
