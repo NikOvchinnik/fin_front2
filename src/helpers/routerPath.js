@@ -8,17 +8,11 @@ const routesConfig = [
     element: lazy(() => import('../pages/UsersPage/UsersPage')),
   },
   {
+    // Доступ тут перевіряється не лише за роллю (тому перелічені всі
+    // ролі) — див. App.jsx і helpers/featureAccess.js -> canAccessEmployees.
     path: 'employees',
-    roles: [UserRole.HR],
-    element: lazy(() => import('../pages/EmployeesPage/EmployeesPage')),
-  },
-  {
-    // Доступ тут перевіряється не за роллю (тому перелічені всі ролі), а
-    // окремо, за прапорцем has_finance_staff_access — див. App.jsx і
-    // helpers/featureAccess.js -> canAccessStaffAndPayrollReview.
-    path: 'staff',
     roles: Object.values(UserRole),
-    element: lazy(() => import('../pages/StaffPage/StaffPage')),
+    element: lazy(() => import('../pages/EmployeesPage/EmployeesPage')),
   },
   {
     // Доступ тут перевіряється не за роллю (тому перелічені всі ролі), а
@@ -33,7 +27,7 @@ const routesConfig = [
   {
     // Доступ тут перевіряється не за роллю (тому перелічені всі ролі), а
     // окремо, за прапорцем has_finance_staff_access — див. App.jsx і
-    // helpers/featureAccess.js -> canAccessStaffAndPayrollReview.
+    // helpers/featureAccess.js -> canAccessPayrollReview.
     path: 'payroll-review',
     roles: Object.values(UserRole),
     element: lazy(() =>

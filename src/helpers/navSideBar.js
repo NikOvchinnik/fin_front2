@@ -1,8 +1,8 @@
 import { UserRole } from './enums';
 import {
   canAccessGoogleSheetsAnalytics,
+  canAccessPayrollReview,
   canAccessPayrollStatement,
-  canAccessStaffAndPayrollReview,
 } from './featureAccess';
 
 export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) => {
@@ -27,14 +27,14 @@ export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) =
     link: `/payroll-statement`,
     icon: 'dollar',
   };
-  const showStaffAndPayrollReview = canAccessStaffAndPayrollReview({
+  const showFinanceEmployeesAccess = canAccessPayrollReview({
     hasFinanceStaffAccess,
   });
-  const staffPage = {
+  const employeesPage = {
     page: 'Співробітники',
-    pageKey: 'nav.staff',
-    link: `/staff`,
-    icon: 'employees',
+    pageKey: 'nav.employees',
+    link: `/employees`,
+    icon: 'users',
   };
   const payrollReviewPage = {
     page: 'Перевірка відомостей',
@@ -141,7 +141,7 @@ export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) =
           ],
         },
         ...(showPayrollStatement ? [payrollStatementPage] : []),
-        ...(showStaffAndPayrollReview ? [staffPage, payrollReviewPage] : []),
+        ...(showFinanceEmployeesAccess ? [employeesPage, payrollReviewPage] : []),
       ],
     },
     {
@@ -195,7 +195,7 @@ export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) =
           ],
         },
         ...(showPayrollStatement ? [payrollStatementPage] : []),
-        ...(showStaffAndPayrollReview ? [staffPage, payrollReviewPage] : []),
+        ...(showFinanceEmployeesAccess ? [employeesPage, payrollReviewPage] : []),
       ],
     },
     {
@@ -220,7 +220,7 @@ export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) =
           icon: 'coins',
         },
         ...(showPayrollStatement ? [payrollStatementPage] : []),
-        ...(showStaffAndPayrollReview ? [staffPage, payrollReviewPage] : []),
+        ...(showFinanceEmployeesAccess ? [employeesPage, payrollReviewPage] : []),
       ],
     },
     {
@@ -343,7 +343,7 @@ export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) =
           ],
         },
         ...(showPayrollStatement ? [payrollStatementPage] : []),
-        ...(showStaffAndPayrollReview ? [staffPage, payrollReviewPage] : []),
+        ...(showFinanceEmployeesAccess ? [employeesPage, payrollReviewPage] : []),
       ],
     },
     {
@@ -448,20 +448,15 @@ export const getNavSideBar = (userId, isPayrollManager, hasFinanceStaffAccess) =
           ],
         },
         ...(showPayrollStatement ? [payrollStatementPage] : []),
-        ...(showStaffAndPayrollReview ? [staffPage, payrollReviewPage] : []),
+        ...(showFinanceEmployeesAccess ? [employeesPage, payrollReviewPage] : []),
       ],
     },
     {
       roles: [UserRole.HR],
       pages: [
-        {
-          page: 'Співробітники',
-          pageKey: 'nav.employees',
-          link: `/employees`,
-          icon: 'users',
-        },
+        employeesPage,
         ...(showPayrollStatement ? [payrollStatementPage] : []),
-        ...(showStaffAndPayrollReview ? [staffPage, payrollReviewPage] : []),
+        ...(showFinanceEmployeesAccess ? [payrollReviewPage] : []),
       ],
     },
   ];

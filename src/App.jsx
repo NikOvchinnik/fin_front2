@@ -2,9 +2,10 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { lazy } from 'react';
 import { useSelector } from 'react-redux';
 import {
+  canAccessEmployees,
   canAccessGoogleSheetsAnalytics,
   canAccessPayrollStatement,
-  canAccessStaffAndPayrollReview,
+  canAccessPayrollReview,
 } from './helpers/featureAccess';
 import routesConfig from './helpers/routerPath';
 import {
@@ -42,8 +43,15 @@ const App = () => {
     }
 
     if (
-      (route.path === 'staff' || route.path === 'payroll-review') &&
-      !canAccessStaffAndPayrollReview({ hasFinanceStaffAccess })
+      route.path === 'employees' &&
+      !canAccessEmployees({ userRole, hasFinanceStaffAccess })
+    ) {
+      return false;
+    }
+
+    if (
+      route.path === 'payroll-review' &&
+      !canAccessPayrollReview({ hasFinanceStaffAccess })
     ) {
       return false;
     }
