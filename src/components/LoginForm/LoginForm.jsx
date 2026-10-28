@@ -76,6 +76,7 @@ const LoginForm = () => {
           <div className={style.inputContainer}>
             <label className={style.formLabel}>
               <input
+                data-hw-login-input
                 className={style.formInput}
                 type="text"
                 placeholder={t('auth.emailPlaceholder')}
@@ -101,12 +102,14 @@ const LoginForm = () => {
           <div className={style.inputContainer}>
             <label className={style.formLabel}>
               <input
+                data-hw-login-password
                 className={style.formInput}
                 type={isPasswordVisible ? 'text' : 'password'}
                 placeholder={t('auth.passwordPlaceholder')}
                 {...register('password')}
               />
               <button
+                data-hw-login-eye
                 onClick={() => setPasswordVisible(!isPasswordVisible)}
                 type="button"
                 className={style.formBtnIcon}

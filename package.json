@@ -43,6 +43,7 @@
     "redux": "^5.0.1",
     "redux-persist": "^6.0.0",
     "simplebar-react": "^3.3.2",
+    "three": "^0.128.0",
     "yup": "^1.7.0"
   },
   "devDependencies": {

@@ -88,11 +88,12 @@ const SideBar = () => {
         )}
       </div>
       <div
+        data-hw-sidebar
         className={`${
           isMenuOpen ? style.navContainerMobile : style.navContainerDesktop
         } ${isCollapsed ? style.navContainerCollapsed : ''}`}
       >
-        <div className={style.logoContainer}>
+        <div data-hw-spot="logo" className={style.logoContainer}>
           <NavLink to="/">
             <img
               src="/logo_white.svg"
@@ -121,7 +122,11 @@ const SideBar = () => {
             );
 
             return (
-              <li key={index} className={style.navItem}>
+              <li
+                key={index}
+                className={style.navItem}
+                data-hw-spot={index === 0 ? 'study' : undefined}
+              >
                 {children ? (
                   <>
                     <button
@@ -213,11 +218,12 @@ const SideBar = () => {
           })}
         </ul>
         <div
+          data-hw-tools
           className={`${style.navUserContainer} ${
             isCollapsed ? style.navUserContainerCollapsed : ''
           }`}
         >
-          <div className={style.languageSwitcher}>
+          <div data-hw-spot="lang" className={style.languageSwitcher}>
             <button
               className={`${style.languageBtn} ${
                 i18n.language === 'en' ? `${style.languageBtnActive}` : ''
@@ -235,13 +241,15 @@ const SideBar = () => {
               UA
             </button>
           </div>
-          <button
-            className={style.btnLogOut}
-            onClick={() => dispatch(logout())}
-          >
-            {userName}
-            <Icon id="log-out" className={style.iconLogOut} />
-          </button>
+          <div data-hw-spot="user" style={{ position: 'relative' }}>
+            <button
+              className={style.btnLogOut}
+              onClick={() => dispatch(logout())}
+            >
+              {userName}
+              <Icon id="log-out" className={style.iconLogOut} />
+            </button>
+          </div>
         </div>
       </div>
     </>
