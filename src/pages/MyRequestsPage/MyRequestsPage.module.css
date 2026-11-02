@@ -244,6 +244,7 @@
 
 .btnsContainer {
   display: flex;
+  flex-wrap: wrap;
   gap: 12px;
 }
 
@@ -326,6 +327,7 @@
 
   .dateContainer {
     flex-direction: row;
+    flex-wrap: wrap;
     gap: 20px;
     justify-content: space-between;
     align-items: center;
