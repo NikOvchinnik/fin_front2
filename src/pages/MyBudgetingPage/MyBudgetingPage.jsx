@@ -26,6 +26,7 @@ import {
 import MonthNavigator from '../../components/MonthNavigator/MonthNavigator';
 import { useNavigate } from 'react-router-dom';
 import BudgetNewForm from '../../components/Forms/BudgetNewForm/BudgetNewForm';
+import BulkBudgetingForm from '../../components/Forms/BulkBudgetingForm/BulkBudgetingForm';
 import BudgetEditForm from '../../components/Forms/BudgetEditForm/BudgetEditForm';
 import BudgetWatchForm from '../../components/Forms/BudgetWatchForm/BudgetWatchForm';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
@@ -78,6 +79,7 @@ const MyBudgetingPage = () => {
   });
   const [isModalColumnsOpen, setModalColumnsIsOpen] = useState(false);
   const [isModalOpen, setModalIsOpen] = useState(false);
+  const [isModalBulkCreateOpen, setModalBulkCreateIsOpen] = useState(false);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
   const [isModalReturnOpen, setModalReturnIsOpen] = useState(false);
@@ -943,6 +945,14 @@ const MyBudgetingPage = () => {
     setModalIsOpen(false);
   };
 
+  const openModalBulkCreate = () => {
+    setModalBulkCreateIsOpen(true);
+  };
+
+  const closeModalBulkCreate = () => {
+    setModalBulkCreateIsOpen(false);
+  };
+
   const openModalImport = () => {
     setModalImportIsOpen(true);
   };
@@ -1094,6 +1104,9 @@ const MyBudgetingPage = () => {
               <div className={style.btnsContainer}>
                 <button className={style.newBtn} onClick={openModal}>
                   {t('common.createBudget')} <span>+</span>
+                </button>
+                <button className={style.csvBtn} onClick={openModalBulkCreate}>
+                  Створити регулярний бюджет
                 </button>
                 <button
                   className={style.csvBtn}
@@ -1347,6 +1360,15 @@ const MyBudgetingPage = () => {
           </ModalWindow>
           <ModalWindow isModalOpen={isModalOpen} onCloseModal={closeModal}>
             <BudgetNewForm closeModal={closeModal} onRefresh={fetchData} />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalBulkCreateOpen}
+            onCloseModal={closeModalBulkCreate}
+          >
+            <BulkBudgetingForm
+              closeModal={closeModalBulkCreate}
+              onRefresh={fetchData}
+            />
           </ModalWindow>
           <ModalWindow
             isModalOpen={isModalEditOpen}

@@ -113,6 +113,14 @@ export const createRequest = async payload => {
   }
 };
 
+export const createBulkRequests = async payload => {
+  try {
+    return await axios.post('/api/financial-request/create-bulk', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const updateRequest = async payload => {
   try {
     return await axios.post('/api/financial-request/update-request', payload);

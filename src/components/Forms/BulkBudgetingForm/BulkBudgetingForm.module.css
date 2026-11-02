@@ -1,0 +1,223 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 24px;
+  width: min(94vw, 760px);
+  max-height: 86vh;
+  overflow-y: auto;
+}
+
+.title {
+  font-weight: 500;
+  color: var(--modal-title);
+  font-size: 22px;
+  line-height: 1.33;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  color: var(--toggle-lang);
+  margin-top: 8px;
+}
+
+.fieldsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.fieldsGrid > * {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.selectField {
+  width: 100%;
+}
+
+.field {
+  position: relative;
+  width: 100%;
+}
+
+.fieldLabel {
+  position: absolute;
+  top: 0;
+  left: 12px;
+  transform: translateY(-50%);
+  padding: 0 4px;
+  background: var(--white);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--toggle-lang);
+}
+
+.fieldInput,
+.fieldTextarea {
+  width: 100%;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--heading-text);
+  background: var(--white);
+}
+
+.fieldInput {
+  height: 48px;
+}
+
+.fieldTextarea {
+  padding: 12px 14px;
+  min-height: 64px;
+  resize: vertical;
+}
+
+.warningText {
+  color: #a71916;
+  font-size: 14px;
+}
+
+.distributeBtn {
+  align-self: flex-end;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--button);
+  border-radius: 8px;
+  color: var(--button);
+  font-weight: 500;
+  white-space: nowrap;
+  transition: all 0.3s ease;
+}
+
+.distributeBtn:hover:not(:disabled) {
+  background: var(--button);
+  color: var(--white);
+}
+
+.distributeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tableWrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.table th {
+  background: var(--toggle-lang-background);
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--main-text);
+  white-space: nowrap;
+}
+
+.cellInput {
+  width: 100%;
+  min-width: 100px;
+  height: 36px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--heading-text);
+}
+
+.summaryRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.summaryBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  background: var(--toggle-lang-background);
+  font-size: 14px;
+  min-width: 220px;
+}
+
+.summaryError {
+  color: #a71916;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.cancelBtn {
+  padding: 12px 20px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--main-text);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.cancelBtn:hover:not(:disabled) {
+  border-color: var(--button);
+  color: var(--button);
+}
+
+.draftBtn {
+  padding: 12px 20px;
+  border: 1px solid var(--button);
+  border-radius: 8px;
+  color: var(--button);
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.draftBtn:hover:not(:disabled) {
+  background: #f1eefc;
+}
+
+.draftBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.submitBtn {
+  padding: 12px 24px;
+  border-radius: 8px;
+  background: var(--button);
+  color: var(--white);
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.submitBtn:disabled {
+  background: var(--table-edit);
+  cursor: not-allowed;
+}
