@@ -4,8 +4,6 @@
   gap: 16px;
   padding: 24px;
   width: min(94vw, 760px);
-  max-height: 86vh;
-  overflow-y: auto;
 }
 
 .title {
