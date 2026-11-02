@@ -95,6 +95,14 @@ export const postMyBudgeting = async payload => {
   }
 };
 
+export const createBulkBudgeting = async payload => {
+  try {
+    return await axios.post('/api/budgeting/create-bulk', payload);
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const updateMyBudgeting = async payload => {
   try {
     return await axios.post('/api/budgeting/update-budgeting', payload);

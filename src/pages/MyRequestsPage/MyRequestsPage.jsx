@@ -28,6 +28,7 @@ import { useSelector } from 'react-redux';
 import ConfirmModal from '../../components/ConfirmModal/ConfirmModal';
 import { useNavigate } from 'react-router-dom';
 import NewRequestForm from '../../components/Forms/NewRequestForm/NewRequestForm';
+import BulkPaymentForm from '../../components/Forms/BulkPaymentForm/BulkPaymentForm';
 import EditRequestForm from '../../components/Forms/EditRequestForm/EditRequestForm';
 import WatchRequestForm from '../../components/Forms/WatchRequestForm/WatchRequestForm';
 import { exportToCSV } from '../../helpers/exportToCSV';
@@ -84,6 +85,7 @@ const MyRequestsPage = () => {
     direction: 'desc',
   });
   const [isModalOpen, setModalIsOpen] = useState(false);
+  const [isModalBulkCreateOpen, setModalBulkCreateIsOpen] = useState(false);
   const [isModalEditOpen, setModalEditIsOpen] = useState(false);
   const [isModalWatchOpen, setModalWatchIsOpen] = useState(false);
   const [isModalSendOpen, setModalSendIsOpen] = useState(false);
@@ -1097,6 +1099,14 @@ const MyRequestsPage = () => {
     setModalIsOpen(false);
   };
 
+  const openModalBulkCreate = () => {
+    setModalBulkCreateIsOpen(true);
+  };
+
+  const closeModalBulkCreate = () => {
+    setModalBulkCreateIsOpen(false);
+  };
+
   const openModalEdit = () => {
     setModalEditIsOpen(true);
   };
@@ -1276,6 +1286,9 @@ const MyRequestsPage = () => {
               <div className={style.btnsContainer}>
                 <button className={style.newBtn} onClick={openModal}>
                   {t('common.createRequest')} <span>+</span>
+                </button>
+                <button className={style.csvBtn} onClick={openModalBulkCreate}>
+                  Створити регулярний платіж
                 </button>
                 <button
                   className={style.csvBtn}
@@ -1550,6 +1563,15 @@ const MyRequestsPage = () => {
               closeModal={closeModal}
               onRefresh={fetchData}
               formType="request"
+            />
+          </ModalWindow>
+          <ModalWindow
+            isModalOpen={isModalBulkCreateOpen}
+            onCloseModal={closeModalBulkCreate}
+          >
+            <BulkPaymentForm
+              closeModal={closeModalBulkCreate}
+              onRefresh={fetchData}
             />
           </ModalWindow>
           <ModalWindow
