@@ -8,6 +8,7 @@ import Form from '../../components/Form/Form';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
+import PaymentChangeNote from '../../components/PaymentChangeNote/PaymentChangeNote';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import {
   exportPayrollReviewToGoogle,
@@ -223,10 +224,7 @@ const withAllOption = options => [{ value: FILTER_ALL, label: 'Усі' }, ...opt
 const getEntryStatus = employee =>
   employee?.payroll_entry?.status ?? PAYROLL_ENTRY_STATUS.DRAFT;
 
-// entryData — конкретний відрізок ставки місяця (employee.payroll_entry або
-// один з employee.extra_payroll_entries, якщо ставку міняли ВСЕРЕДИНІ
-// місяця, _resolve_rate_periods_for_month на бекенді) — щоб та сама логіка
-// статусу/блокування працювала незалежно від того, скільки їх у цього рядка.
+// entryData — відрізок місяця: payroll_entry або один з extra_payroll_entries.
 const getStatusForEntry = entryData => entryData?.status ?? PAYROLL_ENTRY_STATUS.DRAFT;
 
 const getEntrySlots = employee => [
@@ -236,10 +234,8 @@ const getEntrySlots = employee => [
 
 const hasMultiplePeriods = employee => (employee.extra_payroll_entries || []).length > 0;
 
-// rate_history_id самого запису однозначно ідентифікує відрізок — null для
-// першого (як і завжди було), id рядка EmployeeRateHistory для 2-го й
-// подальших.
-const getPeriodKey = entryData => entryData?.rate_history_id ?? null;
+// Ключ відрізка з бекенду: null — перший, "r:<id>"/"t:<id>" — зі зміни ставки/податку.
+const getPeriodKey = entryData => entryData?.period_key ?? null;
 
 const formatEffectiveDate = isoDate => (isoDate ? dayjs(isoDate).format('DD.MM.YYYY') : null);
 
@@ -249,8 +245,8 @@ const formatEffectiveDate = isoDate => (isoDate ? dayjs(isoDate).format('DD.MM.Y
 // (той міняється з "draft-…" на "entry-…" після першого збереження
 // ПЕРВИННОГО відрізка — прив'язка до нього ускладнила б облік 2-го відрізка
 // без жодної користі).
-const getPeriodUnlockKey = (employee, rateHistoryId) =>
-  `${employee.id}:${employee.payroll_entry?.manager_id}:${rateHistoryId ?? 'primary'}`;
+const getPeriodUnlockKey = (employee, periodKey) =>
+  `${employee.id}:${employee.payroll_entry?.manager_id}:${periodKey ?? 'primary'}`;
 
 // Один співробітник може мати кілька керівників одночасно — кожен зі своїм
 // ОКРЕМИМ payroll_entry (див. коментар у моделі EmployeePayrollEntry на
@@ -264,6 +260,12 @@ const getRowKey = employee =>
   employee?.payroll_entry?.id != null
     ? `entry-${employee.payroll_entry.id}`
     : `draft-${employee?.id}-${employee?.payroll_entry?.manager_id}`;
+
+// Id збережених записів усіх відрізків рядка (для експорту).
+const getSavedEntryIds = employee =>
+  [employee?.payroll_entry, ...(employee?.extra_payroll_entries || [])]
+    .map(entry => entry?.id)
+    .filter(id => id != null);
 
 // Клас підсвітки рядка (row.original.className, читає Table.jsx) — ті самі
 // класи в Table.module.css, що й на "Зарплатній відомості" керівника.
@@ -314,7 +316,7 @@ const PayrollReviewPage = () => {
   const [isEditingMonthWorkingDays, setIsEditingMonthWorkingDays] = useState(false);
   const [monthWorkingDaysInput, setMonthWorkingDaysInput] = useState('');
   const [savingMonthWorkingDays, setSavingMonthWorkingDays] = useState(false);
-  const [editingCell, setEditingCell] = useState(null); // { rowKey, employeeId, managerId, rateHistoryId, unlockKey, field } | null
+  const [editingCell, setEditingCell] = useState(null); // { rowKey, employeeId, managerId, periodKey, unlockKey, field } | null
   const [editingValue, setEditingValue] = useState('');
   const [savingCell, setSavingCell] = useState(false);
   const editingCellRef = useRef(null);
@@ -598,7 +600,7 @@ const PayrollReviewPage = () => {
     rowKey,
     employeeId,
     managerId,
-    rateHistoryId,
+    periodKey,
     unlockKey,
     field,
     currentValue
@@ -611,7 +613,7 @@ const PayrollReviewPage = () => {
       Notify.warning('Спершу розблокуйте рядок олівцем у колонці "Дія".');
       return;
     }
-    setEditingCell({ rowKey, employeeId, managerId, rateHistoryId, unlockKey, field });
+    setEditingCell({ rowKey, employeeId, managerId, periodKey, unlockKey, field });
     setEditingValue(currentValue ?? '');
   };
 
@@ -620,21 +622,18 @@ const PayrollReviewPage = () => {
     setEditingValue('');
   };
 
-  // Оновлює правильний "відрізок" рядка після збереження: rateHistoryId
-  // null — це employee.payroll_entry (перший відрізок), інакше шукає
-  // відповідний запис в employee.extra_payroll_entries за rate_history_id
-  // (той самий підхід, що на "Зарплатній відомості" керівника).
-  const applyPayrollEntryUpdate = (rowKey, rateHistoryId, updatedEntry) => {
+  // periodKey null — перший відрізок (payroll_entry), інакше — з extra_payroll_entries.
+  const applyPayrollEntryUpdate = (rowKey, periodKey, updatedEntry) => {
     setEmployees(prev =>
       prev.map(employee => {
         if (getRowKey(employee) !== rowKey) return employee;
-        if (rateHistoryId === null) {
+        if (periodKey === null) {
           return withRowClassName({ ...employee, payroll_entry: updatedEntry });
         }
         return {
           ...employee,
           extra_payroll_entries: (employee.extra_payroll_entries || []).map(entry =>
-            getPeriodKey(entry) === rateHistoryId ? updatedEntry : entry
+            getPeriodKey(entry) === periodKey ? updatedEntry : entry
           ),
         };
       })
@@ -645,8 +644,7 @@ const PayrollReviewPage = () => {
     if (!editingCell) return;
     setSavingCell(true);
     try {
-      // Ручні статті витрат — спільні на весь місяць (не прив'язані до
-      // відрізка ставки), тому rate_history_id тут не передається.
+      // Ручні статті витрат — спільні на весь місяць, без period_key.
       const result = editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX)
         ? await updateEmployeePayrollExpenseValue(editingCell.employeeId, {
             month: monthParam,
@@ -661,11 +659,11 @@ const PayrollReviewPage = () => {
             manager_id: editingCell.managerId,
             field: editingCell.field,
             value: editingValue,
-            rate_history_id: editingCell.rateHistoryId,
+            period_key: editingCell.periodKey,
           });
       applyPayrollEntryUpdate(
         editingCell.rowKey,
-        editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? null : editingCell.rateHistoryId,
+        editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? null : editingCell.periodKey,
         result?.payroll_entry
       );
       setEditingCell(null);
@@ -686,22 +684,19 @@ const PayrollReviewPage = () => {
     }
   };
 
-  // rateHistoryId — кожен відрізок ставки місяця має свій НЕЗАЛЕЖНИЙ статус
-  // (той самий підхід, що вже застосований до кількох керівників одного
-  // співробітника) — можна затвердити 1-й відрізок, поки 2-й ще на
-  // доопрацюванні, і навпаки.
-  const handleChangeStatus = async (employee, rateHistoryId, newStatus) => {
+  // Кожен відрізок місяця має власний статус.
+  const handleChangeStatus = async (employee, periodKey, newStatus) => {
     const rowKey = getRowKey(employee);
-    const unlockKey = getPeriodUnlockKey(employee, rateHistoryId);
+    const unlockKey = getPeriodUnlockKey(employee, periodKey);
     setStatusUpdatingId(unlockKey);
     try {
       const result = await updateEmployeePayrollEntryStatus(employee.id, {
         month: monthParam,
         manager_id: employee.payroll_entry?.manager_id,
         status: newStatus,
-        rate_history_id: rateHistoryId,
+        period_key: periodKey,
       });
-      applyPayrollEntryUpdate(rowKey, rateHistoryId, result?.payroll_entry);
+      applyPayrollEntryUpdate(rowKey, periodKey, result?.payroll_entry);
       if (newStatus === PAYROLL_ENTRY_STATUS.APPROVED) {
         Notify.success('Відомість затверджено.');
       } else if (newStatus === PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW) {
@@ -738,7 +733,7 @@ const PayrollReviewPage = () => {
   // (керівник ще взагалі нічого не зберігав): експортувати там нічого,
   // нема самого запису в базі, тому чекбокс недоступний саме для таких.
   const selectableEmployees = useMemo(
-    () => filteredEmployees.filter(employee => employee.payroll_entry?.id != null),
+    () => filteredEmployees.filter(employee => getSavedEntryIds(employee).length > 0),
     [filteredEmployees]
   );
 
@@ -768,8 +763,7 @@ const PayrollReviewPage = () => {
     // реальні числові id записів для бекенду.
     const entryIds = employees
       .filter(employee => selectedEmployeeIds.has(getRowKey(employee)))
-      .map(employee => employee.payroll_entry?.id)
-      .filter(id => id != null);
+      .flatMap(getSavedEntryIds);
     if (entryIds.length === 0) return;
 
     setExportingToGoogle(true);
@@ -1235,8 +1229,8 @@ const PayrollReviewPage = () => {
           if (EDITABLE_PAYROLL_FIELDS.includes(key)) {
             const rowKey = getRowKey(employee);
             return renderStackedSlots(employee, entryData => {
-              const rateHistoryId = getPeriodKey(entryData);
-              const unlockKey = getPeriodUnlockKey(employee, rateHistoryId);
+              const periodKey = getPeriodKey(entryData);
+              const unlockKey = getPeriodUnlockKey(employee, periodKey);
               const isEditing =
                 editingCell?.unlockKey === unlockKey && editingCell?.field === key;
               const savedValue = entryData?.[key];
@@ -1325,7 +1319,7 @@ const PayrollReviewPage = () => {
                           rowKey,
                           employee.id,
                           employee.payroll_entry?.manager_id,
-                          rateHistoryId,
+                          periodKey,
                           unlockKey,
                           key,
                           savedValue
@@ -1360,8 +1354,8 @@ const PayrollReviewPage = () => {
 
           if (key === 'action') {
             return renderStackedSlots(employee, entryData => {
-              const rateHistoryId = getPeriodKey(entryData);
-              const unlockKey = getPeriodUnlockKey(employee, rateHistoryId);
+              const periodKey = getPeriodKey(entryData);
+              const unlockKey = getPeriodUnlockKey(employee, periodKey);
               const statusValue = getStatusForEntry(entryData);
               const isUpdating = statusUpdatingId === unlockKey;
               const isUnlocked = unlockedEmployeeIds.has(unlockKey);
@@ -1385,7 +1379,7 @@ const PayrollReviewPage = () => {
                           onClick={() =>
                             handleChangeStatus(
                               employee,
-                              rateHistoryId,
+                              periodKey,
                               PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW
                             )
                           }
@@ -1406,7 +1400,7 @@ const PayrollReviewPage = () => {
                             onClick={() =>
                               handleChangeStatus(
                                 employee,
-                                rateHistoryId,
+                                periodKey,
                                 PAYROLL_ENTRY_STATUS.APPROVED
                               )
                             }
@@ -1424,7 +1418,7 @@ const PayrollReviewPage = () => {
                             onClick={() =>
                               handleChangeStatus(
                                 employee,
-                                rateHistoryId,
+                                periodKey,
                                 PAYROLL_ENTRY_STATUS.NEEDS_REVISION
                               )
                             }
@@ -1455,6 +1449,14 @@ const PayrollReviewPage = () => {
                 </div>
               );
             });
+          }
+
+          if (key === 'payment_form' || key === 'payment_details') {
+            return (
+              <PaymentChangeNote field={key} notes={employee.payment_change_notes?.[key]}>
+                {value || '-'}
+              </PaymentChangeNote>
+            );
           }
 
           return value || '-';

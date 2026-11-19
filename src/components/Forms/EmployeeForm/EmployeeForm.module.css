@@ -37,6 +37,14 @@
   position: relative;
 }
 
+.fieldHint {
+  display: block;
+  margin-top: 4px;
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--toggle-lang);
+}
+
 /* Обгортка для селектів, які рендеряться через спільний Form-компонент
    (MUI) — щоб вигляд/розкривний список збігався з фільтрами Unit/Department/
    Subdivision над таблицями, а не імітувався нативним <select>. */
@@ -153,6 +161,17 @@
   display: flex;
   gap: 12px;
   margin-top: 8px;
+}
+
+/* Кнопка "Зберегти" завжди видима внизу модалки під час скролу. */
+.stickyActions {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 8px -24px -24px;
+  padding: 16px 24px;
+  background: var(--white);
+  border-top: 1px solid var(--border);
 }
 
 .submitBtn {

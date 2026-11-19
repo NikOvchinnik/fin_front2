@@ -8,6 +8,7 @@ import Form from '../../components/Form/Form';
 import Table from '../../components/Table/Table';
 import ModalWindow from '../../components/ModalWindow/ModalWindow';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
+import PaymentChangeNote from '../../components/PaymentChangeNote/PaymentChangeNote';
 import BulkEditPayrollForm from '../../components/Forms/BulkEditPayrollForm/BulkEditPayrollForm';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import {
@@ -89,6 +90,10 @@ const getRowClassName = employee => STATUS_ROW_CLASS_NAME[getPayrollEntryStatus(
 // (див. коментар біля selectableEmployees нижче).
 const isPayrollEntryLocked = employee => isEntryLocked(employee?.payroll_entry);
 
+// Масове редагування пише лише в перший відрізок — людей з кількома не даємо обрати.
+const isBulkSelectable = employee =>
+  !isPayrollEntryLocked(employee) && !hasMultiplePeriods(employee);
+
 // Якщо ставку міняли ВСЕРЕДИНІ місяця — бекенд віддає employee.payroll_entry
 // (перший відрізок) + employee.extra_payroll_entries (2-й і подальші,
 // _resolve_rate_periods_for_month). Кожен відрізок — незалежний запис зі
@@ -102,10 +107,8 @@ const getEntrySlots = employee => [
 const hasMultiplePeriods = employee =>
   (employee.extra_payroll_entries || []).length > 0;
 
-// rate_history_id самого запису однозначно ідентифікує відрізок — null для
-// першого (як і завжди було), id рядка EmployeeRateHistory для 2-го й
-// подальших.
-const getPeriodKey = entryData => entryData?.rate_history_id ?? null;
+// Ключ відрізка з бекенду: null — перший, "r:<id>"/"t:<id>" — зі зміни ставки/податку.
+const getPeriodKey = entryData => entryData?.period_key ?? null;
 
 const formatEffectiveDate = isoDate =>
   isoDate ? dayjs(isoDate).format('DD.MM.YYYY') : null;
@@ -259,9 +262,7 @@ const DEFAULT_MONTH_WORKING_DAYS = 22;
 // числами в employee.payroll_entry.{accrued,taxes,total_accrued_currency}.
 // Тут лишається тільки: (1) визначити, яких вхідних даних бракує — щоб
 // показати "-" з підказкою, і (2) текст для тултіпа з описом формули.
-// entryData — конкретний відрізок ставки місяця (employee.payroll_entry або
-// один з employee.extra_payroll_entries), щоб та сама перевірка працювала
-// незалежно від того, скільки їх у цього рядка.
+// entryData — відрізок місяця: payroll_entry або один з extra_payroll_entries.
 const getAccruedMissingFieldsForEntry = entryData => {
   const missing = [];
   if (!entryData?.rate) missing.push('Ставка');
@@ -320,7 +321,7 @@ const PayrollStatementPage = () => {
     return saved ? JSON.parse(saved) : DEFAULT_HIDDEN_COLUMN_KEYS;
   });
   const [isColumnsModalOpen, setColumnsModalOpen] = useState(false);
-  const [editingCell, setEditingCell] = useState(null); // { employeeId, field, rateHistoryId } | null
+  const [editingCell, setEditingCell] = useState(null); // { employeeId, field, periodKey } | null
   const [editingValue, setEditingValue] = useState('');
   const [savingCell, setSavingCell] = useState(false);
   const editingCellRef = useRef(null);
@@ -420,16 +421,12 @@ const PayrollStatementPage = () => {
     };
   }, [editingCell]);
 
-  // Оновлює правильний "відрізок" рядка після збереження: rateHistoryId
-  // null — це employee.payroll_entry (перший відрізок, разом з дзеркальними
-  // top-level employee.rate/currency і підсвіткою рядка за статусом), інакше
-  // шукає відповідний запис в employee.extra_payroll_entries за
-  // rate_history_id.
-  const applyPayrollEntryUpdate = (employeeId, rateHistoryId, updatedEntry) => {
+  // periodKey null — перший відрізок (payroll_entry), інакше — з extra_payroll_entries.
+  const applyPayrollEntryUpdate = (employeeId, periodKey, updatedEntry) => {
     setEmployees(prev =>
       prev.map(item => {
         if (item.id !== employeeId) return item;
-        if (rateHistoryId === null) {
+        if (periodKey === null) {
           const next = {
             ...item,
             payroll_entry: updatedEntry,
@@ -441,48 +438,46 @@ const PayrollStatementPage = () => {
         return {
           ...item,
           extra_payroll_entries: (item.extra_payroll_entries || []).map(entry =>
-            getPeriodKey(entry) === rateHistoryId ? updatedEntry : entry
+            getPeriodKey(entry) === periodKey ? updatedEntry : entry
           ),
         };
       })
     );
   };
 
-  const handleStartEdit = (employeeId, rateHistoryId, field, currentValue) => {
+  const handleStartEdit = (employeeId, periodKey, field, currentValue) => {
     if (editingCell) {
       Notify.warning(UNSAVED_EDIT_WARNING);
       return;
     }
     const employee = employees.find(item => item.id === employeeId);
     const entryData = employee
-      ? getEntrySlots(employee).find(entry => getPeriodKey(entry) === rateHistoryId)
+      ? getEntrySlots(employee).find(entry => getPeriodKey(entry) === periodKey)
       : null;
     if (entryData && isEntryLocked(entryData)) {
       Notify.warning('Рядок заблокований — дані вже відправлені на перевірку.');
       return;
     }
-    setEditingCell({ employeeId, rateHistoryId, field });
+    setEditingCell({ employeeId, periodKey, field });
     setEditingValue(currentValue ?? '');
   };
 
   // Єдина дія, доступна керівнику зараз: відправити на перевірку або
   // скасувати відправку. "Повернуто на доопрацювання"/"Затверджено" — це
   // рішення бухгалтерії, звідси їх виставити не можна (бекенд це теж
-  // перевіряє й відхилить будь-який інший перехід). rateHistoryId —
-  // кожен відрізок ставки місяця має свій НЕЗАЛЕЖНИЙ статус, той самий
-  // підхід, що вже застосований до кількох керівників одного співробітника.
-  const handleChangeEntryStatus = async (employee, rateHistoryId, newStatus) => {
-    const statusKey = `${employee.id}:${rateHistoryId ?? 'primary'}`;
+  // перевіряє й відхилить будь-який інший перехід). Кожен відрізок має власний статус.
+  const handleChangeEntryStatus = async (employee, periodKey, newStatus) => {
+    const statusKey = `${employee.id}:${periodKey ?? 'primary'}`;
     setStatusUpdatingId(statusKey);
     try {
       const result = await updateEmployeePayrollEntryStatus(employee.id, {
         month: monthParam,
         status: newStatus,
-        rate_history_id: rateHistoryId,
+        period_key: periodKey,
       });
-      applyPayrollEntryUpdate(employee.id, rateHistoryId, result?.payroll_entry);
+      applyPayrollEntryUpdate(employee.id, periodKey, result?.payroll_entry);
       if (newStatus !== PAYROLL_ENTRY_STATUS.DRAFT) {
-        if (rateHistoryId === null) {
+        if (periodKey === null) {
           setSelectedEmployeeIds(prev => {
             if (!prev.has(employee.id)) return prev;
             const next = new Set(prev);
@@ -519,8 +514,7 @@ const PayrollStatementPage = () => {
       // Ручні статті витрат (calc_type="manual") живуть в окремій таблиці
       // (employee_payroll_expense_values), не в employee_payroll_entry —
       // тому окремий ендпоінт, той самий UI редагування (isEditing тощо).
-      // Вони НЕ прив'язані до відрізка ставки (спільні на весь місяць),
-      // тому rate_history_id тут не передається.
+      // Спільні на весь місяць, тому без period_key.
       const result = editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX)
         ? await updateEmployeePayrollExpenseValue(editingCell.employeeId, {
             month: monthParam,
@@ -533,11 +527,11 @@ const PayrollStatementPage = () => {
             month: monthParam,
             field: editingCell.field,
             value: editingValue,
-            rate_history_id: editingCell.rateHistoryId,
+            period_key: editingCell.periodKey,
           });
       applyPayrollEntryUpdate(
         editingCell.employeeId,
-        editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? null : editingCell.rateHistoryId,
+        editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? null : editingCell.periodKey,
         result?.payroll_entry
       );
       setEditingCell(null);
@@ -698,7 +692,7 @@ const PayrollStatementPage = () => {
   // Заблоковані (відправлені на перевірку) рядки не беруть участі в
   // "вибрати все" — їх все одно не можна масово редагувати.
   const selectableEmployees = useMemo(
-    () => filteredEmployees.filter(employee => !isPayrollEntryLocked(employee)),
+    () => filteredEmployees.filter(isBulkSelectable),
     [filteredEmployees]
   );
 
@@ -853,14 +847,23 @@ const PayrollStatementPage = () => {
             onClick={e => e.stopPropagation()}
           />
         ),
-        cell: ({ row }) => (
-          <Checkbox
-            checked={selectedEmployeeIds.has(row.original.id)}
-            disabled={isPayrollEntryLocked(row.original)}
-            onChange={() => toggleEmployeeSelection(row.original.id)}
-            onClick={e => e.stopPropagation()}
-          />
-        ),
+        cell: ({ row }) => {
+          const checkbox = (
+            <Checkbox
+              checked={selectedEmployeeIds.has(row.original.id)}
+              disabled={!isBulkSelectable(row.original)}
+              onChange={() => toggleEmployeeSelection(row.original.id)}
+              onClick={e => e.stopPropagation()}
+            />
+          );
+          return hasMultiplePeriods(row.original) ? (
+            <Tooltip title="У місяці кілька відрізків ставки/податку — редагуйте вручну" arrow>
+              <span>{checkbox}</span>
+            </Tooltip>
+          ) : (
+            checkbox
+          );
+        },
       },
       ...payrollColumnKeys.map(key => ({
         accessorKey: key,
@@ -1171,7 +1174,7 @@ const PayrollStatementPage = () => {
           if (expenseItem && expenseItem.calc_type === 'manual') {
             const isEditing =
               editingCell?.employeeId === employee.id &&
-              editingCell?.rateHistoryId === null &&
+              editingCell?.periodKey === null &&
               editingCell?.field === key;
             const savedValue = employee.payroll_entry?.expense_items?.[expenseItemKeyId];
 
@@ -1240,10 +1243,10 @@ const PayrollStatementPage = () => {
 
           if (EDITABLE_PAYROLL_FIELDS.includes(key)) {
             return renderStackedSlots(employee, entryData => {
-              const rateHistoryId = getPeriodKey(entryData);
+              const periodKey = getPeriodKey(entryData);
               const isEditing =
                 editingCell?.employeeId === employee.id &&
-                editingCell?.rateHistoryId === rateHistoryId &&
+                editingCell?.periodKey === periodKey &&
                 editingCell?.field === key;
               const savedValue = entryData?.[key];
 
@@ -1333,7 +1336,7 @@ const PayrollStatementPage = () => {
                       type="button"
                       className={style.rateEditBtn}
                       onClick={() =>
-                        handleStartEdit(employee.id, rateHistoryId, key, savedValue)
+                        handleStartEdit(employee.id, periodKey, key, savedValue)
                       }
                     >
                       <Icon id="edit" className={style.rateEditIcon} />
@@ -1363,10 +1366,10 @@ const PayrollStatementPage = () => {
 
           if (key === 'action') {
             return renderStackedSlots(employee, entryData => {
-              const rateHistoryId = getPeriodKey(entryData);
+              const periodKey = getPeriodKey(entryData);
               const statusValue = getEntryStatus(entryData);
               const isUpdating =
-                statusUpdatingId === `${employee.id}:${rateHistoryId ?? 'primary'}`;
+                statusUpdatingId === `${employee.id}:${periodKey ?? 'primary'}`;
 
               if (statusValue === PAYROLL_ENTRY_STATUS.DRAFT) {
                 // Відправити на перевірку можна лише коли керівник заповнив
@@ -1389,7 +1392,7 @@ const PayrollStatementPage = () => {
                           onClick={() =>
                             handleChangeEntryStatus(
                               employee,
-                              rateHistoryId,
+                              periodKey,
                               PAYROLL_ENTRY_STATUS.SENT_FOR_REVIEW
                             )
                           }
@@ -1417,7 +1420,7 @@ const PayrollStatementPage = () => {
                           onClick={() =>
                             handleChangeEntryStatus(
                               employee,
-                              rateHistoryId,
+                              periodKey,
                               PAYROLL_ENTRY_STATUS.DRAFT
                             )
                           }
@@ -1434,6 +1437,14 @@ const PayrollStatementPage = () => {
               // вихід тепер лише через рішення фінансиста на PayrollReviewPage.
               return <div className={style.actionContainer}>-</div>;
             });
+          }
+
+          if (key === 'payment_form' || key === 'payment_details') {
+            return (
+              <PaymentChangeNote field={key} notes={employee.payment_change_notes?.[key]}>
+                {value || '-'}
+              </PaymentChangeNote>
+            );
           }
 
           return value || '-';

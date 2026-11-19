@@ -169,3 +169,9 @@ export const putEmployeeRate = async (id, assignmentId, rateId, payload) => {
     throw error;
   }
 };
+
+export const postEmployeeTax = async (id, assignmentId, payload) =>
+  axios.post(`/api/employees/${id}/assignments/${assignmentId}/tax`, payload);
+
+export const putEmployeeTax = async (id, assignmentId, taxId, payload) =>
+  axios.put(`/api/employees/${id}/assignments/${assignmentId}/tax/${taxId}`, payload);
