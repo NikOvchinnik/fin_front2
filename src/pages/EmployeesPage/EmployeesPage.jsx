@@ -11,6 +11,7 @@ import EmployeeForm from '../../components/Forms/EmployeeForm/EmployeeForm';
 import GoogleSheetImportForm from '../../components/Forms/GoogleSheetImportForm/GoogleSheetImportForm';
 import ModalColumnsForm from '../../components/Forms/ModalColumnsForm/ModalColumnsForm';
 import StaffRateDrawer from '../../components/StaffRateDrawer/StaffRateDrawer';
+import PaymentChangeNote from '../../components/PaymentChangeNote/PaymentChangeNote';
 import { getEmployees } from '../../helpers/axios/employees';
 import {
   buildEmployeeFieldOptions,
@@ -28,6 +29,7 @@ import style from './EmployeesPage.module.css';
 const EMPLOYEE_STATUS_ACTIVE = 'active';
 const EMPLOYEE_STATUS_TERMINATED = 'terminated';
 const SHOW_EMPLOYEE_HISTORY_ACTION = false;
+const PAYMENT_NOTE_KEYS = ['payment_form', 'payment_details'];
 
 const withAllOption = options => [
   { value: FILTER_ALL, label: 'Усі' },
@@ -343,7 +345,19 @@ const EmployeesPage = () => {
                     />
                   </button>
                 )}
-                <span>{primaryValue}</span>
+                {PAYMENT_NOTE_KEYS.includes(field.key) ? (
+                  <PaymentChangeNote
+                    field={field.key}
+                    notes={
+                      employees.find(e => e.id === employee.id)
+                        ?.payment_change_notes?.[field.key]
+                    }
+                  >
+                    <span>{primaryValue}</span>
+                  </PaymentChangeNote>
+                ) : (
+                  <span>{primaryValue}</span>
+                )}
               </div>
               {isExpanded &&
                 extraValues.map((value, index) => (
@@ -934,7 +948,9 @@ const EmployeesPage = () => {
           <StaffRateDrawer
             key={`${rateDrawerEmployee?.id}-${rateDrawerAssignmentId}`}
             isOpen={!!rateDrawerEmployee}
-            employee={rateDrawerEmployee}
+            employee={
+              employees.find(e => e.id === rateDrawerEmployee?.id) || rateDrawerEmployee
+            }
             initialAssignmentId={rateDrawerAssignmentId}
             onClose={() => {
               setRateDrawerEmployee(null);

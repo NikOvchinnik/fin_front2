@@ -269,6 +269,11 @@
   color: var(--heading-text);
 }
 
+.historyTax {
+  font-size: 16px;
+  color: var(--heading-text);
+}
+
 .historyMeta {
   font-size: 16px;
   color: var(--toggle-lang);
@@ -440,6 +445,27 @@
 }
 
 .saveBtn:disabled {
+  background: var(--table-edit);
+  cursor: not-allowed;
+}
+
+.taxSaveBtn {
+  align-self: flex-start;
+  margin-top: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background: var(--button);
+  color: var(--white);
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+.taxSaveBtn:hover:not(:disabled) {
+  background: var(--button-hover);
+}
+
+.taxSaveBtn:disabled {
   background: var(--table-edit);
   cursor: not-allowed;
 }

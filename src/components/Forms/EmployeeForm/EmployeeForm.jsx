@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 import { Notify } from 'notiflix';
 import Icon from '../../Icon/Icon';
 import Form from '../../Form/Form';
@@ -176,6 +177,9 @@ const EmployeeForm = ({
   const [initialAssignmentIds] = useState(() =>
     new Set(buildAssignmentBlocks(employee).map(item => item.id).filter(Boolean))
   );
+  const [initialManagerById] = useState(() =>
+    Object.fromEntries(buildAssignmentBlocks(employee).map(item => [item.id, item.manager_id]))
+  );
   // Якщо створення нового співробітника впирається в уже наявну людину
   // (збіг по ІПН) — пропонуємо додати призначення їй замість блокування.
   const [duplicateEmployee, setDuplicateEmployee] = useState(null);
@@ -203,9 +207,20 @@ const EmployeeForm = ({
     setPersonValues(prev => ({ ...prev, [key]: value }));
   };
 
+  // Керівника змінили в уже збереженому призначенні — потрібен місяць переходу.
+  const isManagerChanged = block =>
+    Boolean(block.id) && String(block.manager_id ?? '') !== String(initialManagerById[block.id] ?? '');
+
   const handleAssignmentChange = (index, key, value) => {
     setAssignmentBlocks(prev =>
-      prev.map((block, i) => (i === index ? { ...block, [key]: value } : block))
+      prev.map((block, i) => {
+        if (i !== index) return block;
+        const next = { ...block, [key]: value };
+        if (key === 'manager_id' && !next.manager_effective_month) {
+          next.manager_effective_month = dayjs().format('YYYY-MM');
+        }
+        return next;
+      })
     );
   };
 
@@ -257,6 +272,9 @@ const EmployeeForm = ({
           errors.push(`Призначення ${index + 1} — ${field.label}: обов'язкове поле.`);
         }
       });
+      if (isManagerChanged(block) && !block.manager_effective_month) {
+        errors.push(`Призначення ${index + 1} — Новий керівник з місяця: обов'язкове поле.`);
+      }
     });
 
     return errors;
@@ -291,6 +309,9 @@ const EmployeeForm = ({
         await patchEmployee(employeeId, buildEmployeePayload(personValues));
         for (const block of assignmentBlocks) {
           const payload = buildAssignmentPayload(block);
+          if (isManagerChanged(block)) {
+            payload.manager_effective_month = dayjs(block.manager_effective_month).format('MM.YYYY');
+          }
           if (block.id) {
             await patchEmployeeAssignment(employeeId, block.id, payload);
           } else {
@@ -487,11 +508,29 @@ const EmployeeForm = ({
               )}
             </div>
             <div className={style.fieldsGrid}>
-              {ASSIGNMENT_FIELD_DEFS.map(fieldDef =>
-                renderField(fieldDef, block[fieldDef.key], value =>
+              {ASSIGNMENT_FIELD_DEFS.flatMap(fieldDef => {
+                const field = renderField(fieldDef, block[fieldDef.key], value =>
                   handleAssignmentChange(index, fieldDef.key, value)
-                )
-              )}
+                );
+                if (fieldDef.key !== 'manager_id' || !isManagerChanged(block)) return [field];
+                return [
+                  field,
+                  <label key="manager_effective_month" className={style.field}>
+                    <span className={style.fieldLabel}>Новий керівник з місяця *</span>
+                    <input
+                      type="month"
+                      className={style.fieldInput}
+                      value={block.manager_effective_month ?? ''}
+                      onChange={e =>
+                        handleAssignmentChange(index, 'manager_effective_month', e.target.value)
+                      }
+                    />
+                    <span className={style.fieldHint}>
+                      Попередні місяці лишаються за попереднім керівником.
+                    </span>
+                  </label>,
+                ];
+              })}
             </div>
           </div>
         ))}
@@ -506,7 +545,7 @@ const EmployeeForm = ({
           </button>
         )}
 
-        <div className={style.actions}>
+        <div className={`${style.actions} ${style.stickyActions}`}>
           <button type="submit" className={style.submitBtn} disabled={saving}>
             {saving ? 'Зберігаю...' : 'Зберегти'}
           </button>

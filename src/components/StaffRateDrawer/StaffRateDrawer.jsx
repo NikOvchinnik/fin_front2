@@ -11,9 +11,10 @@ import Icon from '../Icon/Icon';
 import style from './StaffRateDrawer.module.css';
 import { employeeFields, formatRate, taxFormulaOptions } from '../../helpers/employees';
 import {
-  patchEmployeeAssignment,
   postEmployeeRate,
+  postEmployeeTax,
   putEmployeeRate,
+  putEmployeeTax,
 } from '../../helpers/axios/employees';
 
 registerLocale('uk', {
@@ -86,6 +87,12 @@ const StaffRateDrawer = ({
   const [rateValue, setRateValue] = useState('');
   const [currency, setCurrency] = useState('UAH');
   const [taxFormula, setTaxFormula] = useState('');
+  const [savedTaxFormula, setSavedTaxFormula] = useState('');
+  const [taxDate, setTaxDate] = useState(() => new Date());
+  const [taxHistory, setTaxHistory] = useState([]);
+  const [editingTaxId, setEditingTaxId] = useState(null);
+  const [editTaxFormula, setEditTaxFormula] = useState('');
+  const [editTaxDate, setEditTaxDate] = useState(new Date());
   const [savingTaxFormula, setSavingTaxFormula] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
@@ -113,12 +120,23 @@ const StaffRateDrawer = ({
     setRateHistory(selectedAssignment?.rate_history || []);
     setEditingEntryId(null);
     setTaxFormula(selectedAssignment?.tax_formula || '');
+    setSavedTaxFormula(selectedAssignment?.tax_formula || '');
+    setTaxDate(new Date());
+    setTaxHistory(selectedAssignment?.tax_history || []);
+    setEditingTaxId(null);
   }, [selectedAssignment?.id]);
 
   if (!employee) return null;
 
+  const combinedHistory = [
+    ...rateHistory.map(item => ({ ...item, type: 'rate' })),
+    ...taxHistory.map(item => ({ ...item, type: 'tax' })),
+  ].sort((a, b) => dayjs(b.created_at).valueOf() - dayjs(a.created_at).valueOf());
+
   const canSave = rateValue.trim() !== '' && !!currency && !!rateDate;
-  const hasUnsavedChanges = rateValue.trim() !== '';
+  const isTaxFormulaChanged =
+    taxFormula !== savedTaxFormula || !dayjs(taxDate).isSame(dayjs(), 'day');
+  const hasUnsavedChanges = rateValue.trim() !== '' || isTaxFormulaChanged;
 
   const handleRequestClose = () => {
     if (hasUnsavedChanges) {
@@ -181,24 +199,70 @@ const StaffRateDrawer = ({
     }
   };
 
-  // "Податки" — незалежне від ставки поле призначення (як currency), без
-  // власної історії змін: зберігається одразу при виборі, без кнопки
-  // "Зберегти зміни" (та без вимоги спершу заповнити ставку).
-  const handleTaxFormulaChange = async value => {
-    const previousValue = taxFormula;
-    setTaxFormula(value);
+  const applyTaxHistoryFromResponse = updatedEmployee => {
+    const updatedAssignment = (updatedEmployee?.assignments || []).find(
+      item => item.id === selectedAssignment.id
+    );
+    setTaxHistory(updatedAssignment?.tax_history || []);
+  };
+
+  const handleRetroactiveError = (error, retry) => {
+    if (error?.response?.data?.code !== 'RATE_AFFECTS_PROCESSED_MONTH') return false;
+    setRetroactiveWarning({ message: error.response.data.message, onConfirm: retry });
+    return true;
+  };
+
+  // "Податки" зберігаються окремою кнопкою під полем, не разом зі ставкою.
+  const handleSaveTaxFormula = async ({ confirmRetroactive = false } = {}) => {
     setSavingTaxFormula(true);
     try {
-      await patchEmployeeAssignment(employee.id, selectedAssignment.id, {
-        tax_formula: value || null,
+      const updatedEmployee = await postEmployeeTax(employee.id, selectedAssignment.id, {
+        tax_formula: taxFormula || null,
+        tax_date: dayjs(taxDate).format('DD.MM.YYYY'),
+        ...(confirmRetroactive ? { confirm_retroactive: true } : {}),
       });
+      applyTaxHistoryFromResponse(updatedEmployee);
+      setSavedTaxFormula(taxFormula);
+      setTaxDate(new Date());
+      setRetroactiveWarning(null);
       Notify.success('Податки оновлено.');
-      await onSaved();
-    } catch {
-      setTaxFormula(previousValue);
-      Notify.failure('Не вдалося оновити податки.');
+      onSaved();
+    } catch (error) {
+      const retry = () => handleSaveTaxFormula({ confirmRetroactive: true });
+      if (confirmRetroactive || !handleRetroactiveError(error, retry)) {
+        Notify.failure('Не вдалося оновити податки.');
+      }
     } finally {
       setSavingTaxFormula(false);
+    }
+  };
+
+  const startEditingTax = entry => {
+    setEditingTaxId(entry.id);
+    setEditTaxFormula(entry.tax_formula || '');
+    setEditTaxDate(dayjs(entry.effective_date).toDate());
+  };
+
+  const handleSaveTaxEdit = async (taxId, { confirmRetroactive = false } = {}) => {
+    setEditSaving(true);
+    try {
+      const updatedEmployee = await putEmployeeTax(employee.id, selectedAssignment.id, taxId, {
+        tax_formula: editTaxFormula || null,
+        tax_date: dayjs(editTaxDate).format('DD.MM.YYYY'),
+        ...(confirmRetroactive ? { confirm_retroactive: true } : {}),
+      });
+      applyTaxHistoryFromResponse(updatedEmployee);
+      setEditingTaxId(null);
+      setRetroactiveWarning(null);
+      Notify.success('Запис оновлено.');
+      onSaved();
+    } catch (error) {
+      const retry = () => handleSaveTaxEdit(taxId, { confirmRetroactive: true });
+      if (confirmRetroactive || !handleRetroactiveError(error, retry)) {
+        Notify.failure('Не вдалося оновити запис.');
+      }
+    } finally {
+      setEditSaving(false);
     }
   };
 
@@ -320,10 +384,6 @@ const StaffRateDrawer = ({
           <p className={style.sectionTitle}>Оплата праці</p>
           <div className={`${style.field} ${style.styledFormField}`}>
             <Form
-              // Незалежне від ставки поле — зберігається одразу при виборі
-              // (див. handleTaxFormulaChange), тому key лише прив'язаний до
-              // призначення (щоб показати правильне значення при перемиканні
-              // вкладки керівника), без зв'язку з кнопкою "Зберегти зміни".
               key={selectedAssignment.id}
               fields={[
                 {
@@ -337,14 +397,30 @@ const StaffRateDrawer = ({
                       label: option,
                     })),
                   ],
-                  onChange: handleTaxFormulaChange,
+                  onChange: value => setTaxFormula(value ?? ''),
                 },
               ]}
-              defaultValues={{ tax_formula: taxFormula }}
+              defaultValues={{ tax_formula: selectedAssignment?.tax_formula || '' }}
             />
-            {savingTaxFormula && (
-              <p className={style.fieldHint}>Зберігаю...</p>
-            )}
+          </div>
+          <div className={style.field}>
+            <p className={style.fieldLabel}>Дата, з якої діє податок</p>
+            <DatePicker
+              selected={taxDate}
+              onChange={date => setTaxDate(date)}
+              dateFormat="dd.MM.yyyy"
+              locale="uk"
+              className={style.fieldInput}
+              wrapperClassName={style.dateWrapper}
+            />
+            <button
+              type="button"
+              className={style.taxSaveBtn}
+              disabled={!isTaxFormulaChanged || !taxDate || savingTaxFormula}
+              onClick={() => handleSaveTaxFormula()}
+            >
+              {savingTaxFormula ? 'Зберігаю...' : 'Зберегти податки'}
+            </button>
           </div>
           <div className={style.salaryRow}>
             <div className={style.field}>
@@ -402,12 +478,85 @@ const StaffRateDrawer = ({
         </div>
 
         <div className={style.section}>
-          <p className={style.sectionTitle}>Історія змін ставки</p>
-          {rateHistory.length > 0 ? (
+          <p className={style.sectionTitle}>Історія змін</p>
+          {combinedHistory.length > 0 ? (
             <div className={style.historyList}>
-              {rateHistory.map(entry =>
-                editingEntryId === entry.id ? (
-                  <div key={entry.id} className={style.historyEditRow}>
+              {combinedHistory.map(entry =>
+                entry.type === 'tax' && editingTaxId === entry.id ? (
+                  <div key={`tax-${entry.id}`} className={style.historyEditRow}>
+                    <div className={style.historyEditFields}>
+                      <select
+                        className={style.historyEditSelect}
+                        value={editTaxFormula}
+                        onChange={e => setEditTaxFormula(e.target.value)}
+                      >
+                        <option value="">—</option>
+                        {taxFormulaOptions.map(option => (
+                          <option key={option} value={option}>
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                      <DatePicker
+                        selected={editTaxDate}
+                        onChange={date => setEditTaxDate(date)}
+                        dateFormat="dd.MM.yyyy"
+                        locale="uk"
+                        className={style.historyEditInput}
+                        wrapperClassName={style.historyEditDateWrapper}
+                      />
+                    </div>
+                    <div className={style.historyEditActions}>
+                      <button
+                        type="button"
+                        className={style.historyConfirmBtn}
+                        disabled={editSaving || !editTaxDate}
+                        onClick={() => handleSaveTaxEdit(entry.id)}
+                      >
+                        <Icon id="check" className={style.historyActionIcon} />
+                      </button>
+                      <button
+                        type="button"
+                        className={style.historyCancelBtn}
+                        disabled={editSaving}
+                        onClick={() => setEditingTaxId(null)}
+                      >
+                        <Icon id="close" className={style.historyActionIcon} />
+                      </button>
+                    </div>
+                  </div>
+                ) : entry.type === 'tax' ? (
+                  <div key={`tax-${entry.id}`} className={style.historyItem}>
+                    <span className={style.historyTax}>
+                      Податки: {entry.tax_formula || 'не обрано'}
+                    </span>
+                    <span className={style.historyMeta}>
+                      {dayjs(entry.effective_date).format('DD.MM.YY')}
+                      {' • '}
+                      {entry.created_by_name
+                        ? `Внесено: ${entry.created_by_name}`
+                        : 'Автор невідомий'}
+                    </span>
+                    {entry.is_editable ? (
+                      <Tooltip title="Редагувати запис" arrow>
+                        <button
+                          type="button"
+                          className={style.historyActionBtn}
+                          onClick={() => startEditingTax(entry)}
+                        >
+                          <Icon id="edit" className={style.historyActionIcon} />
+                        </button>
+                      </Tooltip>
+                    ) : (
+                      <Tooltip title="Редагування недоступне" arrow>
+                        <span className={style.historyLockBtn}>
+                          <Icon id="lock" className={style.historyActionIcon} />
+                        </span>
+                      </Tooltip>
+                    )}
+                  </div>
+                ) : editingEntryId === entry.id ? (
+                  <div key={`rate-${entry.id}`} className={style.historyEditRow}>
                     <div className={style.historyEditFields}>
                       <input
                         type="text"
@@ -458,7 +607,7 @@ const StaffRateDrawer = ({
                     </div>
                   </div>
                 ) : (
-                  <div key={entry.id} className={style.historyItem}>
+                  <div key={`rate-${entry.id}`} className={style.historyItem}>
                     <span className={style.historyRate}>
                       {formatRate(entry.rate, entry.currency)}
                     </span>
@@ -492,7 +641,7 @@ const StaffRateDrawer = ({
             </div>
           ) : (
             <p className={style.historyText}>
-              Записів ще немає — це нова ставка.
+              Записів ще немає.
             </p>
           )}
         </div>

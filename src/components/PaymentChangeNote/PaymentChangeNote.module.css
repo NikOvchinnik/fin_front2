@@ -1,0 +1,53 @@
+.cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ed8a00;
+  cursor: help;
+}
+
+.badgeAlert {
+  background: #d32f2f;
+}
+
+.icon {
+  width: 12px;
+  height: 12px;
+}
+
+.tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.item + .item {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.heading {
+  font-weight: 600;
+}
+
+.alert {
+  font-weight: 600;
+  color: #ffb4ab;
+}
+
+.meta {
+  opacity: 0.8;
+}
