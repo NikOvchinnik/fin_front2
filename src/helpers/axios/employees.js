@@ -89,6 +89,9 @@ export const updateEmployeePayrollEntry = async (id, payload) => {
   }
 };
 
+export const deleteEmployeePayrollSplit = async (id, payload) =>
+  axios.delete(`/api/employees/${id}/payroll-entry/split`, { data: payload });
+
 export const updateEmployeePayrollExpenseValue = async (id, payload) => {
   try {
     return await axios.put(`/api/employees/${id}/payroll-expense-value`, payload);

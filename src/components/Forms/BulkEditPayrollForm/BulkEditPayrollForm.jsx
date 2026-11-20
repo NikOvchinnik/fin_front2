@@ -9,12 +9,6 @@ import style from './BulkEditPayrollForm.module.css';
 // ігнорується при збереженні, доки не з'ясуємо з бізнесом його логіку.
 const BULK_EDIT_FIELDS = [
   {
-    name: 'distribution',
-    label: 'Розподіл',
-    placeholder: 'Введіть відсоток',
-    editable: true,
-  },
-  {
     name: 'worked_days',
     label: 'Відпрацьовані робочі дні',
     placeholder: 'Введіть кількість відпрацьованих днів',
@@ -49,12 +43,8 @@ const BulkEditPayrollForm = ({
   const [fieldValues, setFieldValues] = useState(INITIAL_FIELD_VALUES);
   const [showUnsavedConfirm, setShowUnsavedConfirm] = useState(false);
 
-  // "Розподіл" — відсоток (0-100). "Відпрацьовані робочі дні" — межа
-  // приходить ззовні (найменше "Робочі дні місяця" серед обраних
-  // співробітників), щоб лишатись коректною, навіть коли це значення
-  // перестане бути статичним.
+  // Межа днів — найменше "Робочі дні місяця" серед обраних.
   const fieldLimits = {
-    distribution: { min: 0, max: 100 },
     worked_days: { min: 0, max: maxWorkedDays },
   };
 

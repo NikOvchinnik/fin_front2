@@ -648,3 +648,47 @@
 .nbuModalError {
   color: #a71916;
 }
+
+/* Рядки розподілу між юнітами (split_rows) */
+.multiValueSplit {
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.splitRowPlaceholder {
+  display: inline-block;
+  min-height: 24px;
+}
+
+.distributionTotalBadge {
+  margin-left: 6px;
+  font-size: 12px;
+}
+
+/* Однакова висота підрядків у всіх колонках (кнопки редагування — 28px) */
+.multiValuePrimary,
+.multiValueExtra {
+  min-height: 28px;
+}
+
+.unitSelect {
+  min-width: 140px;
+  max-width: 200px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--white);
+  color: var(--main-text);
+  font-size: 14px;
+}
+
+.unitSelectEmpty {
+  border-color: #a71916;
+  color: #a71916;
+}
+
+.unitSelect:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}

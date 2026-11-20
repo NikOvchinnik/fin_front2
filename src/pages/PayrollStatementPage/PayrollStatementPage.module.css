@@ -560,3 +560,125 @@
   background-color: var(--button);
   color: var(--white);
 }
+
+/* Рядки розподілу між юнітами (split_rows) */
+.multiValueSplit {
+  padding-left: 12px;
+  border-left: 2px solid var(--border);
+}
+
+.splitRowPlaceholder {
+  display: inline-block;
+  min-height: 24px;
+}
+
+.unitSelect {
+  min-width: 140px;
+  max-width: 200px;
+  height: 28px;
+  padding: 0 6px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--white);
+  color: var(--main-text);
+  font-size: 14px;
+}
+
+.unitSelectEmpty {
+  border-color: #a71916;
+  color: #a71916;
+}
+
+.unitSelect:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.distributionTotalBadge {
+  margin-left: 6px;
+  font-size: 12px;
+}
+
+.splitDeleteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid #e57373;
+  border-radius: 4px;
+  fill: #e57373;
+  transition: all 0.3s ease;
+}
+
+.splitDeleteBtn:hover:not(:disabled) {
+  fill: #c74736;
+  border-color: #c74736;
+}
+
+.splitDeleteBtn:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.splitConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 28px 32px;
+  width: min(92vw, 520px);
+}
+
+.splitConfirmTitle {
+  font-weight: 500;
+  font-size: 22px;
+  color: var(--heading-text);
+}
+
+.splitConfirmText {
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--toggle-lang);
+}
+
+.splitConfirmActions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.splitConfirmPrimaryBtn,
+.splitConfirmSecondaryBtn {
+  min-height: 44px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.splitConfirmPrimaryBtn {
+  background: #c74736;
+  color: var(--white);
+}
+
+.splitConfirmPrimaryBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.splitConfirmSecondaryBtn {
+  border: 1px solid var(--border);
+  color: var(--main-text);
+  background: transparent;
+}
+
+.splitConfirmSecondaryBtn:hover {
+  border-color: var(--button);
+  color: var(--button);
+}
+
+/* Однакова висота підрядків у всіх колонках (кнопки редагування — 28px) */
+.multiValuePrimary,
+.multiValueExtra {
+  min-height: 28px;
+}
