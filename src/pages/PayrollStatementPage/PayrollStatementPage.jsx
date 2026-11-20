@@ -12,6 +12,8 @@ import PaymentChangeNote from '../../components/PaymentChangeNote/PaymentChangeN
 import BulkEditPayrollForm from '../../components/Forms/BulkEditPayrollForm/BulkEditPayrollForm';
 import DateNavigator from '../../components/DateNavigator/DateNavigator';
 import {
+  deleteEmployeePayrollSplit,
+  getEmployeeLookups,
   getMyTeamEmployees,
   getPayrollExpenseItems,
   updateEmployeePayrollEntry,
@@ -90,25 +92,53 @@ const getRowClassName = employee => STATUS_ROW_CLASS_NAME[getPayrollEntryStatus(
 // (див. коментар біля selectableEmployees нижче).
 const isPayrollEntryLocked = employee => isEntryLocked(employee?.payroll_entry);
 
-// Масове редагування пише лише в перший відрізок — людей з кількома не даємо обрати.
+// Масове редагування пише лише в перший рядок — людей з кількома рядками не даємо обрати.
 const isBulkSelectable = employee =>
-  !isPayrollEntryLocked(employee) && !hasMultiplePeriods(employee);
+  !isPayrollEntryLocked(employee) && !hasMultipleRows(employee);
 
-// Якщо ставку міняли ВСЕРЕДИНІ місяця — бекенд віддає employee.payroll_entry
-// (перший відрізок) + employee.extra_payroll_entries (2-й і подальші,
-// _resolve_rate_periods_for_month). Кожен відрізок — незалежний запис зі
-// своїми полями/статусом, "рядок" на екрані лишається один (стек підрядків,
-// той самий патерн, що rateSlots на "Співробітниках").
-const getEntrySlots = employee => [
-  employee.payroll_entry,
-  ...(employee.extra_payroll_entries || []),
-];
+const getSegments = employee =>
+  [employee.payroll_entry, ...(employee.extra_payroll_entries || [])].filter(Boolean);
 
-const hasMultiplePeriods = employee =>
-  (employee.extra_payroll_entries || []).length > 0;
+// Плоский список рядків: кожен відрізок, а під ним його рядки юнітів (split_rows).
+const getEntrySlots = employee =>
+  getSegments(employee).flatMap(segment => [segment, ...(segment.split_rows || [])]);
+
+const hasMultipleRows = employee => getEntrySlots(employee).length > 1;
+
+const getSplitUnits = employee =>
+  getSegments(employee)
+    .flatMap(segment => segment.split_rows || [])
+    .map(row => row.unit)
+    .filter(Boolean);
+
+const hasUnitSplit = employee =>
+  getSegments(employee).some(segment => (segment.split_rows || []).length > 0);
 
 // Ключ відрізка з бекенду: null — перший, "r:<id>"/"t:<id>" — зі зміни ставки/податку.
 const getPeriodKey = entryData => entryData?.period_key ?? null;
+
+// 0 — основний рядок відрізка, 1+ — рядки юнітів.
+const getSplitNo = entryData => entryData?.split_no ?? 0;
+const isSplitRow = entryData => getSplitNo(entryData) > 0;
+
+const getSlotKey = entryData => `${getPeriodKey(entryData) ?? 'primary'}:${getSplitNo(entryData)}`;
+
+const formatPercent = value => Math.round((value ?? 0) * 100) / 100;
+
+const getSegmentSplitProblem = segment => {
+  if (!segment) return null;
+  const total = segment.distribution_total ?? segment.distribution ?? 0;
+  if (Math.abs(total - 100) > 1e-6) {
+    return `Сума розподілу ${formatPercent(total)}% — має бути 100%`;
+  }
+  if ((segment.split_rows || []).some(row => !row.unit_id)) {
+    return 'Оберіть юніт у кожному рядку розподілу';
+  }
+  return null;
+};
+
+const findSegment = (employee, periodKey) =>
+  getSegments(employee).find(segment => getPeriodKey(segment) === periodKey);
 
 const formatEffectiveDate = isoDate =>
   isoDate ? dayjs(isoDate).format('DD.MM.YYYY') : null;
@@ -249,7 +279,8 @@ const UNSAVED_EDIT_WARNING =
 
 // "Податки" в масовому редагуванні поки не входить сюди — немає відповідного
 // поля в EmployeePayrollEntry на бекенді, ігноруємо його при збереженні.
-const BULK_EDIT_SAVE_FIELDS = ['distribution', 'worked_days', 'bonus'];
+// "Розподіл" — лише вручну по людині (менше 100% створює рядок юніта).
+const BULK_EDIT_SAVE_FIELDS = ['worked_days', 'bonus'];
 
 // TODO: поки статичне значення за замовчуванням — коли з'явиться реальний
 // розрахунок робочих днів місяця, замінити на нього (і в колонці "Робочі дні
@@ -321,7 +352,7 @@ const PayrollStatementPage = () => {
     return saved ? JSON.parse(saved) : DEFAULT_HIDDEN_COLUMN_KEYS;
   });
   const [isColumnsModalOpen, setColumnsModalOpen] = useState(false);
-  const [editingCell, setEditingCell] = useState(null); // { employeeId, field, periodKey } | null
+  const [editingCell, setEditingCell] = useState(null); // { employeeId, field, periodKey, splitNo } | null
   const [editingValue, setEditingValue] = useState('');
   const [savingCell, setSavingCell] = useState(false);
   const editingCellRef = useRef(null);
@@ -329,14 +360,14 @@ const PayrollStatementPage = () => {
   const [isBulkEditModalOpen, setBulkEditModalOpen] = useState(false);
   const [isBulkSaving, setBulkSaving] = useState(false);
   const [statusUpdatingId, setStatusUpdatingId] = useState(null);
-  // Рядки з розгорнутим підрядком другої (і подальшої) ставки місяця — той
-  // самий патерн, що rowExpandToggle на "Співробітниках" (StaffPage), тільки
-  // тут відрізки не керівників, а зміни ставки ВСЕРЕДИНІ місяця
-  // (employee.extra_payroll_entries, бекенд _resolve_rate_periods_for_month).
-  const [expandedRowIds, setExpandedRowIds] = useState(() => new Set());
+  // Згорнуті рядки (підрядки відрізків ставки та юнітів за замовчуванням розгорнуті).
+  const [collapsedRowIds, setCollapsedRowIds] = useState(() => new Set());
+  const [unitLookup, setUnitLookup] = useState([]);
+  const [splitSavingKey, setSplitSavingKey] = useState(null);
+  const [pendingSplitDelete, setPendingSplitDelete] = useState(null); // { employee, entryData } | null
 
   const toggleRowExpand = employeeId => {
-    setExpandedRowIds(prev => {
+    setCollapsedRowIds(prev => {
       const next = new Set(prev);
       if (next.has(employeeId)) next.delete(employeeId);
       else next.add(employeeId);
@@ -384,6 +415,9 @@ const PayrollStatementPage = () => {
     getPayrollExpenseItems()
       .then(result => setExpenseItemsBySubdivision(result || {}))
       .catch(() => setExpenseItemsBySubdivision({}));
+    getEmployeeLookups()
+      .then(result => setUnitLookup(result?.units || []))
+      .catch(() => setUnitLookup([]));
   }, []);
 
   // Вибір рядків скидається при зміні місяця — обране стосується конкретної
@@ -421,51 +455,60 @@ const PayrollStatementPage = () => {
     };
   }, [editingCell]);
 
-  // periodKey null — перший відрізок (payroll_entry), інакше — з extra_payroll_entries.
-  const applyPayrollEntryUpdate = (employeeId, periodKey, updatedEntry) => {
+  // Бекенд після кожної зміни віддає весь місяць (month_entries) — замінюємо всі відрізки разом.
+  const applyMonthEntries = (employeeId, result) => {
+    const monthEntries = result?.month_entries;
+    if (!monthEntries) return;
     setEmployees(prev =>
       prev.map(item => {
         if (item.id !== employeeId) return item;
-        if (periodKey === null) {
-          const next = {
-            ...item,
-            payroll_entry: updatedEntry,
-            rate: updatedEntry?.rate,
-            currency: updatedEntry?.currency,
-          };
-          return { ...next, className: getRowClassName(next) };
-        }
-        return {
+        const next = {
           ...item,
-          extra_payroll_entries: (item.extra_payroll_entries || []).map(entry =>
-            getPeriodKey(entry) === periodKey ? updatedEntry : entry
-          ),
+          payroll_entry: monthEntries.payroll_entry,
+          extra_payroll_entries: monthEntries.extra_payroll_entries || [],
+          combined_totals: monthEntries.combined_totals,
+          rate: monthEntries.payroll_entry?.rate,
+          currency: monthEntries.payroll_entry?.currency,
         };
+        return { ...next, className: getRowClassName(next) };
       })
     );
   };
 
-  const handleStartEdit = (employeeId, periodKey, field, currentValue) => {
+  const getPayrollErrorMessage = (error, fallback) =>
+    error?.response?.data?.code || error?.response?.status === 400
+      ? error.response.data?.message || fallback
+      : fallback;
+
+  const handleStartEdit = (employee, entryData, field, currentValue) => {
     if (editingCell) {
       Notify.warning(UNSAVED_EDIT_WARNING);
       return;
     }
-    const employee = employees.find(item => item.id === employeeId);
-    const entryData = employee
-      ? getEntrySlots(employee).find(entry => getPeriodKey(entry) === periodKey)
-      : null;
     if (entryData && isEntryLocked(entryData)) {
       Notify.warning('Рядок заблокований — дані вже відправлені на перевірку.');
       return;
     }
-    setEditingCell({ employeeId, periodKey, field });
+    setEditingCell({
+      employeeId: employee.id,
+      periodKey: getPeriodKey(entryData),
+      splitNo: getSplitNo(entryData),
+      field,
+    });
     setEditingValue(currentValue ?? '');
   };
+
+  const isEditingSlot = (employee, entryData, field) =>
+    editingCell?.employeeId === employee.id &&
+    editingCell?.periodKey === getPeriodKey(entryData) &&
+    editingCell?.splitNo === getSplitNo(entryData) &&
+    editingCell?.field === field;
 
   // Єдина дія, доступна керівнику зараз: відправити на перевірку або
   // скасувати відправку. "Повернуто на доопрацювання"/"Затверджено" — це
   // рішення бухгалтерії, звідси їх виставити не можна (бекенд це теж
-  // перевіряє й відхилить будь-який інший перехід). Кожен відрізок має власний статус.
+  // перевіряє й відхилить будь-який інший перехід). Кожен відрізок має власний
+  // статус, спільний для всіх його рядків юнітів.
   const handleChangeEntryStatus = async (employee, periodKey, newStatus) => {
     const statusKey = `${employee.id}:${periodKey ?? 'primary'}`;
     setStatusUpdatingId(statusKey);
@@ -475,7 +518,7 @@ const PayrollStatementPage = () => {
         status: newStatus,
         period_key: periodKey,
       });
-      applyPayrollEntryUpdate(employee.id, periodKey, result?.payroll_entry);
+      applyMonthEntries(employee.id, result);
       if (newStatus !== PAYROLL_ENTRY_STATUS.DRAFT) {
         if (periodKey === null) {
           setSelectedEmployeeIds(prev => {
@@ -492,10 +535,8 @@ const PayrollStatementPage = () => {
     } catch (error) {
       if (error?.response?.status === 409) {
         Notify.warning('Статус уже змінився — онови сторінку.');
-      } else if (error?.response?.data?.code === 'PAYROLL_ENTRY_INCOMPLETE') {
-        Notify.failure(error.response.data.message);
       } else {
-        Notify.failure('Не вдалося змінити статус.');
+        Notify.failure(getPayrollErrorMessage(error, 'Не вдалося змінити статус.'));
       }
     } finally {
       setStatusUpdatingId(null);
@@ -507,48 +548,103 @@ const PayrollStatementPage = () => {
     setEditingValue('');
   };
 
+  const countSplitRows = (employeeId, periodKey) => {
+    const employee = employees.find(item => item.id === employeeId);
+    return (findSegment(employee || {}, periodKey)?.split_rows || []).length;
+  };
+
   const handleSaveEdit = async () => {
     if (!editingCell) return;
     setSavingCell(true);
+    const { employeeId, periodKey, splitNo, field } = editingCell;
+    const splitRowsBefore = countSplitRows(employeeId, periodKey);
     try {
-      // Ручні статті витрат (calc_type="manual") живуть в окремій таблиці
-      // (employee_payroll_expense_values), не в employee_payroll_entry —
-      // тому окремий ендпоінт, той самий UI редагування (isEditing тощо).
-      // Спільні на весь місяць, тому без period_key.
-      const result = editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX)
-        ? await updateEmployeePayrollExpenseValue(editingCell.employeeId, {
+      // Ручні статті витрат (calc_type="manual") — окремий ендпоінт, окремо для кожного рядка.
+      const result = field.startsWith(EXPENSE_ITEM_KEY_PREFIX)
+        ? await updateEmployeePayrollExpenseValue(employeeId, {
             month: monthParam,
-            expense_item_id: Number(
-              editingCell.field.slice(EXPENSE_ITEM_KEY_PREFIX.length)
-            ),
+            expense_item_id: Number(field.slice(EXPENSE_ITEM_KEY_PREFIX.length)),
             value: editingValue,
+            period_key: periodKey,
+            split_no: splitNo,
           })
-        : await updateEmployeePayrollEntry(editingCell.employeeId, {
+        : await updateEmployeePayrollEntry(employeeId, {
             month: monthParam,
-            field: editingCell.field,
+            field,
             value: editingValue,
-            period_key: editingCell.periodKey,
+            period_key: periodKey,
+            split_no: splitNo,
           });
-      applyPayrollEntryUpdate(
-        editingCell.employeeId,
-        editingCell.field.startsWith(EXPENSE_ITEM_KEY_PREFIX) ? null : editingCell.periodKey,
-        result?.payroll_entry
-      );
+      applyMonthEntries(employeeId, result);
       setEditingCell(null);
       setEditingValue('');
-    } catch (error) {
-      if (error?.response?.data?.code === 'WORKED_DAYS_EXCEEDS_MONTH') {
-        Notify.failure(error.response.data.message);
-      } else {
-        Notify.failure('Не вдалося зберегти значення.');
+      const splitRowsAfter = (result?.payroll_entry?.split_rows || []).length;
+      if (field === 'distribution' && splitRowsAfter > splitRowsBefore) {
+        Notify.info('Додано рядок із залишком розподілу — оберіть для нього юніт.');
       }
+    } catch (error) {
+      Notify.failure(getPayrollErrorMessage(error, 'Не вдалося зберегти значення.'));
     } finally {
       setSavingCell(false);
     }
   };
 
+  const handleSplitUnitChange = async (employee, entryData, unitId) => {
+    if (editingCell) {
+      Notify.warning(UNSAVED_EDIT_WARNING);
+      return;
+    }
+    const savingKey = `${employee.id}:${getSlotKey(entryData)}`;
+    setSplitSavingKey(savingKey);
+    try {
+      const result = await updateEmployeePayrollEntry(employee.id, {
+        month: monthParam,
+        field: 'unit_id',
+        value: unitId,
+        period_key: getPeriodKey(entryData),
+        split_no: getSplitNo(entryData),
+      });
+      applyMonthEntries(employee.id, result);
+    } catch (error) {
+      Notify.failure(getPayrollErrorMessage(error, 'Не вдалося зберегти юніт.'));
+    } finally {
+      setSplitSavingKey(null);
+    }
+  };
+
+  const handleConfirmSplitDelete = async () => {
+    if (!pendingSplitDelete) return;
+    const { employee, entryData } = pendingSplitDelete;
+    const savingKey = `${employee.id}:${getSlotKey(entryData)}`;
+    setSplitSavingKey(savingKey);
+    try {
+      const result = await deleteEmployeePayrollSplit(employee.id, {
+        month: monthParam,
+        period_key: getPeriodKey(entryData),
+        split_no: getSplitNo(entryData),
+      });
+      applyMonthEntries(employee.id, result);
+      setPendingSplitDelete(null);
+      const total = result?.payroll_entry?.distribution_total;
+      if (total != null && Math.abs(total - 100) > 1e-6) {
+        Notify.warning(
+          `Рядок видалено. Сума розподілу тепер ${formatPercent(total)}% — розподіліть залишок вручну.`
+        );
+      } else {
+        Notify.success('Рядок видалено.');
+      }
+    } catch (error) {
+      Notify.failure(getPayrollErrorMessage(error, 'Не вдалося видалити рядок.'));
+    } finally {
+      setSplitSavingKey(null);
+    }
+  };
+
   const unitOptions = useMemo(
-    () => withAllOption(buildEmployeeFieldOptions(employees, 'unit')),
+    () =>
+      withAllOption(
+        buildEmployeeFieldOptions(employees, 'unit', employees.flatMap(getSplitUnits))
+      ),
     [employees]
   );
   const departmentOptions = useMemo(
@@ -635,7 +731,9 @@ const PayrollStatementPage = () => {
     let rows = employees;
 
     if (selectedUnit !== FILTER_ALL) {
-      rows = rows.filter(employee => employee.unit === selectedUnit);
+      rows = rows.filter(
+        employee => employee.unit === selectedUnit || getSplitUnits(employee).includes(selectedUnit)
+      );
     }
     if (selectedDepartment !== FILTER_ALL) {
       rows = rows.filter(
@@ -763,22 +861,15 @@ const PayrollStatementPage = () => {
     setBulkSaving(true);
     try {
       for (const employee of selectedEmployeesList) {
-        let latestEntry;
+        let latestResult;
         for (const field of fieldsToSave) {
-          const result = await updateEmployeePayrollEntry(employee.id, {
+          latestResult = await updateEmployeePayrollEntry(employee.id, {
             month: monthParam,
             field,
             value: fieldValues[field],
           });
-          latestEntry = result?.payroll_entry;
         }
-        setEmployees(prev =>
-          prev.map(item =>
-            item.id === employee.id
-              ? { ...item, payroll_entry: latestEntry }
-              : item
-          )
-        );
+        applyMonthEntries(employee.id, latestResult);
       }
       Notify.success('Значення збережено.');
       setBulkEditModalOpen(false);
@@ -792,27 +883,25 @@ const PayrollStatementPage = () => {
     }
   };
 
-  // Стекує значення клітинки по ВСІХ відрізках ставки місяця цього рядка
-  // (employee.payroll_entry + employee.extra_payroll_entries) — той самий
-  // патерн, що rateSlots/multiValueCell на "Співробітниках". Для звичайного
-  // випадку "одна ставка на місяць" (99% рядків) повертає renderSlot(...)
-  // напряму, без жодної обгортки — вигляд і розмітка лишаються точно такими,
-  // як до підтримки кількох ставок на місяць.
+  // Значення клітинки по всіх рядках місяця (відрізки + рядки юнітів), стеком.
   const renderStackedSlots = (employee, renderSlot) => {
     const slots = getEntrySlots(employee);
     if (slots.length <= 1) {
       return renderSlot(slots[0], false, 0);
     }
-    const isExpanded = expandedRowIds.has(employee.id);
+    const isExpanded = !collapsedRowIds.has(employee.id);
     return (
       <div className={style.multiValueCell}>
         {slots.map((entryData, index) => {
           if (index > 0 && !isExpanded) return null;
+          const slotClassName =
+            index === 0
+              ? style.multiValuePrimary
+              : isSplitRow(entryData)
+              ? `${style.multiValueExtra} ${style.multiValueSplit}`
+              : style.multiValueExtra;
           return (
-            <div
-              key={entryData?.id ?? getPeriodKey(entryData) ?? index}
-              className={index === 0 ? style.multiValuePrimary : style.multiValueExtra}
-            >
+            <div key={getSlotKey(entryData)} className={slotClassName}>
               {renderSlot(entryData, index > 0, index)}
             </div>
           );
@@ -821,19 +910,64 @@ const PayrollStatementPage = () => {
     );
   };
 
-  // "Всього у валюті нарахування"/статті витрат, порахован formулою/"Всього
-  // до виплати на руки" — на відміну від решти полів (Ставка/Розподіл/
-  // Відпрацьовані дні/Нараховано/Податки — лишаються показані ОКРЕМО на
-  // кожен відрізок, renderStackedSlots), тут потрібне ОДНЕ підсумкове число
-  // за весь місяць одразу по всіх відрізках (узгоджено з фінансистом): для
-  // звичайного випадку "одна ставка на місяць" — renderSlot(...) напряму
-  // (жодних змін), інакше — renderCombined(employee.combined_totals).
+  // Підсумки (Всього, статті за формулою) — одне число за весь місяць.
   const renderTotalCell = (employee, renderSlot, renderCombined) => {
-    if (!hasMultiplePeriods(employee)) {
+    if (!hasMultipleRows(employee)) {
       return renderSlot(employee.payroll_entry);
     }
     return renderCombined(employee.combined_totals || {});
   };
+
+  const renderEditCell = editLimits => (
+    <div ref={editingCellRef} className={style.editCellContainer}>
+      <input
+        type="number"
+        className={style.editCellInput}
+        value={editingValue}
+        autoFocus
+        disabled={savingCell}
+        min={editLimits?.min}
+        max={editLimits?.max}
+        onChange={e =>
+          setEditingValue(
+            editLimits?.max != null
+              ? clampToRange(e.target.value, editLimits.min, editLimits.max)
+              : e.target.value
+          )
+        }
+        onKeyDown={e => {
+          if (e.key === 'Enter' && !savingCell) {
+            e.preventDefault();
+            handleSaveEdit();
+          }
+        }}
+      />
+      <Tooltip title="Зберегти">
+        <span>
+          <button
+            type="button"
+            className={style.editCellSaveBtn}
+            onClick={handleSaveEdit}
+            disabled={savingCell}
+          >
+            <Icon id="check" className={style.editCellIcon} />
+          </button>
+        </span>
+      </Tooltip>
+      <Tooltip title="Скасувати">
+        <span>
+          <button
+            type="button"
+            className={style.editCellCancelBtn}
+            onClick={handleCancelEdit}
+            disabled={savingCell}
+          >
+            <Icon id="x" className={style.editCellIcon} />
+          </button>
+        </span>
+      </Tooltip>
+    </div>
+  );
 
   const columns = useMemo(
     () => [
@@ -856,8 +990,15 @@ const PayrollStatementPage = () => {
               onClick={e => e.stopPropagation()}
             />
           );
-          return hasMultiplePeriods(row.original) ? (
-            <Tooltip title="У місяці кілька відрізків ставки/податку — редагуйте вручну" arrow>
+          return hasMultipleRows(row.original) ? (
+            <Tooltip
+              title={
+                hasUnitSplit(row.original)
+                  ? 'Зарплата розподілена між юнітами — редагуйте вручну'
+                  : 'У місяці кілька відрізків ставки/податку — редагуйте вручну'
+              }
+              arrow
+            >
               <span>{checkbox}</span>
             </Tooltip>
           ) : (
@@ -888,22 +1029,17 @@ const PayrollStatementPage = () => {
           const employee = row.original;
           const value = employee[key];
 
-          // Ім'я — тут же шеврон розгортання підрядків 2-ї й подальшої
-          // ставки місяця (employee.extra_payroll_entries), той самий
-          // патерн, що rowExpandToggle на "Співробітниках".
           if (key === 'local_full_name') {
-            const isExpanded = expandedRowIds.has(employee.id);
-            const extraCount = (employee.extra_payroll_entries || []).length;
+            const isExpanded = !collapsedRowIds.has(employee.id);
+            const extraCount = getEntrySlots(employee).length - 1;
             return (
               <div className={style.nameCellContainer}>
-                {hasMultiplePeriods(employee) && (
+                {hasMultipleRows(employee) && (
                   <Tooltip
                     title={
                       isExpanded
                         ? 'Згорнути'
-                        : `Ставку міняли всередині місяця — ще ${extraCount} ${
-                            extraCount === 1 ? 'відрізок' : 'відрізки'
-                          }`
+                        : `Ще ${extraCount} ${extraCount === 1 ? 'рядок' : 'рядки'} (юніти / зміна ставки)`
                     }
                   >
                     <button
@@ -928,6 +1064,36 @@ const PayrollStatementPage = () => {
             );
           }
 
+          // Юніт: основний рядок — з призначення, рядки розподілу — вибір з усіх юнітів.
+          if (key === 'unit' && hasUnitSplit(employee)) {
+            return renderStackedSlots(employee, entryData => {
+              if (!isSplitRow(entryData)) return value || '-';
+              if (isEntryLocked(entryData)) {
+                return entryData.unit || (
+                  <span className={style.accruedMissingBadge}>Юніт не обрано</span>
+                );
+              }
+              const isSaving = splitSavingKey === `${employee.id}:${getSlotKey(entryData)}`;
+              return (
+                <select
+                  className={`${style.unitSelect} ${entryData.unit_id ? '' : style.unitSelectEmpty}`}
+                  value={entryData.unit_id ?? ''}
+                  disabled={isSaving || Boolean(editingCell)}
+                  onChange={event =>
+                    handleSplitUnitChange(employee, entryData, event.target.value || null)
+                  }
+                >
+                  <option value="">Оберіть юніт</option>
+                  {unitLookup.map(unit => (
+                    <option key={unit.id} value={unit.id}>
+                      {unit.name}
+                    </option>
+                  ))}
+                </select>
+              );
+            });
+          }
+
           if (key === 'rate') {
             return renderStackedSlots(employee, (entryData, isExtra) => (
               <>
@@ -945,11 +1111,7 @@ const PayrollStatementPage = () => {
             return renderStackedSlots(employee, entryData => entryData?.currency || '-');
           }
           if (key === 'month_working_days') {
-            // Спільне на весь місяць (обидва відрізки ставки рахуються в
-            // межах одного й того самого "Робочі дні місяця") — виставляє
-            // фінансист на "Перевірці відомостей", не сам керівник. Для
-            // заморожених записів це те, що реально застосувалось при
-            // відправці, не поточне значення (див. _serialize_payroll_entry).
+            // Для відправлених — значення на момент відправки.
             return employee.payroll_entry?.month_working_days ?? DEFAULT_MONTH_WORKING_DAYS;
           }
 
@@ -1045,9 +1207,14 @@ const PayrollStatementPage = () => {
                 }
                 const breakdown = combined.total_accrued_currency_breakdown || [];
                 const tooltipText = `${breakdown
-                  .map(item =>
-                    formatRate(Math.round((item.value ?? 0) * 100) / 100, item.currency || employee.currency)
-                  )
+                  .map(item => {
+                    const amount = formatRate(
+                      Math.round((item.value ?? 0) * 100) / 100,
+                      item.currency || employee.currency
+                    );
+                    const unitName = item.unit || (hasUnitSplit(employee) ? employee.unit : null);
+                    return unitName ? `${amount} (${unitName})` : amount;
+                  })
                   .join(' + ')} = ${formatRate(
                   Math.round(combined.total_accrued_currency * 100) / 100,
                   employee.currency
@@ -1106,13 +1273,7 @@ const PayrollStatementPage = () => {
             );
           }
 
-          // Динамічна колонка "статті витрат" — calc_type визначає, як
-          // показувати значення: "formula" готове рахує бекенд (тільки
-          // читання, окремо для кожного відрізка ставки — формула могла
-          // включати rate), "manual" — керівник вводить сам, ОДНЕ спільне
-          // значення на весь місяць (не прив'язане до відрізка ставки, тому
-          // без стекування — об'єднано з EDITABLE_PAYROLL_FIELDS нижче, щоб
-          // не дублювати UI редагування клітинки), не визначено (ще) — "-".
+          // Статті витрат: "formula" рахує бекенд, "manual" вводиться окремо в кожному рядку.
           const expenseItemKeyId = key.startsWith(EXPENSE_ITEM_KEY_PREFIX)
             ? key.slice(EXPENSE_ITEM_KEY_PREFIX.length)
             : null;
@@ -1172,93 +1333,44 @@ const PayrollStatementPage = () => {
           }
 
           if (expenseItem && expenseItem.calc_type === 'manual') {
-            const isEditing =
-              editingCell?.employeeId === employee.id &&
-              editingCell?.periodKey === null &&
-              editingCell?.field === key;
-            const savedValue = employee.payroll_entry?.expense_items?.[expenseItemKeyId];
-
-            if (isEditing) {
+            return renderStackedSlots(employee, entryData => {
+              const savedValue = entryData?.expense_items?.[expenseItemKeyId];
+              if (isEditingSlot(employee, entryData, key)) {
+                return renderEditCell({});
+              }
+              const displayValue = savedValue === null || savedValue === undefined ? '-' : savedValue;
               return (
-                <div ref={editingCellRef} className={style.editCellContainer}>
-                  <input
-                    type="number"
-                    className={style.editCellInput}
-                    value={editingValue}
-                    autoFocus
-                    disabled={savingCell}
-                    onChange={e => setEditingValue(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter' && !savingCell) {
-                        e.preventDefault();
-                        handleSaveEdit();
-                      }
-                    }}
-                  />
-                  <Tooltip title="Зберегти">
-                    <span>
-                      <button
-                        type="button"
-                        className={style.editCellSaveBtn}
-                        onClick={handleSaveEdit}
-                        disabled={savingCell}
-                      >
-                        <Icon id="check" className={style.editCellIcon} />
-                      </button>
-                    </span>
-                  </Tooltip>
-                  <Tooltip title="Скасувати">
-                    <span>
-                      <button
-                        type="button"
-                        className={style.editCellCancelBtn}
-                        onClick={handleCancelEdit}
-                        disabled={savingCell}
-                      >
-                        <Icon id="x" className={style.editCellIcon} />
-                      </button>
-                    </span>
-                  </Tooltip>
+                <div className={style.viewCellContainer}>
+                  <span>{displayValue}</span>
+                  {!isEntryLocked(entryData) && (
+                    <button
+                      type="button"
+                      className={style.rateEditBtn}
+                      onClick={() => handleStartEdit(employee, entryData, key, savedValue)}
+                    >
+                      <Icon id="edit" className={style.rateEditIcon} />
+                    </button>
+                  )}
                 </div>
               );
-            }
-
-            const displayValue = savedValue === null || savedValue === undefined ? '-' : savedValue;
-
-            return (
-              <div className={style.viewCellContainer}>
-                <span>{displayValue}</span>
-                {!isPayrollEntryLocked(employee) && (
-                  <button
-                    type="button"
-                    className={style.rateEditBtn}
-                    onClick={() => handleStartEdit(employee.id, null, key, savedValue)}
-                  >
-                    <Icon id="edit" className={style.rateEditIcon} />
-                  </button>
-                )}
-              </div>
-            );
+            });
           }
 
           if (EDITABLE_PAYROLL_FIELDS.includes(key)) {
             return renderStackedSlots(employee, entryData => {
               const periodKey = getPeriodKey(entryData);
-              const isEditing =
-                editingCell?.employeeId === employee.id &&
-                editingCell?.periodKey === periodKey &&
-                editingCell?.field === key;
+              const segment = findSegment(employee, periodKey);
               const savedValue = entryData?.[key];
 
-              // "Розподіл" — відсоток (0-100), "Відпрацьовані робочі дні" —
-              // не може перевищувати "Робочі дні місяця" (payroll-month-
-              // settings, виставляє фінансист на "Перевірці відомостей");
-              // при кількох відрізках ставки бекенд додатково перевіряє, щоб
-              // СУМА відпрацьованих днів усіх відрізків не перевищила це
-              // число (див. WORKED_DAYS_EXCEEDS_MONTH).
+              // Розподіл — не більше залишку до 100%, дні — не більше днів місяця.
               const editLimits =
                 key === 'distribution'
-                  ? { min: 0, max: 100 }
+                  ? {
+                      min: 0,
+                      max: formatPercent(
+                        100 - ((segment?.distribution_total ?? 0) - (entryData?.distribution ?? 0))
+                      ),
+                    }
                   : key === 'worked_days'
                   ? {
                       min: 0,
@@ -1268,76 +1380,39 @@ const PayrollStatementPage = () => {
                     }
                   : null;
 
-              if (isEditing) {
-                return (
-                  <div ref={editingCellRef} className={style.editCellContainer}>
-                    <input
-                      type="number"
-                      className={style.editCellInput}
-                      value={editingValue}
-                      autoFocus
-                      disabled={savingCell}
-                      min={editLimits?.min}
-                      max={editLimits?.max}
-                      onChange={e =>
-                        setEditingValue(
-                          editLimits
-                            ? clampToRange(e.target.value, editLimits.min, editLimits.max)
-                            : e.target.value
-                        )
-                      }
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && !savingCell) {
-                          e.preventDefault();
-                          handleSaveEdit();
-                        }
-                      }}
-                    />
-                    <Tooltip title="Зберегти">
-                      <span>
-                        <button
-                          type="button"
-                          className={style.editCellSaveBtn}
-                          onClick={handleSaveEdit}
-                          disabled={savingCell}
-                        >
-                          <Icon id="check" className={style.editCellIcon} />
-                        </button>
-                      </span>
-                    </Tooltip>
-                    <Tooltip title="Скасувати">
-                      <span>
-                        <button
-                          type="button"
-                          className={style.editCellCancelBtn}
-                          onClick={handleCancelEdit}
-                          disabled={savingCell}
-                        >
-                          <Icon id="x" className={style.editCellIcon} />
-                        </button>
-                      </span>
-                    </Tooltip>
-                  </div>
-                );
+              if (isEditingSlot(employee, entryData, key)) {
+                return renderEditCell(editLimits);
               }
 
               const displayValue =
                 savedValue === null || savedValue === undefined
                   ? '-'
                   : key === 'distribution'
-                  ? `${savedValue}%`
+                  ? `${formatPercent(savedValue)}%`
                   : savedValue;
+
+              const totalWarning =
+                key === 'distribution' && !isSplitRow(entryData) && segment
+                  ? getSegmentSplitProblem({ ...segment, split_rows: [] })
+                  : null;
 
               return (
                 <div className={style.viewCellContainer}>
-                  <span>{displayValue}</span>
+                  <span>
+                    {displayValue}
+                    {totalWarning && (
+                      <Tooltip title={`${totalWarning}. Розподіліть залишок вручну.`}>
+                        <span className={`${style.accruedMissingBadge} ${style.distributionTotalBadge}`}>
+                          Σ {formatPercent(segment.distribution_total)}%
+                        </span>
+                      </Tooltip>
+                    )}
+                  </span>
                   {!isEntryLocked(entryData) && (
                     <button
                       type="button"
                       className={style.rateEditBtn}
-                      onClick={() =>
-                        handleStartEdit(employee.id, periodKey, key, savedValue)
-                      }
+                      onClick={() => handleStartEdit(employee, entryData, key, savedValue)}
                     >
                       <Icon id="edit" className={style.rateEditIcon} />
                     </button>
@@ -1349,6 +1424,8 @@ const PayrollStatementPage = () => {
 
           if (key === 'payroll_status') {
             return renderStackedSlots(employee, entryData => {
+              // Статус спільний для відрізка — показуємо лише в основному рядку.
+              if (isSplitRow(entryData)) return <span className={style.splitRowPlaceholder} />;
               const statusMeta = PAYROLL_ENTRY_STATUS_META[getEntryStatus(entryData)];
               return (
                 <span
@@ -1371,24 +1448,41 @@ const PayrollStatementPage = () => {
               const isUpdating =
                 statusUpdatingId === `${employee.id}:${periodKey ?? 'primary'}`;
 
-              if (statusValue === PAYROLL_ENTRY_STATUS.DRAFT) {
-                // Відправити на перевірку можна лише коли керівник заповнив
-                // те, за що сам відповідає (Розподіл) — бекенд це теж
-                // перевіряє (PAYROLL_ENTRY_INCOMPLETE), тут лише проактивно
-                // блокуємо кнопку, щоб не було сюрпризу після кліку.
-                // "Відпрацьовані робочі дні" тут більше не перевіряємо — це
-                // поле завжди має дефолт (= "Робочі дні місяця").
-                const isIncomplete = entryData?.distribution == null;
+              // Рядок юніта: лише видалення в чернетці, статусом керує основний рядок.
+              if (isSplitRow(entryData)) {
+                if (statusValue !== PAYROLL_ENTRY_STATUS.DRAFT) {
+                  return <span className={style.splitRowPlaceholder} />;
+                }
+                const isSaving = splitSavingKey === `${employee.id}:${getSlotKey(entryData)}`;
                 return (
                   <div className={style.actionContainer}>
-                    <Tooltip
-                      title={isIncomplete ? 'Заповніть "Розподіл"' : 'Відправити на перевірку'}
-                    >
+                    <Tooltip title="Видалити рядок юніта">
+                      <span>
+                        <button
+                          type="button"
+                          className={style.splitDeleteBtn}
+                          disabled={isSaving || Boolean(editingCell)}
+                          onClick={() => setPendingSplitDelete({ employee, entryData })}
+                        >
+                          <Icon id="trash" className={style.editIcon} />
+                        </button>
+                      </span>
+                    </Tooltip>
+                  </div>
+                );
+              }
+
+              if (statusValue === PAYROLL_ENTRY_STATUS.DRAFT) {
+                // Бекенд теж перевіряє; тут лише блокуємо кнопку заздалегідь.
+                const splitProblem = getSegmentSplitProblem(findSegment(employee, periodKey));
+                return (
+                  <div className={style.actionContainer}>
+                    <Tooltip title={splitProblem || 'Відправити на перевірку'}>
                       <span>
                         <button
                           type="button"
                           className={style.sendReviewBtn}
-                          disabled={isUpdating || isIncomplete}
+                          disabled={isUpdating || Boolean(splitProblem)}
                           onClick={() =>
                             handleChangeEntryStatus(
                               employee,
@@ -1461,7 +1555,12 @@ const PayrollStatementPage = () => {
       isAllSelected,
       isSomeSelected,
       statusUpdatingId,
-      expandedRowIds,
+      collapsedRowIds,
+      unitLookup,
+      splitSavingKey,
+      // Обробники в комірках читають місяць і список — без цього вони б застарівали.
+      monthParam,
+      employees,
     ]
   );
 
@@ -1788,6 +1887,40 @@ const PayrollStatementPage = () => {
           </button>
         </div>
       )}
+
+      <ModalWindow
+        isModalOpen={Boolean(pendingSplitDelete)}
+        onCloseModal={() => setPendingSplitDelete(null)}
+      >
+        {pendingSplitDelete && (
+          <div className={style.splitConfirm}>
+            <p className={style.splitConfirmTitle}>Видалити рядок юніта?</p>
+            <p className={style.splitConfirmText}>
+              {pendingSplitDelete.entryData.unit || 'Рядок без юніта'} —{' '}
+              {formatPercent(pendingSplitDelete.entryData.distribution)}%. Відсоток не
+              перейде в інші рядки: після видалення розподіліть його вручну. Дані цього
+              рядка (дні, бонус, ручні статті) буде видалено.
+            </p>
+            <div className={style.splitConfirmActions}>
+              <button
+                type="button"
+                className={style.splitConfirmSecondaryBtn}
+                onClick={() => setPendingSplitDelete(null)}
+              >
+                Скасувати
+              </button>
+              <button
+                type="button"
+                className={style.splitConfirmPrimaryBtn}
+                disabled={Boolean(splitSavingKey)}
+                onClick={handleConfirmSplitDelete}
+              >
+                Видалити
+              </button>
+            </div>
+          </div>
+        )}
+      </ModalWindow>
 
       <ModalWindow
         isModalOpen={isBulkEditModalOpen}
