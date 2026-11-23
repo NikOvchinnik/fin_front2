@@ -897,10 +897,14 @@ const PayrollReviewPage = () => {
     );
   };
 
-  // Підсумки (Всього, статті за формулою) — одне число за весь місяць.
+  // Підсумки (Всього, статті за формулою): без юнітів — одне число за місяць.
   const renderTotalCell = (employee, renderSlot, renderCombined) => {
     if (!hasMultipleRows(employee)) {
       return renderSlot(employee.payroll_entry);
+    }
+    // При розподілі на юніти кожен рядок має власні суми.
+    if (hasUnitSplit(employee)) {
+      return renderStackedSlots(employee, entryData => renderSlot(entryData));
     }
     return renderCombined(employee.combined_totals || {});
   };
